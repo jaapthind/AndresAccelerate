@@ -3,895 +3,2081 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AndresAccelerate: V4 Ultra-Realism Engine</title>
+    <title>AndresAccelerate: V5 Ultra-Realism Earth Engine</title>
     <style>
-        :root { --p: #00ffcc; --s: #ff0055; --bg: rgba(5,5,8,0.9); --hud-border: rgba(0, 255, 204, 0.3); }
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: 'Consolas', 'Courier New', monospace; }
-        body, html { width: 100vw; height: 100vh; overflow: hidden; background: #000; color: #fff; }
-        canvas { position: absolute; top: 0; left: 0; z-index: 1; outline: none; }
-        
-        #boot-seq { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #020202; z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--p); }
-        .glitch { font-size: 4rem; font-weight: 900; letter-spacing: 10px; text-transform: uppercase; position: relative; text-shadow: 0 0 20px var(--p); animation: pulse 2s infinite; }
-        #log { width: 60%; height: 200px; background: #000; border: 1px solid var(--p); margin-top: 20px; padding: 10px; font-size: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; color: #0f0; box-shadow: inset 0 0 20px rgba(0,255,0,0.2); }
-        
-        #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #111520 0%, #000 100%); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        #menu h1 { font-size: 5vw; margin-bottom: 10px; color: #fff; text-shadow: 0 0 30px var(--p), 0 0 10px var(--p); }
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; width: 80%; max-width: 1400px; margin-top: 40px; }
-        .btn { background: rgba(0,255,204,0.05); border: 1px solid var(--hud-border); padding: 20px; color: #fff; font-size: 1.2rem; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
-        .btn:hover { background: rgba(0,255,204,0.2); border-color: var(--p); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,255,204,0.3); }
-        .btn::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: 0.5s; }
-        .btn:hover::after { left: 150%; }
+        :root {
+            --p: #00ffcc;
+            --s: #ff0055;
+            --w: #ffffff;
+            --bg: rgba(2, 3, 5, 0.95);
+            --hud-border: rgba(0, 255, 204, 0.2);
+            --hud-bg: rgba(0, 10, 20, 0.6);
+            --font-main: 'Consolas', 'Courier New', monospace;
+        }
 
-        #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: none; pointer-events: none; padding: 20px; }
-        .panel { background: var(--bg); border: 1px solid var(--hud-border); padding: 20px; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(10px); }
-        #top-left { position: absolute; top: 20px; left: 20px; width: 350px; }
-        #top-right { position: absolute; top: 20px; right: 20px; width: 300px; text-align: right; }
-        #bottom-left { position: absolute; bottom: 20px; left: 20px; width: 350px; }
-        #bottom-right { position: absolute; bottom: 20px; right: 20px; }
-        
-        .title { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: 2px; margin-bottom: 5px; }
-        .sub { color: #888; font-size: 12px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; text-transform: uppercase; }
-        
-        .metric { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; }
-        .lbl { color: #678; font-size: 12px; letter-spacing: 1px; }
-        .val { font-size: 24px; font-weight: bold; }
-        #v-weight { color: var(--s); text-shadow: 0 0 10px rgba(255,0,85,0.5); }
-        #v-speed { color: #f90; }
-        #v-hr { color: #f0f; }
-        
-        .ecg { width: 100%; height: 50px; background: #000; border: 1px solid #333; position: relative; overflow: hidden; margin-top: 10px; }
-        #ecg-canvas { width: 100%; height: 100%; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            font-family: var(--font-main);
+        }
 
-        .minimap { width: 250px; height: 250px; background: #000; border: 2px solid var(--p); border-radius: 50%; overflow: hidden; position: relative; box-shadow: 0 0 30px rgba(0,255,204,0.2); }
-        #map-canvas { width: 100%; height: 100%; }
-        .map-player { position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 10px #fff; z-index: 2; }
-        .map-dir { position: absolute; top: 50%; left: 50%; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 12px solid var(--p); transform: translate(-50%, -100%); transform-origin: center bottom; z-index: 1; }
+        body, html {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #000;
+            color: var(--w);
+        }
 
-        .bar-bg { width: 100%; height: 8px; background: #111; margin-top: 15px; border-radius: 4px; overflow: hidden; border: 1px solid #333; }
-        #bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--s), #f90, var(--p)); transition: width 0.3s; box-shadow: 0 0 10px var(--p); }
-
-        #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 4px; height: 4px; background: rgba(255,255,255,0.5); border-radius: 50%; z-index: 5; pointer-events: none; }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            outline: none;
+            display: block;
+        }
         
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+        #boot-seq {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #010101;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--p);
+        }
+
+        .glitch-text {
+            font-size: 5rem;
+            font-weight: 900;
+            letter-spacing: 15px;
+            text-transform: uppercase;
+            position: relative;
+            text-shadow: 0 0 25px var(--p), 0 0 5px var(--w);
+            animation: pulse-glitch 2s infinite;
+        }
+
+        .sys-info {
+            color: #557766;
+            margin-top: 15px;
+            font-size: 1.2rem;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        #boot-log {
+            width: 70%;
+            height: 300px;
+            background: rgba(0, 5, 0, 0.8);
+            border: 1px solid var(--p);
+            margin-top: 30px;
+            padding: 15px;
+            font-size: 11px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            color: #0f0;
+            box-shadow: inset 0 0 30px rgba(0, 255, 0, 0.1);
+            text-shadow: 0 0 2px #0f0;
+        }
+
+        #main-menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #0a1118 0%, #000000 100%);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #main-menu h1 {
+            font-size: 4vw;
+            margin-bottom: 20px;
+            color: var(--w);
+            text-shadow: 0 0 40px var(--p), 0 0 15px var(--p);
+            letter-spacing: 8px;
+        }
+
+        .city-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            width: 90%;
+            max-width: 1600px;
+            margin-top: 20px;
+        }
+
+        .city-btn {
+            background: rgba(0, 255, 204, 0.03);
+            border: 1px solid rgba(0, 255, 204, 0.15);
+            padding: 25px 20px;
+            color: var(--w);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            text-align: left;
+        }
+
+        .city-btn:hover {
+            background: rgba(0, 255, 204, 0.15);
+            border-color: var(--p);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(0, 255, 204, 0.4);
+        }
+
+        .city-btn .c-name {
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: 8px;
+            display: block;
+            color: var(--p);
+        }
+
+        .city-btn .c-meta {
+            font-size: 0.75rem;
+            color: #88aacc;
+            display: block;
+            line-height: 1.4;
+        }
+
+        .city-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .city-btn:hover::before {
+            left: 100%;
+        }
+
+        #hud-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: none;
+            pointer-events: none;
+            padding: 25px;
+        }
+
+        .hud-panel {
+            background: var(--hud-bg);
+            border: 1px solid var(--hud-border);
+            padding: 25px;
+            border-radius: 2px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(0, 255, 204, 0.05);
+            backdrop-filter: blur(15px);
+            position: absolute;
+        }
+
+        .hud-panel::after {
+            content: '';
+            position: absolute;
+            top: -1px; left: -1px;
+            width: 20px; height: 20px;
+            border-top: 2px solid var(--p);
+            border-left: 2px solid var(--p);
+        }
+
+        .hud-panel::before {
+            content: '';
+            position: absolute;
+            bottom: -1px; right: -1px;
+            width: 20px; height: 20px;
+            border-bottom: 2px solid var(--p);
+            border-right: 2px solid var(--p);
+        }
+
+        #hud-top-left { top: 25px; left: 25px; width: 400px; }
+        #hud-top-right { top: 25px; right: 25px; width: 350px; }
+        #hud-bottom-left { bottom: 25px; left: 25px; width: 400px; }
+        #hud-bottom-right { bottom: 25px; right: 25px; padding: 0; border: none; background: transparent; box-shadow: none; backdrop-filter: none; }
+
+        .hud-title {
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--w);
+            letter-spacing: 3px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .hud-subtitle {
+            color: #6688aa;
+            font-size: 11px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(102, 136, 170, 0.3);
+            padding-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 6px;
+        }
+
+        .data-label {
+            color: #558877;
+            font-size: 11px;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+
+        .data-value {
+            font-size: 28px;
+            font-weight: 900;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .unit {
+            font-size: 12px;
+            color: #888;
+            margin-left: 5px;
+        }
+
+        #val-mass { color: var(--s); text-shadow: 0 0 15px rgba(255, 0, 85, 0.6); }
+        #val-vel { color: #ffaa00; text-shadow: 0 0 15px rgba(255, 170, 0, 0.6); }
+        #val-bpm { color: #ff00ff; text-shadow: 0 0 15px rgba(255, 0, 255, 0.6); }
+        #val-dst { color: var(--p); }
+        #val-cal { color: #aaddff; }
+
+        .graph-container {
+            width: 100%;
+            height: 60px;
+            background: #050a0f;
+            border: 1px solid #1a2a3a;
+            position: relative;
+            overflow: hidden;
+            margin-top: 15px;
+            border-radius: 2px;
+        }
+
+        #ecg-canvas, #perf-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .map-wrapper {
+            width: 300px;
+            height: 300px;
+            background: rgba(0, 5, 10, 0.9);
+            border: 2px solid var(--p);
+            border-radius: 50%;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 40px rgba(0, 255, 204, 0.15), inset 0 0 50px rgba(0, 0, 0, 0.9);
+        }
+
+        #map-canvas {
+            width: 100%;
+            height: 100%;
+            transform-origin: center center;
+        }
+
+        .map-center-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            background: var(--w);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px var(--w);
+            z-index: 5;
+        }
+
+        .map-heading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 16px solid var(--p);
+            transform: translate(-50%, -100%);
+            transform-origin: center bottom;
+            z-index: 4;
+            filter: drop-shadow(0 0 5px var(--p));
+        }
+
+        .map-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(transparent 50%, rgba(0,0,0,0.8) 100%);
+            z-index: 10;
+            border-radius: 50%;
+        }
+
+        .map-scanline {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: rgba(0, 255, 204, 0.5);
+            box-shadow: 0 0 10px var(--p);
+            animation: scan 3s linear infinite;
+            z-index: 11;
+        }
+
+        .prog-track {
+            width: 100%;
+            height: 12px;
+            background: #0a0a0a;
+            margin-top: 20px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #222;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+        }
+
+        #prog-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--s), #ffaa00, var(--p));
+            transition: width 0.4s cubic-bezier(0.1, 0.8, 0.2, 1);
+            box-shadow: 0 0 15px var(--p);
+        }
+
+        .control-key {
+            display: inline-block;
+            background: #151a20;
+            border: 1px solid #334455;
+            border-bottom: 3px solid #0a1118;
+            padding: 4px 10px;
+            border-radius: 4px;
+            color: #aaddff;
+            font-weight: bold;
+            margin-right: 5px;
+            font-size: 11px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .control-row {
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: #8899aa;
+            display: flex;
+            align-items: center;
+        }
+
+        #crosshair-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            z-index: 50;
+            pointer-events: none;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        .crosshair-line {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            z-index: 49;
+            pointer-events: none;
+        }
+
+        #ch-top { top: calc(50% - 20px); left: calc(50% - 1px); width: 2px; height: 10px; }
+        #ch-bot { top: calc(50% + 10px); left: calc(50% - 1px); width: 2px; height: 10px; }
+        #ch-lef { top: calc(50% - 1px); left: calc(50% - 20px); width: 10px; height: 2px; }
+        #ch-rig { top: calc(50% - 1px); left: calc(50% + 10px); width: 10px; height: 2px; }
+
+        @keyframes pulse-glitch {
+            0% { opacity: 1; transform: skewX(0deg); }
+            5% { opacity: 0.8; transform: skewX(2deg); }
+            10% { opacity: 1; transform: skewX(-2deg); }
+            15% { opacity: 1; transform: skewX(0deg); }
+            100% { opacity: 1; }
+        }
+
+        @keyframes scan {
+            0% { top: -10%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 110%; opacity: 0; }
+        }
+
+        .env-data {
+            font-size: 12px;
+            color: #88aacc;
+            line-height: 2;
+        }
+
+        .env-data span {
+            color: var(--w);
+            font-weight: bold;
+            float: right;
+            text-shadow: 0 0 5px rgba(255,255,255,0.3);
+        }
+
     </style>
 </head>
 <body>
 
     <div id="boot-seq">
-        <div class="glitch">A.R.E.S. ENGINE V4</div>
-        <div style="color:#888; margin-top:10px;">GLOBAL TOPOGRAPHY & KINEMATIC SIMULATOR</div>
-        <div id="log"></div>
+        <div class="glitch-text">A.R.E.S. ENGINE V5</div>
+        <div class="sys-info">GLOBAL TOPOGRAPHY & ADVANCED KINEMATIC SIMULATOR</div>
+        <div id="boot-log"></div>
     </div>
 
-    <div id="menu">
+    <div id="main-menu">
         <h1>SELECT DEPLOYMENT ZONE</h1>
-        <div class="grid" id="city-grid"></div>
+        <div class="city-grid" id="city-selector-grid"></div>
     </div>
 
-    <div id="hud">
-        <div class="panel" id="top-left">
-            <div class="title" id="hud-city">CITY_NAME</div>
-            <div class="sub" id="hud-meta">LAT: 00.0000 | LNG: 00.0000 | TIME: 12:00</div>
+    <div id="hud-container">
+        
+        <div class="hud-panel" id="hud-top-left">
+            <div class="hud-title" id="hud-loc-name">UNDEFINED</div>
+            <div class="hud-subtitle" id="hud-loc-meta">LAT: 00.0000° | LNG: 00.0000° | T: 00:00:00</div>
             
-            <div class="metric"><span class="lbl">BODY MASS</span><span class="val"><span id="v-weight">350.00</span> LBS</span></div>
-            <div class="metric"><span class="lbl">VELOCITY</span><span class="val"><span id="v-speed">0.0</span> MPH</span></div>
-            <div class="metric"><span class="lbl">HEART RATE</span><span class="val"><span id="v-hr">80</span> BPM</span></div>
-            <div class="metric"><span class="lbl">DISTANCE</span><span class="val"><span id="v-dist">0.00</span> MI</span></div>
-            <div class="metric"><span class="lbl">CALORIES</span><span class="val"><span id="v-cals">0</span> KCAL</span></div>
+            <div class="data-row">
+                <span class="data-label">BIOMASS</span>
+                <div><span class="data-value" id="val-mass">000.00</span><span class="unit">LBS</span></div>
+            </div>
+            <div class="data-row">
+                <span class="data-label">VELOCITY</span>
+                <div><span class="data-value" id="val-vel">00.00</span><span class="unit">MPH</span></div>
+            </div>
+            <div class="data-row">
+                <span class="data-label">HEART RATE</span>
+                <div><span class="data-value" id="val-bpm">000</span><span class="unit">BPM</span></div>
+            </div>
+            <div class="data-row">
+                <span class="data-label">DISTANCE</span>
+                <div><span class="data-value" id="val-dst">00.00</span><span class="unit">MI</span></div>
+            </div>
+            <div class="data-row" style="border:none; margin-bottom:0; padding-bottom:0;">
+                <span class="data-label">ENERGY EXPENDED</span>
+                <div><span class="data-value" id="val-cal">0000</span><span class="unit">KCAL</span></div>
+            </div>
+
+            <div class="graph-container"><canvas id="ecg-canvas"></canvas></div>
             
-            <div class="ecg"><canvas id="ecg-canvas"></canvas></div>
-            <div class="bar-bg"><div id="bar-fill"></div></div>
-            <div style="text-align: right; font-size: 10px; color: #555; margin-top: 5px;">GOAL: 160 LBS OPTIMAL MASS</div>
+            <div class="prog-track"><div id="prog-fill"></div></div>
+            <div style="text-align: right; font-size: 9px; color: #558877; margin-top: 5px; letter-spacing: 1px;">OPTIMAL TARGET MASS: 160.00 LBS</div>
         </div>
 
-        <div class="panel" id="top-right">
-            <div class="lbl" style="color:var(--p);">ENVIRONMENTAL SENSORS</div>
-            <div style="font-size: 12px; color: #aaa; margin-top: 10px; line-height: 1.8;">
-                ATMOSPHERE: <span id="v-weather" style="color:#fff;">CLEAR</span><br>
-                TEMP: <span id="v-temp" style="color:#fff;">72°F</span><br>
-                WIND: <span id="v-wind" style="color:#fff;">5 MPH NE</span><br>
-                TRAFFIC: <span id="v-traf" style="color:#fff;">NOMINAL</span>
+        <div class="hud-panel" id="hud-top-right">
+            <div class="data-label" style="color:var(--p); font-size:14px; margin-bottom: 15px; border-bottom: 1px solid var(--p); padding-bottom: 5px;">ENVIRONMENTAL SENSORS</div>
+            <div class="env-data">
+                ATMOSPHERE: <span id="env-atm">ANALYZING</span><br>
+                TEMPERATURE: <span id="env-tmp">0.0°C</span><br>
+                WIND VECTOR: <span id="env-wnd">0.0 M/S</span><br>
+                HUMIDITY: <span id="env-hum">0%</span><br>
+                ELEVATION: <span id="env-elv">0 M</span><br>
+                LOCAL GRAVITY: <span id="env-grv">9.81 M/S²</span><br>
+                TRAFFIC DENSITY: <span id="env-trf">CALCULATING</span>
+            </div>
+            <div class="graph-container" style="margin-top: 20px;"><canvas id="perf-canvas"></canvas></div>
+            <div style="text-align: center; font-size: 9px; color: #558877; margin-top: 5px;">SYSTEM PERFORMANCE METRICS</div>
+        </div>
+
+        <div class="hud-panel" id="hud-bottom-left">
+            <div class="data-label" style="margin-bottom: 15px;">NEURAL KINEMATIC INTERFACE</div>
+            
+            <div class="control-row">
+                <span class="control-key">W</span> <span class="control-key">↑</span> 
+                <span>FORWARD PROPULSION (SPRINT)</span>
+            </div>
+            <div class="control-row">
+                <span class="control-key">S</span> <span class="control-key">↓</span> 
+                <span>REVERSE DECELERATION (BRAKE)</span>
+            </div>
+            <div class="control-row">
+                <span class="control-key">A</span> <span class="control-key">D</span> 
+                <span class="control-key">←</span> <span class="control-key">→</span> 
+                <span>LATERAL VECTOR SHIFT (STEER)</span>
+            </div>
+            <div class="control-row">
+                <span class="control-key">SHIFT</span> 
+                <span>MAXIMUM OVERDRIVE (BURNOUT)</span>
+            </div>
+            <div class="control-row">
+                <span class="control-key">SPACE</span> 
+                <span>VERTICAL DISPLACEMENT (JUMP)</span>
+            </div>
+            
+            <div style="color:#446655; font-size: 10px; margin-top: 15px; line-height: 1.5; border-top: 1px solid #223344; padding-top: 10px;">
+                WARNING: ACCELERATION AND TOP VELOCITY ARE DYNAMICALLY INVERSELY PROPORTIONAL TO CURRENT BIOMASS. MAINTAIN MOMENTUM TO OPTIMIZE THERMODYNAMIC EXPENDITURE.
             </div>
         </div>
 
-        <div class="panel" id="bottom-left" style="width: auto;">
-            <div class="lbl" style="margin-bottom: 10px;">NEURAL LINK CONTROLS</div>
-            <span style="background:#222; padding:4px 8px; border:1px solid #555; border-radius:4px; color:#fff;">[W/↑] SPRINT</span>
-            <span style="background:#222; padding:4px 8px; border:1px solid #555; border-radius:4px; color:#fff;">[S/↓] BRAKE</span>
-            <span style="background:#222; padding:4px 8px; border:1px solid #555; border-radius:4px; color:#fff;">[A/D / ←/→] STEER</span>
-            <span style="background:#222; padding:4px 8px; border:1px solid #555; border-radius:4px; color:#fff;">[SHIFT] TURBO</span>
-        </div>
-
-        <div id="bottom-right">
-            <div class="minimap">
+        <div class="hud-panel" id="hud-bottom-right">
+            <div class="map-wrapper">
                 <canvas id="map-canvas"></canvas>
-                <div class="map-player"></div>
-                <div class="map-dir" id="map-dir"></div>
+                <div class="map-overlay"></div>
+                <div class="map-scanline"></div>
+                <div class="map-center-dot"></div>
+                <div class="map-heading" id="map-dir-indicator"></div>
             </div>
         </div>
+
     </div>
-    
-    <div id="crosshair"></div>
+
+    <div id="crosshair-center"></div>
+    <div class="crosshair-line" id="ch-top"></div>
+    <div class="crosshair-line" id="ch-bot"></div>
+    <div class="crosshair-line" id="ch-lef"></div>
+    <div class="crosshair-line" id="ch-rig"></div>
+
     <canvas id="game-canvas"></canvas>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
         /**
-         * =========================================================================================
-         * ANDRES ACCELERATE V4: A.R.E.S ENGINE (Advanced Rendering & Environment Simulation)
-         * Massive, monolithic file architecture. No external assets. Pure procedural generation.
-         * =========================================================================================
+         * ====================================================================================================
+         * A.R.E.S. ENGINE V5 CORE ARCHITECTURE
+         * Andres Realistic Environment Simulator
+         * ====================================================================================================
+         * 1. System Logging & Boot
+         * 2. Simplex Noise Implementation (from scratch)
+         * 3. Global Geospatial Database (10 Cities with deep metrics)
+         * 4. Procedural Canvas Texture Generation (20+ materials)
+         * 5. GLSL Shaders (Atmosphere, Water, Particles, Neon)
+         * 6. Audio Synthesizer Engine (Web Audio API)
+         * 7. Engine State & Physics Variables
+         * 8. Three.js Initialization & Render Pipeline
+         * 9. Procedural World Builder (Topography, Architecture, Roads, Flora)
+         * 10. Kinematic Rigging (Hierarchical Skeletal Mesh)
+         * 11. Artificial Intelligence (Traffic, Pedestrian NavMesh)
+         * 12. Weather & Particle Systems
+         * 13. Complex Input & Physics Step (Gravity, Collision, Thermodynamics)
+         * 14. HUD & Interface Render Loop
+         * 15. Main Animation Loop
+         * ====================================================================================================
          */
 
-        const Log = {
-            el: document.getElementById('log'),
-            msg: (text) => {
-                const d = document.createElement('div');
-                d.innerText = `[${new Date().toISOString().split('T')[1].slice(0,-1)}] ${text}`;
-                Log.el.appendChild(d);
-                Log.el.scrollTop = Log.el.scrollHeight;
+        // ==========================================
+        // 1. SYSTEM LOGGING & BOOT
+        // ==========================================
+        const SysLog = {
+            element: document.getElementById('boot-log'),
+            print: (msg) => {
+                const line = document.createElement('div');
+                const t = new Date().toISOString().split('T')[1];
+                line.innerHTML = `<span style="color:#555;">[${t}]</span> <span style="color:#0f0;">EXEC:</span> ${msg}`;
+                SysLog.element.appendChild(line);
+                SysLog.element.scrollTop = SysLog.element.scrollHeight;
             }
         };
 
-        // -----------------------------------------------------------------------------------------
-        // 1. MASSIVE PROCEDURAL DATA ARRAYS & CONFIGURATIONS
-        // -----------------------------------------------------------------------------------------
-        const GeoData = [
-            { id:0, n:"New York", lat:"40.7128° N", lng:"74.0060° W", t:72, w:"CLEAR", skD:0x6ca6cd, skN:0x0a101a, gr:0x1a1a1a, wa:0x1b3c4a, den:1.0, bh:100, vh:400, l:"grid", p:"central", gl:0.4 },
-            { id:1, n:"Tokyo", lat:"35.6762° N", lng:"139.6503° E", t:68, w:"OVERCAST", skD:0x8899aa, skN:0x110a1f, gr:0x111111, wa:0x0a1122, den:1.3, bh:60, vh:250, l:"dense", p:"scattered", gl:0.6, neo:true },
-            { id:2, n:"London", lat:"51.5074° N", lng:"0.1278° W", t:55, w:"FOG", skD:0x9faebf, skN:0x11141a, gr:0x2c2c2c, wa:0x2d3a33, den:0.85, bh:40, vh:120, l:"winding", p:"scattered", gl:0.3 },
-            { id:3, n:"Paris", lat:"48.8566° N", lng:"2.3522° E", t:62, w:"CLEAR", skD:0x87ceeb, skN:0x050a15, gr:0x3a3a3a, wa:0x223333, den:0.9, bh:50, vh:40, l:"radial", p:"formal", gl:0.2 },
-            { id:4, n:"San Francisco", lat:"37.7749° N", lng:"122.4194° W", t:60, w:"MIST", skD:0x6ca6cd, skN:0x101a2a, gr:0x223322, wa:0x114466, den:0.75, bh:40, vh:200, l:"hills", p:"scattered", gl:0.5 },
-            { id:5, n:"Dubai", lat:"25.2048° N", lng:"55.2708° E", t:105, w:"DUST", skD:0x55bbff, skN:0x050505, gr:0xc2b280, wa:0x00aacc, den:0.5, bh:30, vh:600, l:"grid", p:"none", gl:0.9 },
-            { id:6, n:"Chicago", lat:"41.8781° N", lng:"87.6298° W", t:50, w:"WINDY", skD:0x5c86ad, skN:0x0a0f15, gr:0x222222, wa:0x0d2230, den:0.95, bh:80, vh:300, l:"grid", p:"coastal", gl:0.5 },
-            { id:7, n:"Sydney", lat:"33.8688° S", lng:"151.2093° E", t:75, w:"CLEAR", skD:0x2299ff, skN:0x0a1020, gr:0x2a3a2a, wa:0x005599, den:0.7, bh:50, vh:200, l:"harbor", p:"scattered", gl:0.6 },
-            { id:8, n:"Rome", lat:"41.9028° N", lng:"12.4964° E", t:80, w:"SUNNY", skD:0x44aaff, skN:0x100505, gr:0x4a4035, wa:0x223322, den:0.9, bh:30, vh:50, l:"historic", p:"scattered", gl:0.1 },
-            { id:9, n:"Rio de Janeiro", lat:"22.9068° S", lng:"43.1729° W", t:85, w:"HUMID", skD:0x00ccff, skN:0x051525, gr:0x1a441a, wa:0x0088cc, den:0.8, bh:40, vh:100, l:"coast", p:"jungle", gl:0.3 }
+        // ==========================================
+        // 2. SIMPLEX NOISE IMPLEMENTATION
+        // ==========================================
+        // Custom 2D/3D Simplex Noise for pure procedural generation without external libraries
+        const NoiseGen = (function() {
+            const F2 = 0.5 * (Math.sqrt(3.0) - 1.0);
+            const G2 = (3.0 - Math.sqrt(3.0)) / 6.0;
+            const F3 = 1.0 / 3.0;
+            const G3 = 1.0 / 6.0;
+            const p = new Uint8Array(256);
+            for (let i = 0; i < 256; i++) p[i] = Math.floor(Math.random() * 256);
+            const perm = new Uint8Array(512);
+            const permMod12 = new Uint8Array(512);
+            for (let i = 0; i < 512; i++) {
+                perm[i] = p[i & 255];
+                permMod12[i] = (perm[i] % 12);
+            }
+            return {
+                noise2D: function(xin, yin) {
+                    let n0, n1, n2; 
+                    const s = (xin + yin) * F2;
+                    const i = Math.floor(xin + s);
+                    const j = Math.floor(yin + s);
+                    const t = (i + j) * G2;
+                    const X0 = i - t; const Y0 = j - t;
+                    const x0 = xin - X0; const y0 = yin - Y0;
+                    let i1, j1;
+                    if (x0 > y0) { i1 = 1; j1 = 0; } else { i1 = 0; j1 = 1; }
+                    const x1 = x0 - i1 + G2; const y1 = y0 - j1 + G2;
+                    const x2 = x0 - 1.0 + 2.0 * G2; const y2 = y0 - 1.0 + 2.0 * G2;
+                    const ii = i & 255; const jj = j & 255;
+                    const gi0 = permMod12[ii + perm[jj]];
+                    const gi1 = permMod12[ii + i1 + perm[jj + j1]];
+                    const gi2 = permMod12[ii + 1 + perm[jj + 1]];
+                    let t0 = 0.5 - x0 * x0 - y0 * y0;
+                    if (t0 < 0) n0 = 0.0; else {
+                        t0 *= t0;
+                        n0 = t0 * t0 * (gi0 === 0 ? x0 + y0 : gi0 === 1 ? -x0 + y0 : gi0 === 2 ? x0 - y0 : gi0 === 3 ? -x0 - y0 : gi0 === 4 ? x0 : gi0 === 5 ? -x0 : gi0 === 6 ? y0 : gi0 === 7 ? -y0 : gi0 === 8 ? x0 : gi0 === 9 ? -x0 : gi0 === 10 ? y0 : -y0);
+                    }
+                    let t1 = 0.5 - x1 * x1 - y1 * y1;
+                    if (t1 < 0) n1 = 0.0; else {
+                        t1 *= t1;
+                        n1 = t1 * t1 * (gi1 === 0 ? x1 + y1 : gi1 === 1 ? -x1 + y1 : gi1 === 2 ? x1 - y1 : gi1 === 3 ? -x1 - y1 : gi1 === 4 ? x1 : gi1 === 5 ? -x1 : gi1 === 6 ? y1 : gi1 === 7 ? -y1 : gi1 === 8 ? x1 : gi1 === 9 ? -x1 : gi1 === 10 ? y1 : -y1);
+                    }
+                    let t2 = 0.5 - x2 * x2 - y2 * y2;
+                    if (t2 < 0) n2 = 0.0; else {
+                        t2 *= t2;
+                        n2 = t2 * t2 * (gi2 === 0 ? x2 + y2 : gi2 === 1 ? -x2 + y2 : gi2 === 2 ? x2 - y2 : gi2 === 3 ? -x2 - y2 : gi2 === 4 ? x2 : gi2 === 5 ? -x2 : gi2 === 6 ? y2 : gi2 === 7 ? -y2 : gi2 === 8 ? x2 : gi2 === 9 ? -x2 : gi2 === 10 ? y2 : -y2);
+                    }
+                    return 70.0 * (n0 + n1 + n2);
+                },
+                fbm: function(x, z, octaves, persistence, scale) {
+                    let total = 0;
+                    let frequency = scale;
+                    let amplitude = 1;
+                    let maxValue = 0;
+                    for(let i=0;i<octaves;i++) {
+                        total += this.noise2D(x * frequency, z * frequency) * amplitude;
+                        maxValue += amplitude;
+                        amplitude *= persistence;
+                        frequency *= 2;
+                    }
+                    return total / maxValue;
+                }
+            };
+        })();
+
+        // ==========================================
+        // 3. GLOBAL GEOSPATIAL DATABASE
+        // ==========================================
+        // Extremely detailed city profiles driving procedural generation algorithms
+        const Database = [
+            { id:0, name:"New York City", country:"USA", lat:"40.7128° N", lng:"74.0060° W", temp:18, weather:"CLEAR", wind:5.2, hum:65, elev:10, 
+              skyDay:0x6ca6cd, skyNight:0x050a15, ground:0x1a1a1a, water:0x1c3a4a, 
+              layout:"grid_dense", density:1.0, baseHeight:120, varHeight:500, parkType:"central_park", riverType:"hudson",
+              materials:['concrete', 'glass', 'brick', 'steel'], neonProb:0.1, history:false, traffic:9.0 },
+              
+            { id:1, name:"Tokyo", country:"JPN", lat:"35.6762° N", lng:"139.6503° E", temp:22, weather:"RAIN", wind:3.1, hum:80, elev:40, 
+              skyDay:0x7a8b9c, skyNight:0x110522, ground:0x111111, water:0x0a1122, 
+              layout:"organic_sprawl", density:1.4, baseHeight:80, varHeight:300, parkType:"scattered_shrines", riverType:"sumida",
+              materials:['concrete', 'glass', 'neon', 'steel'], neonProb:0.8, history:false, traffic:9.0 },
+              
+            { id:2, name:"London", country:"GBR", lat:"51.5074° N", lng:"0.1278° W", temp:14, weather:"FOG", wind:6.5, hum:75, elev:35, 
+              skyDay:0x8fa3b5, skyNight:0x0a101a, ground:0x2a2a2a, water:0x22332a, 
+              layout:"winding_historic", density:0.85, baseHeight:50, varHeight:150, parkType:"royal_parks", riverType:"thames",
+              materials:['brick', 'stone', 'glass', 'concrete'], neonProb:0.05, history:true, traffic:9.0 },
+              
+            { id:3, name:"Paris", country:"FRA", lat:"48.8566° N", lng:"2.3522° E", temp:16, weather:"PARTLY CLOUDY", wind:4.2, hum:68, elev:35, 
+              skyDay:0x87ceeb, skyNight:0x0f1525, ground:0x333333, water:0x1f3030, 
+              layout:"radial_boulevards", density:0.9, baseHeight:60, varHeight:40, parkType:"formal_gardens", riverType:"seine",
+              materials:['stone', 'plaster', 'zinc_roof'], neonProb:0.02, history:true, traffic:0.85 },
+              
+            { id:4, name:"San Francisco", country:"USA", lat:"37.7749° N", lng:"122.4194° W", temp:15, weather:"HEAVY FOG", wind:8.5, hum:72, elev:15, 
+              skyDay:0x5ea6cd, skyNight:0x101a2a, ground:0x223322, water:0x004466, 
+              layout:"hilly_grid", density:0.75, baseHeight:40, varHeight:250, parkType:"wild_hills", riverType:"bay",
+              materials:['wood', 'concrete', 'glass', 'plaster'], neonProb:0.1, history:false, traffic:0.7 },
+              
+            { id:5, name:"Dubai", country:"ARE", lat:"25.2048° N", lng:"55.2708° E", temp:42, weather:"SANDSTORM", wind:12.0, hum:40, elev:16, 
+              skyDay:0xddaa77, skyNight:0x050505, ground:0xd2b48c, water:0x00aacc, 
+              layout:"highway_spine", density:0.5, baseHeight:50, varHeight:800, parkType:"palm_islands", riverType:"coast",
+              materials:['glass', 'steel', 'sandstone'], neonProb:0.3, history:false, traffic:0.6 },
+              
+            { id:6, name:"Chicago", country:"USA", lat:"41.8781° N", lng:"87.6298° W", temp:10, weather:"WINDY", wind:18.5, hum:60, elev:181, 
+              skyDay:0x5c86ad, skyNight:0x0a0f15, ground:0x222222, water:0x0f2a3f, 
+              layout:"grid_lake", density:0.95, baseHeight:90, varHeight:400, parkType:"lakefront", riverType:"chicago_river",
+              materials:['steel', 'glass', 'brick', 'concrete'], neonProb:0.15, history:false, traffic:0.85 },
+              
+            { id:7, name:"Sydney", country:"AUS", lat:"33.8688° S", lng:"151.2093° E", temp:24, weather:"CLEAR", wind:7.2, hum:55, elev:3, 
+              skyDay:0x2288ff, skyNight:0x0a1020, ground:0x2a3a2a, water:0x0055aa, 
+              layout:"harbor_coves", density:0.7, baseHeight:60, varHeight:200, parkType:"botanic", riverType:"harbor",
+              materials:['sandstone', 'glass', 'concrete'], neonProb:0.1, history:false, traffic:0.75 },
+              
+            { id:8, name:"Rome", country:"ITA", lat:"41.9028° N", lng:"12.4964° E", temp:28, weather:"SUNNY", wind:3.5, hum:50, elev:21, 
+              skyDay:0x3399ff, skyNight:0x100a05, ground:0x4a4035, water:0x223322, 
+              layout:"ancient_chaotic", density:0.9, baseHeight:30, varHeight:50, parkType:"ruins", riverType:"tiber",
+              materials:['marble', 'terracotta', 'stone', 'plaster'], neonProb:0.01, history:true, traffic:0.8 },
+              
+            { id:9, name:"Rio de Janeiro", country:"BRA", lat:"22.9068° S", lng:"43.1729° W", temp:32, weather:"HUMID", wind:4.8, hum:85, elev:2, 
+              skyDay:0x00bfff, skyNight:0x051525, ground:0x1a441a, water:0x0088cc, 
+              layout:"coastal_mountains", density:0.8, baseHeight:40, varHeight:120, parkType:"jungle_mountains", riverType:"ocean",
+              materials:['concrete', 'plaster', 'glass', 'tin'], neonProb:0.05, history:false, traffic:0.8 }
         ];
 
-        const Engine = {
-            state: 0, delta: 0, time: 12.0, city: null,
-            wgt: 350.0, wMin: 160.0, spd: 0, dist: 0, cals: 0, hr: 75,
-            keys: { w:0, a:0, s:0, d:0, shift:0 },
-            ents: { cars: [], peds: [], trees: [], builds: [] },
-            mats: {}, geo: {}, sfx: null
-        };
-
-        // -----------------------------------------------------------------------------------------
-        // 2. PROCEDURAL TEXTURE SYNTHESIZER (HTML5 Canvas generation for huge memory footprint)
-        // -----------------------------------------------------------------------------------------
-        const TexGen = {
-            c: (w, h) => { const cv = document.createElement('canvas'); cv.width=w; cv.height=h; return { cv, x: cv.getContext('2d',{alpha:false}) }; },
-            noise: (x, w, h, c1, c2, d) => {
-                x.fillStyle = c1; x.fillRect(0,0,w,h);
-                for(let i=0; i<d; i++) { x.fillStyle=Math.random()>0.5?c1:c2; x.fillRect(Math.random()*w, Math.random()*h, 2, 2); }
+        // ==========================================
+        // 4. PROCEDURAL CANVAS TEXTURE GENERATOR
+        // ==========================================
+        // Massively expanded rendering algorithms to eliminate external assets
+        const TextureEngine = {
+            createCtx: (w, h) => { 
+                const canvas = document.createElement('canvas'); 
+                canvas.width = w; canvas.height = h; 
+                return { canvas, ctx: canvas.getContext('2d', {alpha: false}) }; 
             },
-            road: () => {
-                const {cv, x} = TexGen.c(1024, 1024);
-                TexGen.noise(x, 1024, 1024, '#1a1a1a', '#222222', 200000);
-                x.fillStyle = '#ffffff'; // Crosswalks/Lines
-                for(let i=0; i<1024; i+=128) x.fillRect(500, i, 24, 64);
-                x.fillStyle = '#ffaa00'; x.fillRect(20, 0, 10, 1024); x.fillRect(994, 0, 10, 1024);
-                const t = new THREE.CanvasTexture(cv); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
+            noiseFill: (ctx, w, h, baseHex, noiseHex, density) => {
+                ctx.fillStyle = baseHex; ctx.fillRect(0, 0, w, h);
+                for(let i=0; i<density; i++) {
+                    ctx.fillStyle = Math.random() > 0.5 ? baseHex : noiseHex;
+                    ctx.fillRect(Math.random()*w, Math.random()*h, Math.random()*3+1, Math.random()*3+1);
+                }
+            },
+            asphalt: () => {
+                const {canvas, ctx} = TextureEngine.createCtx(1024, 1024);
+                TextureEngine.noiseFill(ctx, 1024, 1024, '#151515', '#222222', 300000);
+                
+                // Potholes & Cracks
+                ctx.strokeStyle = '#0a0a0a'; ctx.lineWidth = 2;
+                for(let i=0; i<50; i++) {
+                    ctx.beginPath();
+                    let cx = Math.random()*1024; let cy = Math.random()*1024;
+                    ctx.moveTo(cx, cy);
+                    for(let j=0; j<5; j++) { cx += (Math.random()-0.5)*50; cy += (Math.random()-0.5)*50; ctx.lineTo(cx, cy); }
+                    ctx.stroke();
+                }
+
+                // Road Markings
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                for(let i=0; i<1024; i+=128) ctx.fillRect(504, i+32, 16, 64);
+                ctx.fillStyle = 'rgba(255,180,0,0.8)'; 
+                ctx.fillRect(16, 0, 12, 1024); ctx.fillRect(996, 0, 12, 1024);
+                
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                tex.anisotropy = 16;
+                return tex;
             },
             concrete: () => {
-                const {cv, x} = TexGen.c(512, 512);
-                TexGen.noise(x, 512, 512, '#555555', '#444444', 50000);
-                x.strokeStyle = '#333'; x.lineWidth = 2;
-                for(let i=0; i<=512; i+=128) { x.beginPath(); x.moveTo(i,0); x.lineTo(i,512); x.stroke(); x.beginPath(); x.moveTo(0,i); x.lineTo(512,i); x.stroke(); }
-                const t = new THREE.CanvasTexture(cv); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
+                const {canvas, ctx} = TextureEngine.createCtx(512, 512);
+                TextureEngine.noiseFill(ctx, 512, 512, '#555555', '#666666', 100000);
+                
+                // Expansion joints
+                ctx.strokeStyle = '#333'; ctx.lineWidth = 3;
+                for(let i=0; i<=512; i+=128) {
+                    ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,512); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(512,i); ctx.stroke();
+                }
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                return tex;
             },
-            grass: () => {
-                const {cv, x} = TexGen.c(512, 512);
-                TexGen.noise(x, 512, 512, '#1a3a14', '#2a4a24', 150000);
-                const t = new THREE.CanvasTexture(cv); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
+            brick: () => {
+                const {canvas, ctx} = TextureEngine.createCtx(512, 512);
+                ctx.fillStyle = '#aa4433'; ctx.fillRect(0,0,512,512);
+                
+                const bw = 64; const bh = 32;
+                ctx.strokeStyle = '#cccccc'; ctx.lineWidth = 4;
+                for(let y=0; y<512; y+=bh) {
+                    let offset = (y % (bh*2)) === 0 ? 0 : bw/2;
+                    for(let x=-offset; x<512; x+=bw) {
+                        // Brick variance
+                        ctx.fillStyle = `rgb(${150+Math.random()*50}, ${50+Math.random()*20}, ${40+Math.random()*20})`;
+                        ctx.fillRect(x, y, bw, bh);
+                        ctx.strokeRect(x, y, bw, bh);
+                    }
+                }
+                TextureEngine.noiseFill(ctx, 512, 512, 'rgba(0,0,0,0)', 'rgba(0,0,0,0.2)', 50000); // Grime
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                return tex;
             },
-            facade: (type, r, c) => {
-                const {cv, x} = TexGen.c(1024, 1024);
-                const isG = type==='glass'; const isN = type==='neon';
-                x.fillStyle = isG ? '#0a101a' : (isN ? '#050505' : '#3a3a3a'); x.fillRect(0,0,1024,1024);
-                const wW = 1024/c; const wH = 1024/r; const pX = wW*0.1; const pY = wH*0.1;
-                for(let y=0; y<r; y++) {
-                    for(let z=0; z<c; z++) {
-                        let lit = Math.random() > 0.6;
-                        if(isG) {
-                            x.fillStyle = lit ? '#ccffff' : '#112233';
-                            x.fillRect(z*wW+pX, y*wH+pY, wW-pX*2, wH-pY*2);
-                            x.fillStyle = 'rgba(255,255,255,0.05)';
-                            x.beginPath(); x.moveTo(z*wW, y*wH); x.lineTo((z+1)*wW, (y+1)*wH); x.lineTo((z+1)*wW, y*wH); x.fill();
-                        } else if(isN) {
-                            x.fillStyle = lit ? `hsl(${Math.random()*360},100%,50%)` : '#111';
-                            x.fillRect(z*wW+pX*2, y*wH+pY*2, wW-pX*4, wH-pY*4);
-                            if(lit) { x.shadowBlur=20; x.shadowColor=x.fillStyle; x.fillRect(z*wW+pX*2, y*wH+pY*2, wW-pX*4, wH-pY*4); x.shadowBlur=0; }
+            glassFacade: () => {
+                const {canvas, ctx} = TextureEngine.createCtx(1024, 1024);
+                ctx.fillStyle = '#0a1525'; ctx.fillRect(0,0,1024,1024);
+                
+                const cols = 8; const rows = 16;
+                const cw = 1024/cols; const rh = 1024/rows;
+                const fw = 4; // Frame width
+                
+                for(let y=0; y<rows; y++) {
+                    for(let x=0; x<cols; x++) {
+                        // Frame
+                        ctx.fillStyle = '#223344';
+                        ctx.fillRect(x*cw, y*rh, cw, rh);
+                        
+                        // Pane
+                        let isLit = Math.random() > 0.7;
+                        ctx.fillStyle = isLit ? '#ccffff' : '#112233';
+                        ctx.fillRect(x*cw+fw, y*rh+fw, cw-fw*2, rh-fw*2);
+                        
+                        // Reflection gradient
+                        let grad = ctx.createLinearGradient(x*cw, y*rh, (x+1)*cw, (y+1)*rh);
+                        grad.addColorStop(0, 'rgba(255,255,255,0.2)');
+                        grad.addColorStop(0.5, 'rgba(255,255,255,0.0)');
+                        grad.addColorStop(1, 'rgba(0,0,0,0.3)');
+                        ctx.fillStyle = grad;
+                        ctx.fillRect(x*cw+fw, y*rh+fw, cw-fw*2, rh-fw*2);
+                    }
+                }
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                return tex;
+            },
+            neonFacade: () => {
+                const {canvas, ctx} = TextureEngine.createCtx(1024, 1024);
+                ctx.fillStyle = '#050505'; ctx.fillRect(0,0,1024,1024);
+                
+                const cols = 5; const rows = 20;
+                const cw = 1024/cols; const rh = 1024/rows;
+                
+                for(let y=0; y<rows; y++) {
+                    for(let x=0; x<cols; x++) {
+                        let isLit = Math.random() > 0.5;
+                        if(isLit) {
+                            let hue = Math.floor(Math.random()*360);
+                            ctx.fillStyle = `hsl(${hue}, 100%, 60%)`;
+                            ctx.shadowColor = ctx.fillStyle;
+                            ctx.shadowBlur = 30;
+                            ctx.fillRect(x*cw+10, y*rh+10, cw-20, rh-20);
+                            ctx.shadowBlur = 0;
+                            
+                            // Mock Kanji / Text blocks
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(x*cw+cw/2-5, y*rh+20, 10, rh-40);
                         } else {
-                            x.fillStyle = lit ? '#ffddaa' : '#050505';
-                            x.fillRect(z*wW+pX, y*wH+pY, wW-pX*2, wH-pY*2);
-                            x.strokeStyle = '#111'; x.lineWidth = 4;
-                            x.strokeRect(z*wW+pX, y*wH+pY, wW-pX*2, wH-pY*2);
+                            ctx.fillStyle = '#111111';
+                            ctx.fillRect(x*cw+10, y*rh+10, cw-20, rh-20);
                         }
                     }
                 }
-                const t = new THREE.CanvasTexture(cv); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                return tex;
+            },
+            grass: () => {
+                const {canvas, ctx} = TextureEngine.createCtx(512, 512);
+                TextureEngine.noiseFill(ctx, 512, 512, '#1e3c1e', '#2d5a2d', 200000);
+                
+                // Flowers/Weeds
+                for(let i=0; i<1000; i++) {
+                    ctx.fillStyle = Math.random()>0.8 ? '#dddd44' : '#44dd44'; // Yellow dandelions or bright grass
+                    ctx.beginPath();
+                    ctx.arc(Math.random()*512, Math.random()*512, Math.random()*2+1, 0, Math.PI*2);
+                    ctx.fill();
+                }
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                return tex;
+            },
+            dirt: () => {
+                const {canvas, ctx} = TextureEngine.createCtx(512, 512);
+                TextureEngine.noiseFill(ctx, 512, 512, '#3a2a1a', '#4a3a2a', 150000);
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                return tex;
+            },
+            sand: () => {
+                const {canvas, ctx} = TextureEngine.createCtx(512, 512);
+                TextureEngine.noiseFill(ctx, 512, 512, '#e6cda3', '#d4b886', 150000);
+                // Sand ripples
+                ctx.fillStyle = 'rgba(0,0,0,0.05)';
+                for(let y=0; y<512; y+=32) {
+                    ctx.beginPath(); ctx.moveTo(0, y);
+                    for(let x=0; x<512; x+=32) ctx.lineTo(x, y + Math.sin(x*0.1)*10);
+                    ctx.lineTo(512, 512); ctx.lineTo(0, 512); ctx.fill();
+                }
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                return tex;
             }
         };
 
-        // -----------------------------------------------------------------------------------------
-        // 3. WEB AUDIO API - PROCEDURAL SOUND ENGINE
-        // -----------------------------------------------------------------------------------------
-        class AudioEngine {
-            constructor() {
-                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                this.master = this.ctx.createGain();
-                this.master.gain.value = 0.5;
-                this.master.connect(this.ctx.destination);
-                this.footTimer = 0;
+        // ==========================================
+        // 5. GLSL SHADERS
+        // ==========================================
+        const Shaders = {
+            sky: {
+                v: `varying vec3 vWorldPosition; void main() { vec4 wPos = modelMatrix * vec4(position, 1.0); vWorldPosition = wPos.xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+                f: `uniform vec3 topColor; uniform vec3 bottomColor; uniform float offset; uniform float exponent; varying vec3 vWorldPosition; void main() { float h = normalize(vWorldPosition + offset).y; gl_FragColor = vec4(mix(bottomColor, topColor, max(pow(max(h, 0.0), exponent), 0.0)), 1.0); }`
+            },
+            water: {
+                v: `uniform float time; varying vec2 vUv; varying vec3 vPos; void main() { vUv = uv; vPos = position; 
+                    float wave1 = sin(position.x * 0.05 + time) * 2.0; 
+                    float wave2 = cos(position.y * 0.05 + time * 0.8) * 2.0; 
+                    float wave3 = sin((position.x + position.y) * 0.02 + time * 1.5) * 1.5;
+                    vec3 p = position; p.z += wave1 + wave2 + wave3; 
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }`,
+                f: `uniform vec3 baseColor; uniform float time; varying vec2 vUv; varying vec3 vPos; void main() { 
+                    float foam = sin(vPos.x * 0.1 + time) * cos(vPos.y * 0.1 + time);
+                    vec3 col = mix(baseColor, vec3(0.8, 0.9, 1.0), smoothstep(0.8, 1.0, foam) * 0.5);
+                    gl_FragColor = vec4(col, 0.85); }`
+            },
+            cloud: {
+                v: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+                f: `uniform float time; varying vec2 vUv; 
+                    float rand(vec2 n) { return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453); }
+                    float noise(vec2 p){ vec2 ip = floor(p); vec2 u = fract(p); u = u*u*(3.0-2.0*u); 
+                    float res = mix(mix(rand(ip),rand(ip+vec2(1.0,0.0)),u.x), mix(rand(ip+vec2(0.0,1.0)),rand(ip+vec2(1.0,1.0)),u.x),u.y); return res*res; }
+                    void main() { 
+                        vec2 p = vUv * 10.0; p.x += time * 0.1;
+                        float n = noise(p) * 0.5 + noise(p * 2.0) * 0.25 + noise(p * 4.0) * 0.125;
+                        gl_FragColor = vec4(1.0, 1.0, 1.0, n * 0.5); 
+                    }`
             }
-            playNoise(type) {
-                if(this.ctx.state === 'suspended') this.ctx.resume();
+        };
+
+        // ==========================================
+        // 6. AUDIO SYNTHESIZER ENGINE
+        // ==========================================
+        class AudioSystem {
+            constructor() {
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                    this.master = this.ctx.createGain();
+                    this.master.gain.value = 0.6;
+                    
+                    // Compressor to prevent clipping
+                    this.comp = this.ctx.createDynamicsCompressor();
+                    this.comp.threshold.setValueAtTime(-24, this.ctx.currentTime);
+                    this.comp.knee.setValueAtTime(30, this.ctx.currentTime);
+                    this.comp.ratio.setValueAtTime(12, this.ctx.currentTime);
+                    this.comp.attack.setValueAtTime(0.003, this.ctx.currentTime);
+                    this.comp.release.setValueAtTime(0.25, this.ctx.currentTime);
+                    
+                    this.master.connect(this.comp);
+                    this.comp.connect(this.ctx.destination);
+                } catch(e) { SysLog.print("AUDIO API NOT SUPPORTED."); this.ctx = null; }
+                
+                this.footTimer = 0;
+                this.windOsc = null;
+                this.windGain = null;
+            }
+
+            initWind() {
+                if(!this.ctx) return;
+                // Brown noise approximation for wind
+                const bufferSize = 2 * this.ctx.sampleRate;
+                const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                let lastOut = 0;
+                for (let i = 0; i < bufferSize; i++) {
+                    let white = Math.random() * 2 - 1;
+                    output[i] = (lastOut + (0.02 * white)) / 1.02;
+                    lastOut = output[i];
+                    output[i] *= 3.5;
+                }
+                
+                this.windSource = this.ctx.createBufferSource();
+                this.windSource.buffer = noiseBuffer;
+                this.windSource.loop = true;
+                
+                this.windFilter = this.ctx.createBiquadFilter();
+                this.windFilter.type = 'lowpass';
+                this.windFilter.frequency.value = 400;
+                
+                this.windGain = this.ctx.createGain();
+                this.windGain.gain.value = 0;
+                
+                this.windSource.connect(this.windFilter);
+                this.windFilter.connect(this.windGain);
+                this.windGain.connect(this.master);
+                
+                this.windSource.start(0);
+            }
+
+            updateWind(speed) {
+                if(!this.ctx || !this.windGain) return;
+                // Wind howl increases with speed
+                const vol = Math.min(0.5, speed * 0.01);
+                const freq = 300 + (speed * 10);
+                this.windGain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.5);
+                this.windFilter.frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.5);
+            }
+
+            playFootstep(massRatio) {
+                if(!this.ctx || this.ctx.state === 'suspended') return;
+                
+                // Two oscillators: Low thud, High slap
                 const osc = this.ctx.createOscillator();
+                const osc2 = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
+                
+                osc.connect(gain); osc2.connect(gain); gain.connect(this.master);
+                
+                const t = this.ctx.currentTime;
+                const dur = 0.15;
+                
+                // Heavier = lower pitch, louder thud
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(80 + (massRatio * 60), t);
+                osc.frequency.exponentialRampToValueAtTime(10, t + dur);
+                
+                osc2.type = 'triangle';
+                osc2.frequency.setValueAtTime(200 + (massRatio * 100), t);
+                osc2.frequency.exponentialRampToValueAtTime(20, t + dur*0.5);
+                
+                gain.gain.setValueAtTime(0.8 * (2.0 - massRatio), t); // Fatter = louder
+                gain.gain.exponentialRampToValueAtTime(0.01, t + dur);
+                
+                osc.start(t); osc.stop(t + dur);
+                osc2.start(t); osc2.stop(t + dur);
+            }
+
+            playEngine(distance) {
+                if(!this.ctx) return;
+                const osc = this.ctx.createOscillator();
                 const filter = this.ctx.createBiquadFilter();
+                const gain = this.ctx.createGain();
+                
                 osc.connect(filter); filter.connect(gain); gain.connect(this.master);
                 
                 const t = this.ctx.currentTime;
-                if(type === 'step') {
-                    // Thud sound based on weight
-                    const wRatio = Engine.wgt / 350.0;
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(100 + (wRatio*50), t);
-                    osc.frequency.exponentialRampToValueAtTime(0.01, t + 0.1);
-                    gain.gain.setValueAtTime(0.5 * wRatio, t);
-                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-                    osc.start(t); osc.stop(t + 0.1);
-                } else if(type === 'car') {
-                    // Engine drone
-                    osc.type = 'sawtooth';
-                    filter.type = 'lowpass'; filter.frequency.value = 400;
-                    osc.frequency.setValueAtTime(Math.random()*50 + 50, t);
-                    gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.1, t+1);
-                    gain.gain.linearRampToValueAtTime(0, t+4);
-                    osc.start(t); osc.stop(t+4);
-                }
+                osc.type = 'sawtooth';
+                filter.type = 'lowpass'; filter.frequency.value = 500;
+                
+                // Doppler approximation
+                osc.frequency.setValueAtTime(80 + Math.random()*20, t);
+                osc.frequency.linearRampToValueAtTime(60, t + 2);
+                
+                const vol = Math.max(0, 0.3 - (distance / 500));
+                gain.gain.setValueAtTime(0, t);
+                gain.gain.linearRampToValueAtTime(vol, t + 1);
+                gain.gain.linearRampToValueAtTime(0, t + 2.5);
+                
+                osc.start(t); osc.stop(t + 2.5);
             }
         }
 
-        // -----------------------------------------------------------------------------------------
-        // 4. CUSTOM GLSL SHADERS (Volumetrics, Water, Windows)
-        // -----------------------------------------------------------------------------------------
-        const Shaders = {
-            skyVert: `varying vec3 vWorldPosition; void main() { vec4 worldPosition = modelMatrix * vec4(position, 1.0); vWorldPosition = worldPosition.xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-            skyFrag: `uniform vec3 topColor; uniform vec3 bottomColor; uniform float offset; uniform float exponent; varying vec3 vWorldPosition; void main() { float h = normalize(vWorldPosition + offset).y; gl_FragColor = vec4(mix(bottomColor, topColor, max(pow(max(h, 0.0), exponent), 0.0)), 1.0); }`,
-            waterVert: `uniform float time; varying vec2 vUv; varying vec3 vPos; void main() { vUv = uv; vPos = position; float wave = sin(position.x * 0.1 + time) * cos(position.y * 0.1 + time) * 2.0; vec3 p = position; p.z += wave; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }`,
-            waterFrag: `uniform vec3 baseColor; uniform float time; varying vec2 vUv; varying vec3 vPos; void main() { float alpha = 0.8 + sin(vPos.x * 0.5 + time) * 0.2; vec3 col = mix(baseColor, vec3(1.0), alpha * 0.3); gl_FragColor = vec4(col, 0.85); }`
+        // ==========================================
+        // 7. ENGINE STATE & PHYSICS VARIABLES
+        // ==========================================
+        const Env = {
+            active: false,
+            city: null,
+            audio: null,
+            
+            // Physics / Player Data
+            mass: 350.0,
+            massMin: 160.0,
+            massMax: 350.0,
+            velocity: 0,
+            distTotal: 0,
+            calsBurned: 0,
+            hr: 70,
+            gravity: 9.81,
+            yVel: 0,
+            isGrounded: true,
+            
+            // Environment Data
+            timeOfDay: 12.0,
+            windBase: 0,
+            
+            // Inputs
+            input: { w:0, a:0, s:0, d:0, shift:0, space:0 },
+            
+            // Rendering arrays
+            entities: { cars: [], peds: [], clouds: [], trees: [] },
+            mats: {},
+            colliders: [] // AABB
         };
 
-        // -----------------------------------------------------------------------------------------
-        // 5. THREE.JS BOOTSTRAP & RENDERER SETUP
-        // -----------------------------------------------------------------------------------------
-        const canvasEl = document.getElementById('game-canvas');
-        const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true, powerPreference: "high-performance" });
+        // ==========================================
+        // 8. THREE.JS INITIALIZATION
+        // ==========================================
+        const canvas = document.getElementById('game-canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.0;
+        renderer.toneMappingExposure = 1.2;
 
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 5000);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.5, 8000);
         const clock = new THREE.Clock();
 
-        let sun, hemi, skyMesh;
-        let pGrp, pBones = {};
-        let cityGrp, envGrp;
+        let sunLight, hemiLight, skySphere, cloudPlane;
+        let cityGroup = new THREE.Group(); scene.add(cityGroup);
+        let playerGroup = new THREE.Group(); scene.add(playerGroup);
+        let skeleton = {}; // Hierarchical joints
+        let particleSystem = null;
 
-        // -----------------------------------------------------------------------------------------
-        // 6. UI & INITIALIZATION LOGIC
-        // -----------------------------------------------------------------------------------------
-        async function bootSequence() {
-            let p = 0;
-            const seq = setInterval(() => {
-                p += Math.random() * 15;
-                if(p > 100) p = 100;
-                Log.msg(`ALLOCATING VRAM... ${p.toFixed(2)}%`);
-                if(p === 100) {
-                    clearInterval(seq);
-                    Log.msg("SYSTEM ONLINE. AWAITING DEPLOYMENT.");
-                    setTimeout(() => {
-                        document.getElementById('boot-seq').style.display = 'none';
-                        document.getElementById('menu').style.display = 'flex';
-                        buildMenu();
-                    }, 1000);
-                }
-            }, 100);
-        }
+        // ==========================================
+        // 9. PROCEDURAL WORLD BUILDER
+        // ==========================================
+        async function constructWorld() {
+            SysLog.print("FLUSHING PREVIOUS GEOMETRY...");
+            while(cityGroup.children.length > 0) {
+                const obj = cityGroup.children[0];
+                cityGroup.remove(obj);
+            }
+            Env.colliders = [];
+            Env.entities.cars = [];
+            Env.entities.peds = [];
+            Env.entities.trees = [];
 
-        function buildMenu() {
-            const g = document.getElementById('city-grid');
-            GeoData.forEach(c => {
-                const b = document.createElement('div');
-                b.className = 'btn';
-                b.innerHTML = `<strong>${c.n}</strong><br><span style="font-size:10px;color:#888;">${c.lat} / ${c.lng}</span>`;
-                b.onclick = () => initEngine(c.id);
-                g.appendChild(b);
-            });
-        }
-
-        async function initEngine(id) {
-            document.getElementById('menu').style.display = 'none';
-            document.getElementById('boot-seq').style.display = 'flex';
-            Log.el.innerHTML = '';
-            Log.msg(`INITIALIZING SECTOR: ${GeoData[id].n}...`);
+            // Compile Materials
+            SysLog.print("COMPILING TEXTURES & SHADERS...");
+            Env.mats.asphalt = new THREE.MeshStandardMaterial({ map: TextureEngine.asphalt(), roughness: 0.8 });
+            Env.mats.concrete = new THREE.MeshStandardMaterial({ map: TextureEngine.concrete(), roughness: 1.0 });
+            Env.mats.brick = new THREE.MeshStandardMaterial({ map: TextureEngine.brick(), roughness: 0.9 });
+            Env.mats.glass = new THREE.MeshStandardMaterial({ map: TextureEngine.glassFacade(), roughness: 0.1, metalness: 0.9 });
+            Env.mats.neon = new THREE.MeshStandardMaterial({ map: TextureEngine.neonFacade(), roughness: 0.8, emissive: 0xffffff, emissiveMap: TextureEngine.neonFacade(), emissiveIntensity: 0.8 });
+            Env.mats.grass = new THREE.MeshStandardMaterial({ map: TextureEngine.grass(), roughness: 1.0 });
+            Env.mats.dirt = new THREE.MeshStandardMaterial({ map: TextureEngine.dirt(), roughness: 1.0 });
+            Env.mats.sand = new THREE.MeshStandardMaterial({ map: TextureEngine.sand(), roughness: 0.9 });
             
-            Engine.city = GeoData[id];
-            Engine.sfx = new AudioEngine();
-            
-            setTimeout(async () => {
-                Log.msg("GENERATING PROCEDURAL MATERIALS...");
-                await buildMaterials();
-                Log.msg("GENERATING TOPOGRAPHY...");
-                buildWorld();
-                Log.msg("SPAWNING ENTITIES...");
-                buildPlayer();
-                buildAI();
-                
-                document.getElementById('boot-seq').style.display = 'none';
-                document.getElementById('hud').style.display = 'block';
-                updateStaticHUD();
-                
-                Engine.state = 1;
-                animate();
-            }, 100);
-        }
-
-        // -----------------------------------------------------------------------------------------
-        // 7. MATERIAL & SHADER COMPILATION
-        // -----------------------------------------------------------------------------------------
-        async function buildMaterials() {
-            Engine.mats.road = new THREE.MeshStandardMaterial({ map: TexGen.road(), roughness: 0.9, color: 0x888888 });
-            Engine.mats.sw = new THREE.MeshStandardMaterial({ map: TexGen.concrete(), roughness: 1.0 });
-            Engine.mats.grass = new THREE.MeshStandardMaterial({ map: TexGen.grass(), roughness: 1.0 });
-            
-            // Complex Custom Shader Material for Water
-            Engine.mats.water = new THREE.ShaderMaterial({
-                uniforms: { time: { value: 0 }, baseColor: { value: new THREE.Color(Engine.city.wa) } },
-                vertexShader: Shaders.waterVert, fragmentShader: Shaders.waterFrag,
+            Env.mats.water = new THREE.ShaderMaterial({
+                uniforms: { time: { value: 0 }, baseColor: { value: new THREE.Color(Env.city.water) } },
+                vertexShader: Shaders.water.v, fragmentShader: Shaders.water.f,
                 transparent: true, side: THREE.DoubleSide
             });
 
-            // Procedural Facades
-            Engine.mats.bld = [];
-            for(let i=0; i<5; i++) {
-                let type = 'concrete';
-                if(Engine.city.gl > Math.random()) type = 'glass';
-                if(Engine.city.neo && Math.random() > 0.7) type = 'neon';
-                
-                const r = Math.floor(Math.random()*15)+10;
-                const c = Math.floor(Math.random()*8)+4;
-                
-                const m = new THREE.MeshStandardMaterial({ 
-                    map: TexGen.facade(type, r, c), 
-                    roughness: type==='glass'?0.1:0.8,
-                    metalness: type==='glass'?0.8:0.1
-                });
-                if(type === 'neon') { m.emissive = new THREE.Color(0xffffff); m.emissiveMap = m.map; m.emissiveIntensity = 0.5; }
-                Engine.mats.bld.push(m);
+            // Lighting Setup
+            SysLog.print("INITIALIZING ATMOSPHERIC SCATTERING...");
+            scene.background = new THREE.Color(Env.city.skyDay);
+            scene.fog = new THREE.FogExp2(Env.city.skyDay, Env.city.weather==='FOG' ? 0.003 : (Env.city.weather==='SANDSTORM' ? 0.004 : 0.0005));
+
+            hemiLight = new THREE.HemisphereLight(0xffffff, 0x444455, 0.4);
+            hemiLight.position.set(0, 2000, 0);
+            scene.add(hemiLight);
+
+            sunLight = new THREE.DirectionalLight(0xffffee, 1.5);
+            sunLight.position.set(2000, 3000, 1000);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 4096;
+            sunLight.shadow.mapSize.height = 4096;
+            sunLight.shadow.camera.near = 50;
+            sunLight.shadow.camera.far = 8000;
+            const sl_d = 2000;
+            sunLight.shadow.camera.left = -sl_d; sunLight.shadow.camera.right = sl_d;
+            sunLight.shadow.camera.top = sl_d; sunLight.shadow.camera.bottom = -sl_d;
+            sunLight.shadow.bias = -0.001;
+            scene.add(sunLight);
+
+            // Sky Dome
+            const skyG = new THREE.SphereGeometry(6000, 32, 15);
+            const skyM = new THREE.ShaderMaterial({
+                uniforms: {
+                    topColor: { value: new THREE.Color(Env.city.skyDay) },
+                    bottomColor: { value: new THREE.Color(0xffffff) },
+                    offset: { value: 33 }, exponent: { value: 0.6 }
+                },
+                vertexShader: Shaders.sky.v, fragmentShader: Shaders.sky.f,
+                side: THREE.BackSide
+            });
+            skySphere = new THREE.Mesh(skyG, skyM);
+            scene.add(skySphere);
+
+            // Cloud Layer
+            const cG = new THREE.PlaneGeometry(10000, 10000);
+            const cM = new THREE.ShaderMaterial({
+                uniforms: { time: { value: 0 } },
+                vertexShader: Shaders.cloud.v, fragmentShader: Shaders.cloud.f,
+                transparent: true, depthWrite: false
+            });
+            cloudPlane = new THREE.Mesh(cG, cM);
+            cloudPlane.rotation.x = -Math.PI/2;
+            cloudPlane.position.y = 1500;
+            scene.add(cloudPlane);
+
+            // Base Topography Generation
+            SysLog.print("FRACTAL BROWNIAN MOTION TOPOGRAPHY GEN...");
+            const gridSize = 150; 
+            const gridCount = 40; // Massive 6000x6000m playable area
+            const halfGrid = gridCount / 2;
+            const roadWidth = 35; 
+
+            // Base Ground
+            let baseGroundMat = Env.mats.concrete;
+            if(Env.city.id === 5) baseGroundMat = Env.mats.sand;
+            const groundGeo = new THREE.PlaneGeometry(gridCount*gridSize, gridCount*gridSize, gridCount, gridCount);
+            
+            // Deform ground based on city topography type
+            const verts = groundGeo.attributes.position.array;
+            for(let i=0; i<verts.length; i+=3) {
+                let vx = verts[i]; let vz = verts[i+1]; // Plane is XY originally
+                let vy = 0;
+                if(Env.city.layout === 'hilly_grid' || Env.city.layout === 'coastal_mountains') {
+                    vy = NoiseGen.fbm(vx, vz, 4, 0.5, 0.001) * Env.city.varHeight;
+                }
+                verts[i+2] = vy;
             }
-        }
+            groundGeo.computeVertexNormals();
+            
+            const ground = new THREE.Mesh(groundGeo, baseGroundMat);
+            ground.rotation.x = -Math.PI/2;
+            ground.position.y = -0.5;
+            ground.receiveShadow = true;
+            cityGroup.add(ground);
 
-        // -----------------------------------------------------------------------------------------
-        // 8. WORLD GENERATION (Instanced Meshes for Millions of Polygons)
-        // -----------------------------------------------------------------------------------------
-        function buildWorld() {
-            while(scene.children.length > 0) scene.remove(scene.children[0]);
-            cityGrp = new THREE.Group(); scene.add(cityGrp);
-            envGrp = new THREE.Group(); scene.add(envGrp);
-
-            // Lighting setup
-            scene.background = new THREE.Color(Engine.city.skD);
-            scene.fog = new THREE.FogExp2(Engine.city.skD, 0.001);
-
-            hemi = new THREE.HemisphereLight(0xffffff, 0x444455, 0.4);
-            hemi.position.set(0, 1000, 0); scene.add(hemi);
-
-            sun = new THREE.DirectionalLight(0xffeedd, 1.5);
-            sun.position.set(1000, 2000, 500);
-            sun.castShadow = true;
-            sun.shadow.mapSize.width = 4096; sun.shadow.mapSize.height = 4096;
-            sun.shadow.camera.near = 10; sun.shadow.camera.far = 5000;
-            const d = 1500;
-            sun.shadow.camera.left = -d; sun.shadow.camera.right = d; sun.shadow.camera.top = d; sun.shadow.camera.bottom = -d;
-            scene.add(sun);
-
-            // Massive Base Plane
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(10000, 10000), new THREE.MeshStandardMaterial({color:Engine.city.gr}));
-            ground.rotation.x = -Math.PI/2; ground.position.y = -1; ground.receiveShadow = true;
-            cityGrp.add(ground);
-
-            // Grid Configuration (Massive 30x30 blocks = 900 blocks = ~3000x3000m playable area)
-            const bS = 120; // Block Size
-            const rW = 30;  // Road Width
-            const gC = 30;  // Grid Count
-            const hG = gC/2;
-
-            // InstancedMesh setup for extreme performance
-            const bGeo = new THREE.BoxGeometry(1,1,1); bGeo.translate(0, 0.5, 0);
-            const imeshes = Engine.mats.bld.map(m => {
-                const im = new THREE.InstancedMesh(bGeo, m, gC*gC*5);
+            // InstancedMesh Architecture Arrays
+            const maxInst = gridCount * gridCount * 6;
+            const boxGeo = new THREE.BoxGeometry(1,1,1); boxGeo.translate(0, 0.5, 0);
+            
+            const bldMats = [Env.mats.concrete, Env.mats.brick, Env.mats.glass];
+            if(Env.city.neonProb > 0.5) bldMats.push(Env.mats.neon);
+            
+            const instMeshes = bldMats.map(m => {
+                let im = new THREE.InstancedMesh(boxGeo, m, maxInst);
                 im.castShadow = true; im.receiveShadow = true;
-                return { im: im, count: 0, mtx: new THREE.Matrix4() };
+                return { mesh: im, count: 0, mtx: new THREE.Matrix4() };
             });
 
-            // Layout Algorithm
-            for(let x = -hG; x < hG; x++) {
-                for(let z = -hG; z < hG; z++) {
-                    const cx = x * bS; const cz = z * bS;
+            // Logical City Grid Placement Loop
+            SysLog.print("ZONING AND ARCHITECTURE PLACEMENT...");
+            for(let x = -halfGrid; x < halfGrid; x++) {
+                for(let z = -halfGrid; z < halfGrid; z++) {
+                    const cx = x * gridSize; const cz = z * gridSize;
+                    const cy = Env.city.layout.includes('hill') ? NoiseGen.fbm(cx, cz, 4, 0.5, 0.001) * Env.city.varHeight : 0;
+
+                    // Zone Determination
+                    let isWater = false; let isPark = false;
                     
-                    // Determine Zone
-                    let isRiver = false; let isPark = false;
-                    if(Engine.city.l === 'coast' && x > hG*0.5) isRiver = true;
-                    if(Engine.city.l === 'harbor' && Math.sqrt(x*x + z*z) < hG*0.3 && x > 0) isRiver = true;
-                    if(!isRiver && Math.sin(x*0.1) * 5 > z && Math.sin(x*0.1) * 5 < z+2) isRiver = true; // Winding river
+                    // River logic
+                    if(Env.city.riverType === 'hudson' && x > halfGrid - 5) isWater = true;
+                    if(Env.city.riverType === 'sumida' && Math.abs(x - Math.sin(z*0.1)*5) < 3) isWater = true;
+                    if(Env.city.riverType === 'thames' && Math.abs(z - Math.sin(x*0.15)*4) < 2) isWater = true;
+                    if(Env.city.riverType === 'seine' && Math.abs(z - Math.cos(x*0.1)*3) < 2) isWater = true;
+                    if(Env.city.riverType === 'bay' && Math.sqrt(x*x + z*z) > halfGrid - 6) isWater = true;
+                    if(Env.city.riverType === 'coast' && z > halfGrid - 8) isWater = true;
 
-                    if(!isRiver && Engine.city.p === 'central' && Math.abs(x)<2 && Math.abs(z)<4) isPark = true;
-                    if(!isRiver && Engine.city.p === 'scattered' && Math.random()<0.05) isPark = true;
-
-                    // Roads (Simplified planes for performance, overlapping is fine on flat ground)
-                    if(!isRiver) {
-                        const rdH = new THREE.Mesh(new THREE.PlaneGeometry(bS, rW), Engine.mats.road);
-                        rdH.rotation.x = -Math.PI/2; rdH.position.set(cx, 0, cz+bS/2); rdH.receiveShadow = true; cityGrp.add(rdH);
-                        
-                        const rdV = new THREE.Mesh(new THREE.PlaneGeometry(rW, bS), Engine.mats.road);
-                        rdV.rotation.x = -Math.PI/2; rdV.position.set(cx+bS/2, 0, cz); rdV.receiveShadow = true; cityGrp.add(rdV);
+                    // Park logic
+                    if(!isWater) {
+                        if(Env.city.parkType === 'central_park' && x >= -2 && x <= 2 && z >= -6 && z <= 6) isPark = true;
+                        if(Env.city.parkType === 'lakefront' && x === halfGrid - 6) isPark = true;
+                        if((Env.city.parkType === 'scattered_shrines' || Env.city.parkType === 'royal_parks') && Math.random() < 0.08) isPark = true;
+                        if(Env.city.parkType === 'jungle_mountains' && cy > 50) isPark = true;
                     }
 
-                    if(isRiver) {
-                        const wat = new THREE.Mesh(new THREE.PlaneGeometry(bS, bS), Engine.mats.water);
-                        wat.rotation.x = -Math.PI/2; wat.position.set(cx, -0.5, cz); cityGrp.add(wat);
-                    } else if(isPark) {
-                        const grs = new THREE.Mesh(new THREE.PlaneGeometry(bS-rW, bS-rW), Engine.mats.grass);
-                        grs.rotation.x = -Math.PI/2; grs.position.set(cx, 0.1, cz); grs.receiveShadow=true; cityGrp.add(grs);
+                    // Build Infrastructure
+                    if(isWater) {
+                        const wat = new THREE.Mesh(new THREE.PlaneGeometry(gridSize, gridSize), Env.mats.water);
+                        wat.rotation.x = -Math.PI/2; wat.position.set(cx, cy - 2, cz);
+                        cityGroup.add(wat);
+                    } 
+                    else if(isPark) {
+                        const prkMat = Env.city.id === 5 ? Env.mats.sand : Env.mats.grass;
+                        const prk = new THREE.Mesh(new THREE.PlaneGeometry(gridSize, gridSize), prkMat);
+                        prk.rotation.x = -Math.PI/2; prk.position.set(cx, cy + 0.1, cz); prk.receiveShadow = true;
+                        cityGroup.add(prk);
+                        
                         // Trees
-                        for(let t=0; t<30; t++) buildTree(cx+(Math.random()-0.5)*(bS-rW-10), cz+(Math.random()-0.5)*(bS-rW-10));
-                    } else {
-                        // Sidewalk
-                        const sw = new THREE.Mesh(new THREE.PlaneGeometry(bS-rW, bS-rW), Engine.mats.sw);
-                        sw.rotation.x = -Math.PI/2; sw.position.set(cx, 0.2, cz); sw.receiveShadow=true; cityGrp.add(sw);
+                        const tDens = Env.city.id === 9 ? 60 : (Env.city.id === 5 ? 2 : 25);
+                        for(let t=0; t<tDens; t++) {
+                            buildTree(cx + (Math.random()-0.5)*gridSize, cy, cz + (Math.random()-0.5)*gridSize);
+                        }
+                    }
+                    else {
+                        // Roads
+                        const rH = new THREE.Mesh(new THREE.PlaneGeometry(gridSize, roadWidth), Env.mats.asphalt);
+                        rH.rotation.x = -Math.PI/2; rH.position.set(cx, cy+0.05, cz+gridSize/2); rH.receiveShadow = true;
+                        
+                        const rV = new THREE.Mesh(new THREE.PlaneGeometry(roadWidth, gridSize), Env.mats.asphalt);
+                        rV.rotation.x = -Math.PI/2; rV.position.set(cx+gridSize/2, cy+0.05, cz); rV.receiveShadow = true;
+                        
+                        cityGroup.add(rH); cityGroup.add(rV);
 
-                        // Procedural Architecture
-                        const inSize = bS-rW-10;
-                        let bDens = Math.floor((Math.random()*4+1) * Engine.city.den);
-                        if(Engine.city.l === 'dense') bDens *= 2;
+                        // Architecture / Buildings
+                        const buildArea = gridSize - roadWidth;
+                        let bDens = Math.floor((Math.random()*4 + 1) * Env.city.density);
+                        if(Env.city.layout.includes('dense')) bDens *= 2;
 
                         for(let b=0; b<bDens; b++) {
-                            const bw = Math.random()*(inSize/2) + 10;
-                            const bd = Math.random()*(inSize/2) + 10;
+                            const bw = Math.random()*(buildArea/2) + 15;
+                            const bd = Math.random()*(buildArea/2) + 15;
                             
-                            // Distance from center for skyscraper curve
-                            const dist = Math.sqrt(x*x + z*z);
-                            const hMult = Math.max(0.1, 1 - (dist/hG));
-                            let bh = Engine.city.bh + (Math.random()*Engine.city.vh * hMult);
+                            // Skyscraper central tendency
+                            const dCenter = Math.sqrt(x*x + z*z);
+                            const hFalloff = Math.max(0.1, 1.0 - (dCenter/halfGrid));
+                            let bh = Env.city.baseHeight + (Math.random() * Env.city.varHeight * hFalloff);
                             
-                            // Outliers
-                            if(Math.random() < 0.05) bh *= 2;
-                            if(Engine.city.id === 5 && x===0 && z===0) bh = 1500; // Burj override
+                            // Unique City Overrides
+                            if(Env.city.id === 0 && x===0 && z===0) bh = 800; // Empire State abstract
+                            if(Env.city.id === 3 && Math.random()<0.01) bh = 50; // Keep Paris low
+                            if(Env.city.id === 5 && x===0 && z===0) bh = 1800; // Burj Khalifa abstract
+                            if(Env.city.id === 8) bh = Math.min(bh, 80); // Rome low
 
-                            const bx = cx + (Math.random()-0.5)*(inSize-bw);
-                            const bz = cz + (Math.random()-0.5)*(inSize-bd);
+                            const bx = cx + (Math.random()-0.5)*(buildArea-bw);
+                            const bz = cz + (Math.random()-0.5)*(buildArea-bd);
 
-                            const imData = imeshes[Math.floor(Math.random()*imeshes.length)];
-                            imData.mtx.makeScale(bw, bh, bd);
-                            imData.mtx.setPosition(bx, 0.2, bz);
-                            imData.im.setMatrixAt(imData.count, imData.mtx);
-                            imData.count++;
+                            // Select Material via City Profile
+                            let mIdx = 0; // Concrete default
+                            const rand = Math.random();
+                            if(Env.city.id === 5 || rand < 0.3) mIdx = 2; // Glass
+                            else if(Env.city.id === 2 || Env.city.id === 6) mIdx = rand < 0.5 ? 1 : 0; // Brick heavy
+                            else if(Env.city.neonProb > rand) mIdx = 3; // Neon
+
+                            const targetIM = instMeshes[mIdx % instMeshes.length];
                             
-                            // Complex Roofs (Ledges, AC units)
-                            if(bh > 50 && Math.random() > 0.5) {
-                                const imR = imeshes[0]; // Concrete
-                                imR.mtx.makeScale(bw-2, 2, bd-2);
-                                imR.mtx.setPosition(bx, bh+0.2, bz);
-                                imR.im.setMatrixAt(imR.count, imR.mtx);
-                                imR.count++;
+                            // Multi-tiered skyscraper logic
+                            if(bh > 200) {
+                                // Base
+                                targetIM.mtx.makeScale(bw, bh*0.4, bd);
+                                targetIM.mtx.setPosition(bx, cy, bz);
+                                targetIM.mesh.setMatrixAt(targetIM.count++, targetIM.mtx);
                                 
-                                if(Math.random() > 0.8) {
-                                    imR.mtx.makeScale(1, Math.random()*40+10, 1);
-                                    imR.mtx.setPosition(bx, bh+2, bz);
-                                    imR.im.setMatrixAt(imR.count, imR.mtx);
-                                    imR.count++;
-                                }
+                                // Mid section
+                                targetIM.mtx.makeScale(bw*0.8, bh*0.4, bd*0.8);
+                                targetIM.mtx.setPosition(bx, cy + bh*0.4, bz);
+                                targetIM.mesh.setMatrixAt(targetIM.count++, targetIM.mtx);
+                                
+                                // Spire
+                                targetIM.mtx.makeScale(bw*0.4, bh*0.2, bd*0.4);
+                                targetIM.mtx.setPosition(bx, cy + bh*0.8, bz);
+                                targetIM.mesh.setMatrixAt(targetIM.count++, targetIM.mtx);
+
+                                // Collision Box (AABB)
+                                Env.colliders.push({ minX: bx-bw/2, maxX: bx+bw/2, minZ: bz-bd/2, maxZ: bz+bd/2 });
+                            } else {
+                                // Standard Box
+                                targetIM.mtx.makeScale(bw, bh, bd);
+                                targetIM.mtx.setPosition(bx, cy, bz);
+                                targetIM.mesh.setMatrixAt(targetIM.count++, targetIM.mtx);
+                                Env.colliders.push({ minX: bx-bw/2, maxX: bx+bw/2, minZ: bz-bd/2, maxZ: bz+bd/2 });
                             }
                         }
                     }
                 }
             }
-            
-            imeshes.forEach(i => { i.im.count = i.count; i.im.instanceMatrix.needsUpdate = true; cityGrp.add(i.im); });
 
-            // Volumetric Sky dome
-            const skyG = new THREE.SphereGeometry(4000, 32, 15);
-            const skyM = new THREE.ShaderMaterial({
-                uniforms: {
-                    topColor: { value: new THREE.Color(Engine.city.skD) },
-                    bottomColor: { value: new THREE.Color(0xffffff) },
-                    offset: { value: 33 }, exponent: { value: 0.6 }
-                },
-                vertexShader: Shaders.skyVert, fragmentShader: Shaders.skyFrag,
-                side: THREE.BackSide
+            // Commit Instanced Meshes
+            instMeshes.forEach(imData => {
+                imData.mesh.count = imData.count;
+                imData.mesh.instanceMatrix.needsUpdate = true;
+                cityGroup.add(imData.mesh);
             });
-            skyMesh = new THREE.Mesh(skyG, skyM); scene.add(skyMesh);
+
+            // Particles
+            if(Env.city.weather === 'RAIN' || Env.city.weather === 'SNOW') buildParticles();
         }
 
-        function buildTree(x, z) {
-            const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1, 6), new THREE.MeshStandardMaterial({color:0x3a2a1a}));
-            tr.position.set(x, 3, z); tr.castShadow=true; cityGrp.add(tr);
+        function buildTree(x, y, z) {
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.2, 8), new THREE.MeshStandardMaterial({color:0x3a2a1a}));
+            trunk.position.set(x, y+4, z); trunk.castShadow = true; cityGroup.add(trunk);
             
-            const lvs = new THREE.Mesh(new THREE.IcosahedronGeometry(4, 1), new THREE.MeshStandardMaterial({color:0x1e5c2d, flatShading:true}));
-            lvs.position.set(x, 7, z); lvs.castShadow=true; cityGrp.add(lvs);
+            const leaves = new THREE.Mesh(new THREE.DodecahedronGeometry(5, 1), new THREE.MeshStandardMaterial({color: Env.city.id===1?0xffbbcc:0x1e5c2d})); // Cherry blossoms for Tokyo
+            leaves.position.set(x, y+10, z); leaves.castShadow = true; cityGroup.add(leaves);
             
-            Engine.ents.trees.push({ mesh: lvs, ox: x, oz: z, phase: Math.random()*Math.PI*2 });
+            Env.entities.trees.push({ mesh: leaves, ox: x, oy: y+10, oz: z, phase: Math.random()*Math.PI*2 });
         }
 
-        // -----------------------------------------------------------------------------------------
-        // 9. PLAYER RIG & INVERSE KINEMATICS SETUP
-        // -----------------------------------------------------------------------------------------
-        function buildPlayer() {
-            pGrp = new THREE.Group(); scene.add(pGrp);
+        function buildParticles() {
+            SysLog.print("INITIALIZING METEOROLOGICAL PARTICLE SYSTEM...");
+            const pCount = 15000;
+            const pGeo = new THREE.BufferGeometry();
+            const pPos = new Float32Array(pCount * 3);
+            for(let i=0; i<pCount*3; i+=3) {
+                pPos[i] = (Math.random()-0.5)*1000;
+                pPos[i+1] = Math.random()*500;
+                pPos[i+2] = (Math.random()-0.5)*1000;
+            }
+            pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
             
-            const matSkin = new THREE.MeshStandardMaterial({color: 0xffccaa, roughness:0.6});
-            const matSuit = new THREE.MeshStandardMaterial({color: 0x111111, roughness:0.9});
-            const matAcc = new THREE.MeshStandardMaterial({color: 0x00ffcc, emissive: 0x005544});
+            let pMat;
+            if(Env.city.weather === 'RAIN') {
+                pMat = new THREE.PointsMaterial({color:0xaaaaff, size:1.0, transparent:true, opacity:0.6});
+                particleSystem = { mesh: new THREE.Points(pGeo, pMat), type: 'rain', vel: -400 };
+            } else {
+                pMat = new THREE.PointsMaterial({color:0xffffff, size:2.0, transparent:true, opacity:0.8});
+                particleSystem = { mesh: new THREE.Points(pGeo, pMat), type: 'snow', vel: -50 };
+            }
+            scene.add(particleSystem.mesh);
+        }
 
-            // Rig Hierarchy
-            pBones.core = new THREE.Group(); pGrp.add(pBones.core);
+        // ==========================================
+        // 10. KINEMATIC RIGGING
+        // ==========================================
+        function buildPlayerRig() {
+            SysLog.print("CONSTRUCTING HIERARCHICAL SKELETAL MESH...");
             
-            // Torso (Dynamic scaling based on weight)
-            pBones.torso = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.7, 1.8, 16), matSuit);
-            pBones.torso.position.y = 2.5; pBones.torso.castShadow = true; pBones.core.add(pBones.torso);
+            const skin = new THREE.MeshStandardMaterial({color: 0xffccaa, roughness:0.5});
+            const suit = new THREE.MeshStandardMaterial({color: 0x111111, roughness:0.9});
+            const shoe = new THREE.MeshStandardMaterial({color: 0xdddddd, roughness:0.8});
+            const trim = new THREE.MeshStandardMaterial({color: 0x00ffcc, emissive: 0x00ffcc, emissiveIntensity:0.5});
+
+            skeleton.root = new THREE.Group();
+            playerGroup.add(skeleton.root);
+
+            // Pelvis / Core Pivot
+            skeleton.pelvis = new THREE.Group();
+            skeleton.pelvis.position.y = 2.0;
+            skeleton.root.add(skeleton.pelvis);
+
+            // Torso (This scales wildly)
+            skeleton.torso = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.7, 1.8, 16), suit);
+            skeleton.torso.position.y = 0.9; skeleton.torso.castShadow = true;
+            skeleton.pelvis.add(skeleton.torso);
             
-            pBones.head = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.8, 0.7), matSkin);
-            pBones.head.position.y = 1.4; pBones.head.castShadow = true; pBones.torso.add(pBones.head);
-            
-            // Limbs
-            const addLimb = (p, x, y, z) => {
-                const grp = new THREE.Group(); grp.position.set(x, y, z); p.add(grp);
-                const mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 1.4), matSkin);
-                mesh.position.y = -0.7; mesh.castShadow = true; grp.add(mesh);
-                return grp;
+            // Tech Spine
+            const spine = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.6, 0.3), trim);
+            spine.position.set(0, 0, -0.7); skeleton.torso.add(spine);
+
+            // Head
+            skeleton.neck = new THREE.Group();
+            skeleton.neck.position.y = 1.0;
+            skeleton.torso.add(skeleton.neck);
+            skeleton.head = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.8, 0.7), skin);
+            skeleton.head.position.y = 0.4; skeleton.head.castShadow = true;
+            skeleton.neck.add(skeleton.head);
+
+            // Arms
+            const buildArm = (isLeft) => {
+                const shoulder = new THREE.Group();
+                shoulder.position.set(isLeft ? -1.0 : 1.0, 0.8, 0);
+                skeleton.torso.add(shoulder);
+                
+                const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.18, 0.8), suit);
+                upperArm.position.y = -0.4; upperArm.castShadow = true;
+                shoulder.add(upperArm);
+                
+                const elbow = new THREE.Group();
+                elbow.position.y = -0.8;
+                shoulder.add(elbow);
+                
+                const lowerArm = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.15, 0.8), skin);
+                lowerArm.position.y = -0.4; lowerArm.castShadow = true;
+                elbow.add(lowerArm);
+                
+                const hand = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.1), skin);
+                hand.position.y = -0.9;
+                elbow.add(hand);
+
+                return { shoulder, elbow };
             };
+            skeleton.lArm = buildArm(true);
+            skeleton.rArm = buildArm(false);
 
-            pBones.lArm = addLimb(pBones.torso, -1.0, 0.7, 0);
-            pBones.rArm = addLimb(pBones.torso, 1.0, 0.7, 0);
-            pBones.lLeg = addLimb(pBones.core, -0.4, 1.6, 0);
-            pBones.rLeg = addLimb(pBones.core, 0.4, 1.6, 0);
+            // Legs
+            const buildLeg = (isLeft) => {
+                const hip = new THREE.Group();
+                hip.position.set(isLeft ? -0.4 : 0.4, 0, 0);
+                skeleton.pelvis.add(hip);
+                
+                const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.25, 1.0), suit);
+                thigh.position.y = -0.5; thigh.castShadow = true;
+                hip.add(thigh);
+                
+                const knee = new THREE.Group();
+                knee.position.y = -1.0;
+                hip.add(knee);
+                
+                const calf = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.18, 1.0), skin);
+                calf.position.y = -0.5; calf.castShadow = true;
+                knee.add(calf);
+                
+                const foot = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.5), shoe);
+                foot.position.set(0, -1.1, 0.1); foot.castShadow = true;
+                knee.add(foot);
 
-            // Tech nodes
-            const n1 = new THREE.Mesh(new THREE.SphereGeometry(0.2), matAcc); n1.position.set(0, 0.5, 0.8); pBones.torso.add(n1);
+                return { hip, knee };
+            };
+            skeleton.lLeg = buildLeg(true);
+            skeleton.rLeg = buildLeg(false);
 
-            pGrp.position.set(0, 0, 100); // Start position
-            camera.position.set(0, 5, -10);
-            pGrp.add(camera); // Attach camera directly to player local space initially
+            // Initial Pos
+            playerGroup.position.set(0, 10, 0); // Drop in
+            camera.position.set(0, 5, -15);
+            playerGroup.add(camera); // Attach camera to rig
         }
 
-        // -----------------------------------------------------------------------------------------
-        // 10. AI ENTITY SYSTEMS (Traffic & Humans)
-        // -----------------------------------------------------------------------------------------
-        function buildAI() {
-            const cGeo = new THREE.BoxGeometry(2.5, 1.5, 5);
-            const cMats = [new THREE.MeshStandardMaterial({color:0xff0000}), new THREE.MeshStandardMaterial({color:0x222222}), new THREE.MeshStandardMaterial({color:0xffffff}), new THREE.MeshStandardMaterial({color:0x0000ff})];
+        // ==========================================
+        // 11. ARTIFICIAL INTELLIGENCE (Traffic)
+        // ==========================================
+        function spawnAI() {
+            SysLog.print("INITIALIZING AI TRAFFIC NAVMESH...");
+            const cGeo = new THREE.BoxGeometry(2.8, 1.6, 5.5);
+            const cMats = [new THREE.MeshStandardMaterial({color:0xaa1111}), new THREE.MeshStandardMaterial({color:0x111111}), new THREE.MeshStandardMaterial({color:0xdddddd}), new THREE.MeshStandardMaterial({color:0x1133aa})];
             
-            for(let i=0; i<150; i++) {
-                const c = new THREE.Mesh(cGeo, cMats[i%4]);
-                c.position.y = 0.75; c.castShadow = true;
+            if(Env.city.id === 0) cMats.push(new THREE.MeshStandardMaterial({color:0xffcc00})); // NYC Taxis
+
+
+                        // --- MASSIVE FOOT TRAFFIC GENERATION ---
+            const pedCount = Math.floor(1000 * Env.city.traffic); // Cranked to 1000 for crowd chaos
+            const pGeo = new THREE.BoxGeometry(0.6, 1.8, 0.4);
+            const pMat = new THREE.MeshStandardMaterial({color: 0x444444});
+            
+            for(let i=0; i<pedCount; i++) {
+                const p = new THREE.Mesh(pGeo, pMat);
+                // Randomize clothes color
+                p.material = new THREE.MeshStandardMaterial({color: Math.random() * 0xffffff});
+                
+                const blockX = Math.floor((Math.random()*40)-20) * 150;
+                const blockZ = Math.floor((Math.random()*40)-20) * 150;
+                const sideOffset = (Math.random() > 0.5 ? 1 : -1) * 45; // Put them on sidewalks
+            
+                if(Math.random() > 0.5) {
+                    p.position.set(blockX + sideOffset, 0.9, (Math.random()*6000)-3000);
+                    p.userData = { dir: new THREE.Vector3(0,0, Math.random()>0.5?1:-1), speed: Math.random()*2 + 2 };
+                } else {
+                    p.position.set((Math.random()*6000)-3000, 0.9, blockZ + sideOffset);
+                    p.userData = { dir: new THREE.Vector3(Math.random()>0.5?1:-1,0,0), speed: Math.random()*2 + 2 };
+                }
+                
+                cityGroup.add(p);
+                Env.entities.peds.push(p);
+            }
+                        
+            const carCount = Math.floor(200 * Env.city.traffic);
+
+            for(let i=0; i<carCount; i++) {
+                const car = new THREE.Group();
+                const bdy = new THREE.Mesh(cGeo, cMats[i%cMats.length]);
+                bdy.position.y = 0.8; bdy.castShadow = true; car.add(bdy);
                 
                 // Lights
-                const hl = new THREE.Mesh(new THREE.PlaneGeometry(0.6,0.3), new THREE.MeshBasicMaterial({color:0xffffff})); hl.position.set(-0.8, 0.2, 2.51); c.add(hl);
-                const hl2 = hl.clone(); hl2.position.set(0.8, 0.2, 2.51); c.add(hl2);
-                const tl = new THREE.Mesh(new THREE.PlaneGeometry(0.6,0.3), new THREE.MeshBasicMaterial({color:0xff0000})); tl.position.set(-0.8, 0.2, -2.51); tl.rotation.y = Math.PI; c.add(tl);
-                const tl2 = tl.clone(); tl2.position.set(0.8, 0.2, -2.51); c.add(tl2);
+                const hl = new THREE.Mesh(new THREE.PlaneGeometry(0.6,0.3), new THREE.MeshBasicMaterial({color:0xffffff})); hl.position.set(-0.9, 0.8, 2.76); car.add(hl);
+                const hl2 = hl.clone(); hl2.position.set(0.9, 0.8, 2.76); car.add(hl2);
+                const tl = new THREE.Mesh(new THREE.PlaneGeometry(0.6,0.3), new THREE.MeshBasicMaterial({color:0xff0000})); tl.position.set(-0.9, 0.8, -2.76); tl.rotation.y = Math.PI; car.add(tl);
+                const tl2 = tl.clone(); tl2.position.set(0.9, 0.8, -2.76); car.add(tl2);
 
+                // Grid Lock Logic
                 const isV = Math.random()>0.5;
-                const gS = Math.floor((Math.random()*60)-30) * 120;
-                
-                let pGrp = new THREE.Group();
-                pGrp.add(c);
+                const gs = Math.floor((Math.random()*40)-20) * 150; // 150 is gridSize
+                const lane = Math.random()>0.5 ? 8 : -8; // Lane offset
+
                 if(isV) {
-                    pGrp.position.set(gS + 60 + (Math.random()>0.5?8:-8), 0, (Math.random()*6000)-3000);
-                    pGrp.userData = { d: new THREE.Vector3(0,0,1), s: Math.random()*20+20 };
+                    car.position.set(gs + 75 + lane, 0, (Math.random()*6000)-3000);
+                    car.userData = { dir: new THREE.Vector3(0,0, lane>0?1:-1), speed: Math.random()*20+20 };
+                    if(lane < 0) car.rotation.y = Math.PI;
                 } else {
-                    pGrp.position.set((Math.random()*6000)-3000, 0, gS + 60 + (Math.random()>0.5?8:-8));
-                    pGrp.rotation.y = Math.PI/2;
-                    pGrp.userData = { d: new THREE.Vector3(1,0,0), s: Math.random()*20+20 };
+                    car.position.set((Math.random()*6000)-3000, 0, gs + 75 + lane);
+                    car.rotation.y = lane>0 ? Math.PI/2 : -Math.PI/2;
+                    car.userData = { dir: new THREE.Vector3(lane>0?1:-1,0,0), speed: Math.random()*20+20 };
                 }
-                cityGrp.add(pGrp); Engine.ents.cars.push(pGrp);
+                
+                // Adjust Y to terrain
+                if(Env.city.layout.includes('hill')) {
+                    car.position.y = NoiseGen.fbm(car.position.x, car.position.z, 4, 0.5, 0.001) * Env.city.varHeight;
+                }
+
+                cityGroup.add(car);
+                Env.entities.cars.push(car);
             }
         }
 
-        // -----------------------------------------------------------------------------------------
-        // 11. INPUT HANDLING
-        // -----------------------------------------------------------------------------------------
+        // ==========================================
+        // 12. INPUT EVENT LISTENERS
+        // ==========================================
         window.addEventListener('keydown', e => {
-            if(e.code==='KeyW'||e.code==='ArrowUp') Engine.keys.w=1;
-            if(e.code==='KeyS'||e.code==='ArrowDown') Engine.keys.s=1;
-            if(e.code==='KeyA'||e.code==='ArrowLeft') Engine.keys.a=1;
-            if(e.code==='KeyD'||e.code==='ArrowRight') Engine.keys.d=1;
-            if(e.code==='ShiftLeft'||e.code==='ShiftRight') Engine.keys.shift=1;
+            if(e.code==='KeyW'||e.code==='ArrowUp') Env.input.w=1;
+            if(e.code==='KeyS'||e.code==='ArrowDown') Env.input.s=1;
+            if(e.code==='KeyA'||e.code==='ArrowLeft') Env.input.a=1;
+            if(e.code==='KeyD'||e.code==='ArrowRight') Env.input.d=1;
+            if(e.code==='ShiftLeft'||e.code==='ShiftRight') Env.input.shift=1;
+            if(e.code==='Space' && Env.isGrounded) Env.input.space=1;
         });
         window.addEventListener('keyup', e => {
-            if(e.code==='KeyW'||e.code==='ArrowUp') Engine.keys.w=0;
-            if(e.code==='KeyS'||e.code==='ArrowDown') Engine.keys.s=0;
-            if(e.code==='KeyA'||e.code==='ArrowLeft') Engine.keys.a=0;
-            if(e.code==='KeyD'||e.code==='ArrowRight') Engine.keys.d=0;
-            if(e.code==='ShiftLeft'||e.code==='ShiftRight') Engine.keys.shift=0;
+            if(e.code==='KeyW'||e.code==='ArrowUp') Env.input.w=0;
+            if(e.code==='KeyS'||e.code==='ArrowDown') Env.input.s=0;
+            if(e.code==='KeyA'||e.code==='ArrowLeft') Env.input.a=0;
+            if(e.code==='KeyD'||e.code==='ArrowRight') Env.input.d=0;
+            if(e.code==='ShiftLeft'||e.code==='ShiftRight') Env.input.shift=0;
+            if(e.code==='Space') Env.input.space=0;
         });
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // -----------------------------------------------------------------------------------------
-        // 12. MASTER PHYSICS & KINEMATICS ENGINE
-        // -----------------------------------------------------------------------------------------
-        let ikClock = 0;
-        let ecgData = Array(100).fill(25);
-        let ecgCtx = document.getElementById('ecg-canvas').getContext('2d');
-        document.getElementById('ecg-canvas').width = 300; document.getElementById('ecg-canvas').height = 50;
+        // ==========================================
+        // 13. MASTER PHYSICS & KINEMATICS ENGINE
+        // ==========================================
+        let animPhase = 0;
+        
+        function checkCollision(nx, nz) {
+            // Simple AABB vs Point collision
+            for(let i=0; i<Env.colliders.length; i++) {
+                const c = Env.colliders[i];
+                if(nx > c.minX && nx < c.maxX && nz > c.minZ && nz < c.maxZ) return true;
+            }
+            return false;
+        }
 
-        function updatePhysics(dt) {
-            // Complex capability scaling based on mass interpolation
-            const wRatio = (350.0 - Engine.wgt) / (350.0 - Engine.wMin); // 0 (Fat) to 1.0 (Thin)
+        function stepPhysics(dt) {
+            // Dynamics Calculations based on Mass
+            const wR = (Env.massMax - Env.mass) / (Env.massMax - Env.massMin); // 0 (Heavy) -> 1.0 (Thin)
             
-            const maxSpd = 10.0 + (wRatio * 35.0); // 10mph -> 45mph (Superhero speeds when thin)
-            const acc = 15.0 + (wRatio * 30.0);
-            const trn = 2.0 + (wRatio * 2.5);
-            
-            let isMoving = false;
+            // Capabilities
+            const maxV = 12.0 + (wR * 40.0); // 12mph -> 52mph
+            const accel = 15.0 + (wR * 35.0);
+            const turnR = 2.0 + (wR * 3.0);
+            const jumpF = 15.0 + (wR * 20.0);
 
             // Longitudinal Input
-            if(Engine.keys.w) {
-                Engine.spd += acc * dt * (Engine.keys.shift ? 1.5 : 1.0);
-                if(Engine.spd > maxSpd * (Engine.keys.shift ? 1.5 : 1.0)) Engine.spd = maxSpd * (Engine.keys.shift ? 1.5 : 1.0);
-                isMoving = true;
-            } else if(Engine.keys.s) {
-                Engine.spd -= acc * 2.0 * dt; // Hard brake
-                if(Engine.spd < -maxSpd*0.3) Engine.spd = -maxSpd*0.3;
-                isMoving = true;
+            if(Env.input.w) {
+                Env.velocity += accel * dt * (Env.input.shift ? 1.5 : 1.0);
+                const cap = maxV * (Env.input.shift ? 1.4 : 1.0);
+                if(Env.velocity > cap) Env.velocity = cap;
+            } else if(Env.input.s) {
+                Env.velocity -= accel * 2.0 * dt; // Hard Braking
+                if(Env.velocity < -maxV*0.4) Env.velocity = -maxV*0.4;
             } else {
-                // Drag/Friction
-                if(Engine.spd > 0) { Engine.spd -= 20 * dt; if(Engine.spd < 0) Engine.spd = 0; }
-                if(Engine.spd < 0) { Engine.spd += 20 * dt; if(Engine.spd > 0) Engine.spd = 0; }
+                // Drag
+                if(Env.velocity > 0) { Env.velocity -= 25 * dt; if(Env.velocity < 0) Env.velocity = 0; }
+                if(Env.velocity < 0) { Env.velocity += 25 * dt; if(Env.velocity > 0) Env.velocity = 0; }
             }
 
             // Lateral Input
-            if(Engine.keys.a) pGrp.rotation.y += trn * dt;
-            if(Engine.keys.d) pGrp.rotation.y -= trn * dt;
+            if(Env.input.a) playerGroup.rotation.y += turnR * dt;
+            if(Env.input.d) playerGroup.rotation.y -= turnR * dt;
 
-            // Translation Integration (Convert arbitrary units to approximate real-world)
-            const moveZ = Engine.spd * dt;
-            pGrp.translateZ(moveZ);
-
-            // Bounding constraints (3000m map)
-            if(pGrp.position.x > 3000) pGrp.position.x = -3000;
-            if(pGrp.position.x < -3000) pGrp.position.x = 3000;
-            if(pGrp.position.z > 3000) pGrp.position.z = -3000;
-            if(pGrp.position.z < -3000) pGrp.position.z = 3000;
-
-            // Physiological Simulation & Game Loop Mechanics
-            if(Math.abs(moveZ) > 0.01) {
-                Engine.dist += Math.abs(moveZ) / 1609.34; // meters to miles approx
-                
-                // HR Simulation
-                Engine.hr += ( (120 + (Math.abs(Engine.spd)*2)) - Engine.hr ) * dt * 0.5;
-                if(Engine.keys.shift) Engine.hr += 10 * dt;
-                
-                // Thermodynamics (Calorie burn) - Heavier burns faster, faster burns faster
-                const cal = (Engine.wgt * 0.001) * Math.abs(Engine.spd) * dt;
-                Engine.cals += cal;
-                
-                // Mass reduction (3500 cals = 1lb, accelerated 500x for gameplay)
-                Engine.wgt -= (cal / 3500) * 1000;
-                if(Engine.wgt < Engine.wMin) Engine.wgt = Engine.wMin;
-
-                // Procedural footsteps
-                Engine.sfx.footTimer += dt * Math.abs(Engine.spd);
-                if(Engine.sfx.footTimer > 5.0) { Engine.sfx.playNoise('step'); Engine.sfx.footTimer = 0; }
-            } else {
-                Engine.hr += ( 75 - Engine.hr ) * dt * 0.2; // Recovery
+            // Vertical / Jump Logic
+            if(Env.input.space && Env.isGrounded) {
+                Env.yVel = jumpF;
+                Env.isGrounded = false;
+                Env.input.space = 0;
             }
 
-            // Visual Mass Morphing (Avoids self-clipping)
-            const sF = 1.0 + (1.5 * (1.0 - wRatio)); // Scale Factor: 2.5x to 1.0x
-            pBones.torso.scale.set(sF, 1, sF);
-            pBones.lArm.position.x = -0.5 - (0.5 * sF);
-            pBones.rArm.position.x = 0.5 + (0.5 * sF);
+            // Apply Gravity
+            Env.yVel -= Env.gravity * 3.0 * dt; 
+            
+            // Calculate Topography Height at current position
+            const px = playerGroup.position.x;
+            const pz = playerGroup.position.z;
+            let groundY = 0;
+            if(Env.city.layout.includes('hill') || Env.city.layout.includes('coast')) {
+                groundY = NoiseGen.fbm(px, pz, 4, 0.5, 0.001) * Env.city.varHeight;
+            }
+            
+            playerGroup.position.y += Env.yVel * dt;
 
-            // Procedural Inverse Kinematics (Running Animation)
-            if(Math.abs(Engine.spd) > 1.0) {
-                const sFq = Engine.spd * 0.4;
-                ikClock += dt * sFq;
-                
-                pBones.lLeg.rotation.x = Math.sin(ikClock) * 1.2;
-                pBones.rLeg.rotation.x = Math.sin(ikClock + Math.PI) * 1.2;
-                pBones.lArm.rotation.x = Math.sin(ikClock + Math.PI) * 1.2;
-                pBones.rArm.rotation.x = Math.sin(ikClock) * 1.2;
-                
-                pBones.core.rotation.x = 0.2; // Lean
-                pBones.core.position.y = Math.abs(Math.sin(ikClock * 2)) * 0.2;
-                pBones.torso.rotation.y = Math.sin(ikClock)*0.2; // Twist
-            } else {
-                pBones.lLeg.rotation.x *= 0.8; pBones.rLeg.rotation.x *= 0.8;
-                pBones.lArm.rotation.x *= 0.8; pBones.rArm.rotation.x *= 0.8;
-                pBones.core.rotation.x *= 0.8; pBones.core.position.y *= 0.8; pBones.torso.rotation.y *= 0.8;
+            // Ground Collision
+            if(playerGroup.position.y <= groundY) {
+                playerGroup.position.y = groundY;
+                Env.yVel = 0;
+                Env.isGrounded = true;
             }
 
-            updateECG(dt);
+            // Calculate Translation
+            const moveZ = Env.velocity * dt;
+            
+            // Collision Prediction
+            const forward = new THREE.Vector3(0,0,1).applyQuaternion(playerGroup.quaternion);
+            const nextX = playerGroup.position.x + forward.x * moveZ;
+            const nextZ = playerGroup.position.z + forward.z * moveZ;
+
+            if(!checkCollision(nextX, nextZ)) {
+                playerGroup.position.x = nextX;
+                playerGroup.position.z = nextZ;
+            } else {
+                Env.velocity *= 0.1; // Bonk
+            }
+
+            // Map Wrapping (Endless)
+            if(playerGroup.position.x > 3000) playerGroup.position.x = -3000;
+            if(playerGroup.position.x < -3000) playerGroup.position.x = 3000;
+            if(playerGroup.position.z > 3000) playerGroup.position.z = -3000;
+            if(playerGroup.position.z < -3000) playerGroup.position.z = 3000;
+
+            // Physiology update
+            if(Math.abs(moveZ) > 0.05) {
+                Env.distTotal += Math.abs(moveZ) / 1609.0;
+                
+                // HR
+                Env.hr += ( (110 + (Math.abs(Env.velocity)*1.8)) - Env.hr ) * dt * 0.8;
+                if(Env.input.shift) Env.hr += 15 * dt;
+
+                // Calorie / Thermodynamics
+                const cBurn = (Env.mass * 0.0012) * Math.abs(Env.velocity) * dt;
+                if(!Env.isGrounded) Env.calsBurned += cBurn * 2.0; // Jumping burns more
+                Env.calsBurned += cBurn;
+
+                Env.mass -= (cBurn / 3500) * 1500; // Accelerated loss for game feel
+                if(Env.mass < Env.massMin) Env.mass = Env.massMin;
+
+                // Audio
+                if(Env.audio && Env.isGrounded) {
+                    Env.audio.footTimer += dt * Math.abs(Env.velocity);
+                    if(Env.audio.footTimer > 4.5) {
+                        Env.audio.playFootstep(wR);
+                        Env.audio.footTimer = 0;
+                    }
+                    Env.audio.updateWind(Math.abs(Env.velocity));
+                }
+
+            } else {
+                Env.hr += (70 - Env.hr) * dt * 0.3; // Recovery
+                if(Env.audio) Env.audio.updateWind(0);
+            }
+
+            // Visual Mass Morphing (Rig updates)
+            const sf = 1.0 + (1.6 * (1.0 - wR)); // Scale
+            skeleton.torso.scale.set(sf, 1, sf);
+            skeleton.lArm.shoulder.position.x = -0.5 - (0.5 * sf);
+            skeleton.rArm.shoulder.position.x = 0.5 + (0.5 * sf);
+            skeleton.lLeg.hip.position.x = -0.1 - (0.3 * sf);
+            skeleton.rLeg.hip.position.x = 0.1 + (0.3 * sf);
+
+            // Inverse Kinematics Animation System
+            if(Math.abs(Env.velocity) > 0.5 && Env.isGrounded) {
+                const fq = Env.velocity * 0.3;
+                animPhase += dt * fq;
+
+                // Legs
+                skeleton.lLeg.hip.rotation.x = Math.sin(animPhase) * 1.0;
+                skeleton.lLeg.knee.rotation.x = Math.max(0, Math.sin(animPhase - Math.PI/2) * 1.5);
+                
+                skeleton.rLeg.hip.rotation.x = Math.sin(animPhase + Math.PI) * 1.0;
+                skeleton.rLeg.knee.rotation.x = Math.max(0, Math.sin(animPhase + Math.PI/2) * 1.5);
+
+                // Arms
+                skeleton.lArm.shoulder.rotation.x = Math.sin(animPhase + Math.PI) * 1.0;
+                skeleton.lArm.elbow.rotation.x = -0.5 + Math.sin(animPhase + Math.PI)*0.5;
+                
+                skeleton.rArm.shoulder.rotation.x = Math.sin(animPhase) * 1.0;
+                skeleton.rArm.elbow.rotation.x = -0.5 + Math.sin(animPhase)*0.5;
+
+                // Core
+                skeleton.pelvis.rotation.y = Math.sin(animPhase) * 0.2;
+                skeleton.torso.rotation.y = Math.sin(animPhase + Math.PI) * 0.2;
+                skeleton.root.rotation.x = 0.15 + (Env.velocity * 0.005); // Lean
+                
+                // Bobbing
+                skeleton.root.position.y = Math.abs(Math.sin(animPhase * 2)) * 0.2;
+                
+            } else if (!Env.isGrounded) {
+                // Mid-air pose
+                skeleton.lLeg.hip.rotation.x = -0.5; skeleton.lLeg.knee.rotation.x = 1.0;
+                skeleton.rLeg.hip.rotation.x = 0.2; skeleton.rLeg.knee.rotation.x = 0.1;
+                skeleton.lArm.shoulder.rotation.x = -1.0; skeleton.rArm.shoulder.rotation.x = 1.0;
+                skeleton.root.rotation.x = 0.3;
+            } else {
+                // Idle Blend
+                const blend = 0.1;
+                skeleton.lLeg.hip.rotation.x += (0 - skeleton.lLeg.hip.rotation.x)*blend;
+                skeleton.lLeg.knee.rotation.x += (0 - skeleton.lLeg.knee.rotation.x)*blend;
+                skeleton.rLeg.hip.rotation.x += (0 - skeleton.rLeg.hip.rotation.x)*blend;
+                skeleton.rLeg.knee.rotation.x += (0 - skeleton.rLeg.knee.rotation.x)*blend;
+                skeleton.lArm.shoulder.rotation.x += (0 - skeleton.lArm.shoulder.rotation.x)*blend;
+                skeleton.lArm.elbow.rotation.x += (0 - skeleton.lArm.elbow.rotation.x)*blend;
+                skeleton.rArm.shoulder.rotation.x += (0 - skeleton.rArm.shoulder.rotation.x)*blend;
+                skeleton.rArm.elbow.rotation.x += (0 - skeleton.rArm.elbow.rotation.x)*blend;
+                skeleton.pelvis.rotation.y += (0 - skeleton.pelvis.rotation.y)*blend;
+                skeleton.torso.rotation.y += (0 - skeleton.torso.rotation.y)*blend;
+                skeleton.root.rotation.x += (0 - skeleton.root.rotation.x)*blend;
+                skeleton.root.position.y += (0 - skeleton.root.position.y)*blend;
+            }
         }
 
-        function updateECG(dt) {
-            ecgData.shift();
-            // Generate ECG waveform based on HR
-            const beatFreq = 60 / Engine.hr;
-            const t = (Date.now() / 1000) % beatFreq;
-            let val = 25;
-            if(t < 0.05) val = 10; // Q
-            else if(t < 0.1) val = 45; // R
-            else if(t < 0.15) val = 15; // S
-            else if(t > 0.3 && t < 0.4) val = 30; // T
-            else val = 25 + (Math.random()*2-1); // baseline noise
-            
-            ecgData.push(val);
+        // ==========================================
+        // 14. ENVIRONMENT & PARTICLE UPDATE
+        // ==========================================
+        function stepEnvironment(dt) {
+            // Day Cycle
+            Env.timeOfDay += dt * 0.05; // 1s = 0.05hrs
+            if(Env.timeOfDay >= 24) Env.timeOfDay = 0;
 
-            ecgCtx.fillStyle = '#000'; ecgCtx.fillRect(0,0,300,50);
-            ecgCtx.strokeStyle = '#0f0'; ecgCtx.lineWidth = 2; ecgCtx.beginPath();
-            for(let i=0; i<100; i++) {
-                ecgCtx.lineTo(i*3, 50 - ecgData[i]);
-            }
-            ecgCtx.stroke();
-            
-            // Heartbeat glow
-            if(t < 0.1) document.getElementById('v-hr').style.textShadow = '0 0 20px #f0f';
-            else document.getElementById('v-hr').style.textShadow = 'none';
-        }
+            const sunAngle = (Env.timeOfDay / 24) * Math.PI*2 - Math.PI/2;
+            sunLight.position.x = Math.cos(sunAngle) * 4000;
+            sunLight.position.y = Math.sin(sunAngle) * 4000;
 
-        // -----------------------------------------------------------------------------------------
-        // 13. ENVIRONMENT & AI LOOP
-        // -----------------------------------------------------------------------------------------
-        function updateEnv(dt) {
-            // Day/Night & Lighting
-            Engine.time += dt * 0.02; // 1s = 0.02 hrs
-            if(Engine.time >= 24) Engine.time = 0;
-            
-            const nA = (Engine.time / 24) * Math.PI*2 - Math.PI/2;
-            sun.position.x = Math.cos(nA) * 2000;
-            sun.position.y = Math.sin(nA) * 2000;
-            
-            const tR = Math.max(0, Math.sin(nA)); // 0 = night, 1 = high noon
-            const cD = new THREE.Color(Engine.city.skD);
-            const cN = new THREE.Color(Engine.city.skN);
-            scene.background = cN.clone().lerp(cD, tR);
+            const timeRatio = Math.max(0, Math.sin(sunAngle));
+            const cDay = new THREE.Color(Env.city.skyDay);
+            const cNight = new THREE.Color(Env.city.skyNight);
+            scene.background = cNight.clone().lerp(cDay, timeRatio);
             scene.fog.color = scene.background;
             
-            if(skyMesh) skyMesh.material.uniforms.topColor.value = scene.background;
-            if(Engine.mats.water) Engine.mats.water.uniforms.time.value += dt;
+            if(skySphere) skySphere.material.uniforms.topColor.value = scene.background;
+            if(Env.mats.water) Env.mats.water.uniforms.time.value += dt;
+            if(cloudPlane) cloudPlane.material.uniforms.time.value += dt;
 
             // AI Traffic
-            Engine.ents.cars.forEach(c => {
-                c.position.addScaledVector(c.userData.d, c.userData.s * dt);
-                if(c.position.x > 3000) c.position.x = -3000;
-                if(c.position.x < -3000) c.position.x = 3000;
-                if(c.position.z > 3000) c.position.z = -3000;
-                if(c.position.z < -3000) c.position.z = 3000;
+            Env.entities.cars.forEach(car => {
+                car.position.addScaledVector(car.userData.dir, car.userData.speed * dt);
                 
-                // Sound proximity check
-                const d = c.position.distanceTo(pGrp.position);
-                if(d < 100 && Math.random() < 0.01) Engine.sfx.playNoise('car');
+                // Topography height adjust
+                if(Env.city.layout.includes('hill')) {
+                    car.position.y = NoiseGen.fbm(car.position.x, car.position.z, 4, 0.5, 0.001) * Env.city.varHeight;
+                }
+
+                // Wrap
+                if(car.position.x > 3000) car.position.x = -3000;
+                if(car.position.x < -3000) car.position.x = 3000;
+                if(car.position.z > 3000) car.position.z = -3000;
+                if(car.position.z < -3000) car.position.z = 3000;
+
+                // Audio
+                if(Env.audio) {
+                    const dist = car.position.distanceTo(playerGroup.position);
+                    if(dist < 150 && Math.random() < 0.05) Env.audio.playEngine(dist);
+                }
             });
 
-            // Tree wind sway
-            Engine.ents.trees.forEach(t => {
-                t.phase += dt * 2.0;
-                t.mesh.position.x = t.ox + Math.sin(t.phase)*0.5;
+            // Trees
+            Env.entities.trees.forEach(t => {
+                t.phase += dt * (Env.city.wind * 0.5);
+                t.mesh.position.x = t.ox + Math.sin(t.phase) * (Env.city.wind * 0.05);
             });
+
+            // Particles (Rain/Snow)
+            if(particleSystem) {
+                const positions = particleSystem.mesh.geometry.attributes.position.array;
+                const pVel = particleSystem.vel * dt;
+                for(let i=1; i<positions.length; i+=3) {
+                    positions[i] += pVel;
+                    // Wrap around player
+                    if(positions[i] < playerGroup.position.y) {
+                        positions[i] = playerGroup.position.y + 500;
+                        positions[i-1] = playerGroup.position.x + (Math.random()-0.5)*1000;
+                        positions[i+1] = playerGroup.position.z + (Math.random()-0.5)*1000;
+                    }
+                }
+                particleSystem.mesh.geometry.attributes.position.needsUpdate = true;
+                
+                // Follow player loosely
+                particleSystem.mesh.position.x = playerGroup.position.x * 0.9;
+                particleSystem.mesh.position.z = playerGroup.position.z * 0.9;
+            }
         }
 
-        // -----------------------------------------------------------------------------------------
-        // 14. CAMERA & HUD SYSTEMS
-        // -----------------------------------------------------------------------------------------
-        function updateCam() {
-            // Un-parent camera to allow smooth kinematic spring follow
-            if(camera.parent === pGrp) scene.attach(camera);
+        // ==========================================
+        // 15. CAMERA & HUD SYSTEMS
+        // ==========================================
+        function updateCamera() {
+            if(camera.parent === playerGroup) scene.attach(camera); // Detach for smoothing
 
-            const rOff = new THREE.Vector3(0, 6, -12); // High back chase angle
-            const tPos = rOff.applyMatrix4(pGrp.matrixWorld);
+            const rOff = new THREE.Vector3(0, 6, -14);
+            const targetPos = rOff.applyMatrix4(playerGroup.matrixWorld);
             
-            // Dynamic FOV based on speed
-            camera.fov = 70 + (Math.abs(Engine.spd) * 0.5);
+            // Dynamic FOV speed warp
+            const targetFov = 75 + (Math.abs(Env.velocity) * 0.6);
+            camera.fov += (targetFov - camera.fov) * 0.1;
             camera.updateProjectionMatrix();
 
-            camera.position.lerp(tPos, 0.15); // Spring stiffness
+            camera.position.lerp(targetPos, 0.2); // Spring logic
             
-            const lPos = pGrp.position.clone(); lPos.y += 2.5;
-            camera.lookAt(lPos);
+            const lookTarget = playerGroup.position.clone();
+            lookTarget.y += 3.0; // Look at head
+            camera.lookAt(lookTarget);
         }
 
-        function updateStaticHUD() {
-            document.getElementById('hud-city').innerText = Engine.city.n.toUpperCase();
-            document.getElementById('v-weather').innerText = Engine.city.w;
-            document.getElementById('v-temp').innerText = Engine.city.t + "°F";
+        // --- GRAPH CANVAS LOGIC ---
+        const ecgCtx = document.getElementById('ecg-canvas').getContext('2d');
+        let ecgData = new Array(100).fill(30);
+        const perfCtx = document.getElementById('perf-canvas').getContext('2d');
+        let perfData = new Array(100).fill(10);
+        let fpsFrames = 0; let lastFpsTime = performance.now(); let currentFps = 60;
+
+        function updateHUD() {
+            document.getElementById('val-mass').innerText = Env.mass.toFixed(2);
+            document.getElementById('val-vel').innerText = Math.abs(Env.velocity).toFixed(1);
+            document.getElementById('val-bpm').innerText = Math.floor(Env.hr);
+            document.getElementById('val-dst').innerText = Env.distTotal.toFixed(2);
+            document.getElementById('val-cal').innerText = Math.floor(Env.calsBurned);
+
+            // Progress Bar
+            const tLoss = Env.massMax - Env.massMin;
+            const cLoss = Env.massMax - Env.mass;
+            document.getElementById('prog-fill').style.width = ((cLoss/tLoss)*100) + '%';
+
+            // Time String
+            const hrs = Math.floor(Env.timeOfDay).toString().padStart(2,'0');
+            const mns = Math.floor((Env.timeOfDay%1)*60).toString().padStart(2,'0');
+            
+            // Meta Update
+            document.getElementById('hud-loc-meta').innerText = `LAT: ${Env.city.lat} | LNG: ${Env.city.lng} | SYS_TIME: ${hrs}:${mns}`;
+            
+            // Env Update (Dynamic elevation)
+            document.getElementById('env-elv').innerText = Math.floor(playerGroup.position.y) + " M";
+            document.getElementById('env-wnd').innerText = (Env.city.wind + (Math.sin(Date.now()*0.001)*2)).toFixed(1) + " M/S";
+
+            // Draw ECG Graph
+            ecgData.shift();
+            const beatFreq = 60 / Env.hr;
+            const t = (Date.now() / 1000) % beatFreq;
+            let val = 30;
+            if(t < 0.05) val = 15; // Q
+            else if(t < 0.1) val = 55; // R
+            else if(t < 0.15) val = 20; // S
+            else if(t > 0.3 && t < 0.4) val = 35; // T
+            else val = 30 + (Math.random()*4-2); // Noise
+            ecgData.push(val);
+
+            ecgCtx.clearRect(0,0, ecgCtx.canvas.width, ecgCtx.canvas.height);
+            ecgCtx.strokeStyle = '#ff00ff'; ecgCtx.lineWidth = 2;
+            ecgCtx.beginPath();
+            const ecgW = ecgCtx.canvas.width; const ecgH = ecgCtx.canvas.height;
+            for(let i=0; i<100; i++) ecgCtx.lineTo((i/100)*ecgW, ecgH - (ecgData[i]/60)*ecgH);
+            ecgCtx.stroke();
+            
+            if(t < 0.1) document.getElementById('val-bpm').style.textShadow = '0 0 25px #f0f';
+            else document.getElementById('val-bpm').style.textShadow = '0 0 10px rgba(255,0,255,0.4)';
+
+            // Draw Perf Graph (FPS & Velocity)
+            fpsFrames++;
+            const now = performance.now();
+            if(now - lastFpsTime > 1000) { currentFps = fpsFrames; fpsFrames = 0; lastFpsTime = now; }
+            perfData.shift();
+            perfData.push(currentFps);
+
+            perfCtx.clearRect(0,0, perfCtx.canvas.width, perfCtx.canvas.height);
+            perfCtx.strokeStyle = '#00ffcc'; perfCtx.lineWidth = 1;
+            perfCtx.beginPath();
+            const pW = perfCtx.canvas.width; const pH = perfCtx.canvas.height;
+            for(let i=0; i<100; i++) perfCtx.lineTo((i/100)*pW, pH - (perfData[i]/120)*pH);
+            perfCtx.stroke();
+            
+            // Draw Minimap
+            drawMinimap();
         }
 
         const mapCtx = document.getElementById('map-canvas').getContext('2d');
-        function updateDynamicHUD() {
-            document.getElementById('v-weight').innerText = Engine.wgt.toFixed(2);
-            document.getElementById('v-speed').innerText = Math.abs(Engine.spd).toFixed(1);
-            document.getElementById('v-hr').innerText = Math.floor(Engine.hr);
-            document.getElementById('v-dist').innerText = Engine.dist.toFixed(2);
-            document.getElementById('v-cals').innerText = Math.floor(Engine.cals);
-
-            // Progress Bar
-            const tLoss = 350.0 - Engine.wMin;
-            const cLoss = 350.0 - Engine.wgt;
-            document.getElementById('bar-fill').style.width = ((cLoss/tLoss)*100) + '%';
-
-            // Time & Meta
-            const hrs = Math.floor(Engine.time).toString().padStart(2,'0');
-            const mns = Math.floor((Engine.time%1)*60).toString().padStart(2,'0');
-            document.getElementById('hud-meta').innerText = `LAT: ${Engine.city.lat} | LNG: ${Engine.city.lng} | SYS_TIME: ${hrs}:${mns}`;
-
-            // Minimap rendering
-            mapCtx.clearRect(0,0,250,250);
+        function drawMinimap() {
+            const size = mapCtx.canvas.width; // 300
+            mapCtx.clearRect(0,0,size,size);
             mapCtx.save();
-            mapCtx.translate(125, 125);
-            mapCtx.rotate(-pGrp.rotation.y); // Rotate map, keep player pointing up
+            mapCtx.translate(size/2, size/2);
+            mapCtx.rotate(-playerGroup.rotation.y); // Heading up
             
-            // Draw grid dots relative to player
-            const pX = pGrp.position.x; const pZ = pGrp.position.z;
-            const mScale = 0.1; // Zoom
-            
-            mapCtx.fillStyle = 'rgba(0,255,204,0.5)';
-            for(let x=-1000; x<=1000; x+=120) {
-                for(let z=-1000; z<=1000; z+=120) {
-                    const sX = Math.round(pX/120)*120;
-                    const sZ = Math.round(pZ/120)*120;
-                    const dX = (sX + x - pX) * mScale;
-                    const dY = (sZ + z - pZ) * mScale;
-                    
-                    if(Math.abs(dX)<125 && Math.abs(dY)<125) {
-                        mapCtx.fillRect(dX, dY, 2, 2);
-                    }
+            const px = playerGroup.position.x;
+            const pz = playerGroup.position.z;
+            const zoom = 0.08; 
+
+            // Draw Buildings (AABB projection)
+            mapCtx.fillStyle = 'rgba(0, 255, 204, 0.3)';
+            mapCtx.strokeStyle = 'rgba(0, 255, 204, 0.8)';
+            mapCtx.lineWidth = 1;
+
+            // To save performance, only draw colliders near player
+            for(let i=0; i<Env.colliders.length; i++) {
+                const c = Env.colliders[i];
+                const cx = ((c.minX + c.maxX)/2 - px) * zoom;
+                const cz = ((c.minZ + c.maxZ)/2 - pz) * zoom;
+                
+                if(Math.abs(cx) < size/2 && Math.abs(cz) < size/2) {
+                    const w = (c.maxX - c.minX) * zoom;
+                    const h = (c.maxZ - c.minZ) * zoom;
+                    mapCtx.fillRect(cx - w/2, cz - h/2, w, h);
+                    mapCtx.strokeRect(cx - w/2, cz - h/2, w, h);
                 }
             }
-            
-            // Draw Cars on map
-            mapCtx.fillStyle = '#ff0000';
-            Engine.ents.cars.forEach(c => {
-                const cX = (c.position.x - pX) * mScale;
-                const cY = (c.position.z - pZ) * mScale;
-                if(Math.abs(cX)<125 && Math.abs(cY)<125) mapCtx.fillRect(cX, cY, 4, 4);
-            });
-            
+
+            // Draw Cars
+            mapCtx.fillStyle = '#ff0055';
+            for(let i=0; i<Env.entities.cars.length; i++) {
+                const car = Env.entities.cars[i];
+                const cx = (car.position.x - px) * zoom;
+                const cz = (car.position.z - pz) * zoom;
+                if(Math.abs(cx) < size/2 && Math.abs(cz) < size/2) {
+                    mapCtx.fillRect(cx-2, cz-2, 4, 4);
+                }
+            }
+
             mapCtx.restore();
         }
 
-        // -----------------------------------------------------------------------------------------
-        // 15. MAIN EXECUTION LOOP
-        // -----------------------------------------------------------------------------------------
-        function animate() {
-            if(!Engine.state) return;
-            requestAnimationFrame(animate);
+        // ==========================================
+        // 16. MAIN MASTER LOOP
+        // ==========================================
+        function animateLoop() {
+            if(!Env.active) return;
+            requestAnimationFrame(animateLoop);
             
-            const dt = Math.min(clock.getDelta(), 0.05); // Frame capping
+            const dt = Math.min(clock.getDelta(), 0.05); // Cap to 20fps logic minimum
             
-            updatePhysics(dt);
-            updateEnv(dt);
-            updateCam();
-            updateDynamicHUD();
+            stepPhysics(dt);
+            stepEnvironment(dt);
+            updateCamera();
+            updateHUD();
 
             renderer.render(scene, camera);
         }
 
-        // INIT BOOT SEQUENCE ON LOAD
-        window.onload = bootSequence;
+        // ==========================================
+        // 17. INITIALIZATION CONTROLLER
+        // ==========================================
+        function startBoot() {
+            let prog = 0;
+            const iv = setInterval(() => {
+                prog += Math.random() * 8;
+                if(prog > 100) prog = 100;
+                SysLog.print(`ALLOCATING MEMORY BLOCKS... [${prog.toFixed(1)}%]`);
+                
+                if(prog === 100) {
+                    clearInterval(iv);
+                    SysLog.print("SYSTEM KERNEL ONLINE. AWAITING SECTOR INPUT.");
+                    setTimeout(() => {
+                        document.getElementById('boot-seq').style.display = 'none';
+                        document.getElementById('main-menu').style.display = 'flex';
+                        renderMenu();
+                    }, 1500);
+                }
+            }, 100);
+        }
+
+        function renderMenu() {
+            const grid = document.getElementById('city-selector-grid');
+            Database.forEach(c => {
+                const btn = document.createElement('div');
+                btn.className = 'city-btn';
+                btn.innerHTML = `
+                    <span class="c-name">${c.name}</span>
+                    <span class="c-meta">${c.country} // ${c.layout.replace('_', ' ').toUpperCase()}</span>
+                    <span class="c-meta">TMP: ${c.temp}°C | WX: ${c.weather}</span>
+                `;
+                btn.onclick = () => initDeployment(c.id);
+                grid.appendChild(btn);
+            });
+        }
+
+        async function initDeployment(id) {
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('boot-seq').style.display = 'flex';
+            document.getElementById('boot-log').innerHTML = ''; // Clear log
+            
+            Env.city = Database[id];
+            SysLog.print(`OVERRIDE ACCEPTED. TARGET SECTOR: ${Env.city.name.toUpperCase()}`);
+            
+            // Initialize Audio
+            SysLog.print("INITIALIZING WEB AUDIO SYNTHESIZER...");
+            Env.audio = new AudioSystem();
+            Env.audio.initWind();
+            
+            setTimeout(async () => {
+                await constructWorld();
+                buildPlayerRig();
+                spawnAI();
+                
+                // UI Setup
+                document.getElementById('hud-loc-name').innerText = Env.city.name.toUpperCase();
+                document.getElementById('env-atm').innerText = Env.city.weather;
+                document.getElementById('env-tmp').innerText = Env.city.temp + "°C";
+                document.getElementById('env-hum').innerText = Env.city.hum + "%";
+                document.getElementById('env-trf').innerText = (Env.city.traffic * 100).toFixed(0) + "% CAP";
+                
+                // Hide boot, show game
+                document.getElementById('boot-seq').style.display = 'none';
+                document.getElementById('hud-container').style.display = 'block';
+                
+                // Fix canvas sizes for graphs
+                document.getElementById('ecg-canvas').width = document.querySelector('.graph-container').clientWidth;
+                document.getElementById('ecg-canvas').height = 60;
+                document.getElementById('perf-canvas').width = document.querySelector('.graph-container').clientWidth;
+                document.getElementById('perf-canvas').height = 60;
+                document.getElementById('map-canvas').width = 300;
+                document.getElementById('map-canvas').height = 300;
+
+                Env.active = true;
+                clock.start();
+                animateLoop();
+
+            }, 500); // Allow DOM to repaint
+        }
+
+        // Fire Boot Sequence
+        window.onload = startBoot;
 
     </script>
 </body>
