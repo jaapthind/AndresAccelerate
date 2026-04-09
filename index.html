@@ -721,7 +721,13 @@
             { id:9, name:"Rio de Janeiro", country:"BRA", lat:"22.9068° S", lng:"43.1729° W", temp:32, weather:"HUMID", wind:4.8, hum:85, elev:2, 
               skyDay:0x00bfff, skyNight:0x051525, ground:0x1a441a, water:0x0088cc, 
               layout:"coastal_mountains", density:0.8, baseHeight:40, varHeight:120, parkType:"jungle_mountains", riverType:"ocean",
-              materials:['concrete', 'plaster', 'glass', 'tin'], neonProb:0.05, history:false, traffic:0.8 }
+              materials:['concrete', 'plaster', 'glass', 'tin'], neonProb:0.05, history:false, traffic:0.8 },
+            { 
+            id:10, name:"Berkeley", country:"USA", lat:"37.8715° N", lng:"122.2730° W", temp:17, weather:"CLEAR", wind:4.5, hum:60, elev:52, 
+            skyDay:0x6bb9f0, skyNight:0x0e1726, ground:0x2c3e2e, water:0x1c4a6a, 
+            layout:"hilly_campus", density:0.6, baseHeight:15, varHeight:120, parkType:"campus_glade", riverType:"none",
+            materials:['wood', 'stucco', 'brick', 'concrete'], neonProb:0.05, history:true, traffic:0.5 
+        }
         ];
 
         // ==========================================
@@ -1317,6 +1323,34 @@
                             const bx = cx + (Math.random()-0.5)*(buildArea-bw);
                             const bz = cz + (Math.random()-0.5)*(buildArea-bd);
 
+                                                        // --- COOL THING 1: BERKELEY RESIDENTIAL OVERRIDE ---
+                            if (Env.city.id === 10) {
+                                const houseGroup = new THREE.Group();
+                                // Use stucco for Berkeley houses
+                                const body = new THREE.Mesh(new THREE.BoxGeometry(bw, bh * 0.5, bd), Env.mats.concrete);
+                                body.position.y = bh * 0.25; 
+                                body.material.color.setHex(0xe3dac9); // Stucco color
+                                houseGroup.add(body);
+                            
+                                // Pitched Roof
+                                const roof = new THREE.Mesh(new THREE.ConeGeometry(bw * 0.8, bh * 0.4, 4), Env.mats.brick);
+                                roof.position.y = (bh * 0.5) + (bh * 0.1);
+                                roof.rotation.y = Math.PI / 4;
+                                houseGroup.add(roof);
+                            
+                                // COOL THING 2: Window Lighting
+                                const winGeo = new THREE.PlaneGeometry(2, 2);
+                                const winMat = new THREE.MeshBasicMaterial({color: 0xffffaa});
+                                for(let i=0; i<4; i++) {
+                                    const win = new THREE.Mesh(winGeo, winMat);
+                                    win.position.set((Math.random()-0.5)*bw, bh*0.2, bd*0.51);
+                                    houseGroup.add(win);
+                                }
+                                houseGroup.position.set(bx, cy, bz);
+                                cityGroup.add(houseGroup);
+                                continue; // Skip the skyscraper logic
+                            }
+
                             // Select Material via City Profile
                             let mIdx = 0; // Concrete default
                             const rand = Math.random();
@@ -1363,6 +1397,26 @@
                 imData.mesh.instanceMatrix.needsUpdate = true;
                 cityGroup.add(imData.mesh);
             });
+
+
+            // --- COOL THING 3: BERKELEY CAMPANILE (Sather Tower) ---
+            if (Env.city.id === 10) {
+                const tower = new THREE.Mesh(new THREE.BoxGeometry(12, 110, 12), Env.mats.concrete);
+                tower.position.set(0, 55, 0); 
+                const point = new THREE.Mesh(new THREE.ConeGeometry(8, 20, 4), Env.mats.concrete);
+                point.position.set(0, 120, 0); point.rotation.y = Math.PI/4;
+                cityGroup.add(tower); cityGroup.add(point);
+                SysLog.print("LANDMARK: Sather Tower Initialized.");
+            }
+            
+            // --- COOL THING 4: TOKYO NEON TOWERS ---
+            if (Env.city.id === 1) {
+                const beamGeo = new THREE.CylinderGeometry(1, 1, 2000, 8);
+                const beamMat = new THREE.MeshBasicMaterial({color: 0x00ffff, transparent: true, opacity: 0.3});
+                const beam = new THREE.Mesh(beamGeo, beamMat);
+                beam.position.set(500, 1000, 500);
+                cityGroup.add(beam);
+            }
 
             // Particles
             if(Env.city.weather === 'RAIN' || Env.city.weather === 'SNOW') buildParticles();
@@ -1537,6 +1591,19 @@
             const carCount = Math.floor(200 * Env.city.traffic);
 
             for(let i=0; i<carCount; i++) {
+
+                // --- COOL THING 5-10: CAR MODEL VARIETY ---
+                let carType = Math.random();
+                let carBody;
+                if (carType > 0.8) { // SUV / CyberTruck Style
+                    carBody = new THREE.BoxGeometry(3.5, 2.0, 7.0); 
+                } else if (carType > 0.5) { // Sports Car (Low)
+                    carBody = new THREE.BoxGeometry(3.0, 0.8, 6.0);
+                } else { // Standard Sedan
+                    carBody = new THREE.BoxGeometry(2.8, 1.4, 5.5);
+                }
+                // Apply geometry to the mesh
+                const bdy = new THREE.Mesh(carBody, cMats[i % cMats.length]);
                 const car = new THREE.Group();
                 const bdy = new THREE.Mesh(cGeo, cMats[i%cMats.length]);
                 bdy.position.y = 0.8; bdy.castShadow = true; car.add(bdy);
@@ -1800,7 +1867,17 @@
 
             // AI Traffic
             Env.entities.cars.forEach(car => {
+                
                 car.position.addScaledVector(car.userData.dir, car.userData.speed * dt);
+            const checkX = car.position.x / 150; // gridSize is 150
+            const checkZ = car.position.z / 150;
+            
+            // Logic check: Is the car heading into a park?
+            // (Matches the Park logic in constructWorld)
+            if (Env.city.parkType === 'central_park' && checkX >= -2.2 && checkX <= 2.2 && checkZ >= -6.2 && checkZ <= 6.2) {
+                car.userData.dir.multiplyScalar(-1); // Quick U-Turn
+                car.rotation.y += Math.PI;
+            }
                 
                 // Topography height adjust
                 if(Env.city.layout.includes('hill')) {
