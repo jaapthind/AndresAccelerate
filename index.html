@@ -2,271 +2,786 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AndresAccelerate</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AndresAccelerate: Mars Fitness</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #87CEEB; /* Sky blue */
-            font-family: 'Courier New', Courier, monospace;
+        :root {
+            --ui-bg: rgba(15, 10, 10, 0.85);
+            --mars-red: #c1440e;
+            --mars-orange: #e77d11;
+            --text-main: #f5f5f5;
+            --text-muted: #aaaaaa;
+            --alert-red: #ff3333;
+            --success-green: #33ff33;
         }
-        #ui-container {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: #FFF;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px 25px;
-            border-radius: 8px;
-            border: 2px solid #444;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
-            pointer-events: none;
+        * {
+            box-sizing: border-box;
             user-select: none;
         }
-        h1 {
-            margin: 0 0 10px 0;
-            font-size: 24px;
-            text-transform: uppercase;
-            color: #00FFcc;
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .stat {
-            font-size: 18px;
-            margin: 5px 0;
-        }
-        #controls-help {
+        #game-canvas {
             position: absolute;
-            bottom: 20px;
-            right: 20px;
-            color: rgba(255,255,255,0.6);
-            font-size: 14px;
-            text-align: right;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
             pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+        .panel {
+            background: var(--ui-bg);
+            border: 1px solid var(--mars-red);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(193, 68, 14, 0.3);
+            backdrop-filter: blur(4px);
+        }
+        #top-hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        #title-box h1 {
+            margin: 0;
+            color: var(--mars-orange);
+            font-size: 28px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        #title-box p {
+            margin: 5px 0 0 0;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        #stats-box {
+            min-width: 250px;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 18px;
+            color: var(--text-main);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 5px;
+        }
+        .stat-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .stat-label {
+            font-weight: bold;
+            color: var(--text-muted);
+        }
+        .stat-value {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+        }
+        #weight-val { color: var(--alert-red); transition: color 0.5s; }
+        #speed-val { color: #ffff44; }
+        #dist-val { color: #44ccff; }
+        
+        #bottom-hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        #controls-box {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+        .key-btn {
+            display: inline-block;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin: 0 2px;
+            color: #fff;
+            font-family: monospace;
+        }
+        #progress-container {
+            width: 400px;
+        }
+        #progress-label {
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: var(--text-main);
+            text-align: right;
+        }
+        #progress-bar-bg {
+            width: 100%;
+            height: 15px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--mars-red);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--alert-red), var(--success-green));
+            transition: width 0.2s ease-out;
+        }
+
+        /* Loading Screen */
+        #loading-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #0a0505;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--mars-orange);
+            transition: opacity 1s ease-out;
+        }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 5px solid rgba(193, 68, 14, 0.3);
+            border-top-color: var(--mars-orange);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Vignette */
+        #vignette {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
+            pointer-events: none;
+            z-index: 5;
         }
     </style>
 </head>
 <body>
 
-    <div id="ui-container">
-        <h1>AndresAccelerate</h1>
-        <div class="stat">Weight: <span id="weightDisplay" style="color: #ff4444;">350.0</span> lbs</div>
-        <div class="stat">Speed: <span id="speedDisplay" style="color: #ffaa00;">0.5</span>x</div>
-        <div class="stat">Distance: <span id="distanceDisplay">0</span> m</div>
+    <div id="loading-screen">
+        <div class="spinner"></div>
+        <h2>INITIALIZING MARS TERRAIN...</h2>
+        <p id="loading-text">Generating procedural biomes</p>
     </div>
 
-    <div id="controls-help">
-        [UP] Run Forward<br>
-        [DOWN] Run Backward<br>
-        [LEFT/RIGHT] Turn
+    <div id="vignette"></div>
+
+    <div id="ui-layer">
+        <div id="top-hud">
+            <div class="panel" id="title-box">
+                <h1>AndresAccelerate</h1>
+                <p>Ares Vallis Sector - Fitness Simulation</p>
+            </div>
+            <div class="panel" id="stats-box">
+                <div class="stat-row">
+                    <span class="stat-label">BODY MASS</span>
+                    <span class="stat-value"><span id="weight-val">350.0</span> LBS</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">VELOCITY</span>
+                    <span class="stat-value"><span id="speed-val">0.50</span> M/S</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">DISTANCE</span>
+                    <span class="stat-value"><span id="dist-val">0.0</span> M</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="bottom-hud">
+            <div class="panel" id="controls-box">
+                <strong>SYSTEM CONTROLS:</strong><br>
+                <span class="key-btn">↑</span> Run Forward<br>
+                <span class="key-btn">↓</span> Backpedal<br>
+                <span class="key-btn">←</span> <span class="key-btn">→</span> Steer Vector<br>
+                <em>Sustain movement to accelerate fat burn.</em>
+            </div>
+            <div id="progress-container">
+                <div id="progress-label">FITNESS PROGRESS</div>
+                <div id="progress-bar-bg">
+                    <div id="progress-bar-fill"></div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <canvas id="game-canvas"></canvas>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        // --- GAME STATE & VARIABLES ---
-        let playerWeight = 350.0; // Starts fat
-        const minWeight = 160.0;  // Goal weight
-        let currentSpeed = 0.5;   // Starts slow
-        const maxSpeed = 2.5;     // Gets fast
-        let distanceRun = 0;
-        
-        // Input state
-        const keys = {
-            ArrowUp: false,
-            ArrowDown: false,
-            ArrowLeft: false,
-            ArrowRight: false
+        /**
+         * ==========================================
+         * ANDRES ACCELERATE - ENGINE CORE
+         * ==========================================
+         */
+
+        // --- 1. SIMPLEX NOISE IMPLEMENTATION (No external dependencies) ---
+        // A complete, fast implementation of 2D/3D simplex noise to generate realistic Mars terrain.
+        const SimplexNoise = function() {
+            var F2 = 0.5 * (Math.sqrt(3.0) - 1.0);
+            var G2 = (3.0 - Math.sqrt(3.0)) / 6.0;
+            var p = new Uint8Array(256);
+            for (var i = 0; i < 256; i++) {
+                p[i] = Math.floor(Math.random() * 256);
+            }
+            var perm = new Uint8Array(512);
+            var permMod12 = new Uint8Array(512);
+            for (var i = 0; i < 512; i++) {
+                perm[i] = p[i & 255];
+                permMod12[i] = (perm[i] % 12);
+            }
+            return {
+                noise2D: function(xin, yin) {
+                    var n0, n1, n2; 
+                    var s = (xin + yin) * F2;
+                    var i = Math.floor(xin + s);
+                    var j = Math.floor(yin + s);
+                    var t = (i + j) * G2;
+                    var X0 = i - t; 
+                    var Y0 = j - t;
+                    var x0 = xin - X0; 
+                    var y0 = yin - Y0;
+                    var i1, j1;
+                    if (x0 > y0) { i1 = 1; j1 = 0; } else { i1 = 0; j1 = 1; }
+                    var x1 = x0 - i1 + G2; 
+                    var y1 = y0 - j1 + G2;
+                    var x2 = x0 - 1.0 + 2.0 * G2; 
+                    var y2 = y0 - 1.0 + 2.0 * G2;
+                    var ii = i & 255;
+                    var jj = j & 255;
+                    var gi0 = permMod12[ii + perm[jj]];
+                    var gi1 = permMod12[ii + i1 + perm[jj + j1]];
+                    var gi2 = permMod12[ii + 1 + perm[jj + 1]];
+                    var t0 = 0.5 - x0 * x0 - y0 * y0;
+                    if (t0 < 0) n0 = 0.0;
+                    else {
+                        t0 *= t0;
+                        n0 = t0 * t0 * (gi0 === 0 ? x0 + y0 : gi0 === 1 ? -x0 + y0 : gi0 === 2 ? x0 - y0 : gi0 === 3 ? -x0 - y0 : gi0 === 4 ? x0 : gi0 === 5 ? -x0 : gi0 === 6 ? y0 : gi0 === 7 ? -y0 : gi0 === 8 ? x0 : gi0 === 9 ? -x0 : gi0 === 10 ? y0 : -y0);
+                    }
+                    var t1 = 0.5 - x1 * x1 - y1 * y1;
+                    if (t1 < 0) n1 = 0.0;
+                    else {
+                        t1 *= t1;
+                        n1 = t1 * t1 * (gi1 === 0 ? x1 + y1 : gi1 === 1 ? -x1 + y1 : gi1 === 2 ? x1 - y1 : gi1 === 3 ? -x1 - y1 : gi1 === 4 ? x1 : gi1 === 5 ? -x1 : gi1 === 6 ? y1 : gi1 === 7 ? -y1 : gi1 === 8 ? x1 : gi1 === 9 ? -x1 : gi1 === 10 ? y1 : -y1);
+                    }
+                    var t2 = 0.5 - x2 * x2 - y2 * y2;
+                    if (t2 < 0) n2 = 0.0;
+                    else {
+                        t2 *= t2;
+                        n2 = t2 * t2 * (gi2 === 0 ? x2 + y2 : gi2 === 1 ? -x2 + y2 : gi2 === 2 ? x2 - y2 : gi2 === 3 ? -x2 - y2 : gi2 === 4 ? x2 : gi2 === 5 ? -x2 : gi2 === 6 ? y2 : gi2 === 7 ? -y2 : gi2 === 8 ? x2 : gi2 === 9 ? -x2 : gi2 === 10 ? y2 : -y2);
+                    }
+                    return 70.0 * (n0 + n1 + n2);
+                }
+            };
         };
 
-        // --- SCENE SETUP ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB);
-        scene.fog = new THREE.FogExp2(0x87CEEB, 0.002);
+        const simplex = SimplexNoise();
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        // Complex fractal brownian motion (fBm) for realistic Mars dunes & craters
+        function terrainHeight(x, z) {
+            let height = 0;
+            let amplitude = 15;
+            let frequency = 0.005;
+            
+            // Octave 1: Large rolling dunes
+            height += simplex.noise2D(x * frequency, z * frequency) * amplitude;
+            
+            // Octave 2: Medium details
+            amplitude *= 0.5;
+            frequency *= 2.0;
+            height += simplex.noise2D(x * frequency, z * frequency) * amplitude;
+            
+            // Octave 3: Small rough rocks
+            amplitude *= 0.25;
+            frequency *= 4.0;
+            height += simplex.noise2D(x * frequency, z * frequency) * amplitude;
+
+            // Crater simulation (large negative dips)
+            let craterNoise = Math.abs(simplex.noise2D(x * 0.002, z * 0.002));
+            if (craterNoise < 0.1) {
+                height -= (0.1 - craterNoise) * 150; 
+            }
+
+            return height;
+        }
+
+        // --- 2. GAME CONFIGURATION & STATE ---
+        const GameState = {
+            weight: 350.0,
+            minWeight: 160.0,
+            maxWeight: 350.0,
+            baseSpeed: 3.0,
+            maxSpeed: 18.0,
+            currentSpeed: 0,
+            distanceRun: 0,
+            fatBurnRate: 0.8, // lbs per second of movement
+            turnSpeed: 2.5,
+            isMoving: false
+        };
+
+        const Input = {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false
+        };
+
+        // --- 3. WEBGL SETUP ---
+        const canvas = document.getElementById('game-canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // optimize
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        document.body.appendChild(renderer.domElement);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.0;
 
-        // --- LIGHTING ---
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
-        hemiLight.position.set(0, 200, 0);
-        scene.add(hemiLight);
+        const scene = new THREE.Scene();
+        // Mars atmospheric color
+        const marsSkyColor = new THREE.Color(0xd77d54);
+        const marsFogColor = new THREE.Color(0x9a4a30);
+        scene.background = marsSkyColor;
+        scene.fog = new THREE.FogExp2(marsFogColor, 0.015);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(100, 200, 50);
-        dirLight.castShadow = true;
-        dirLight.shadow.camera.top = 100;
-        dirLight.shadow.camera.bottom = -100;
-        dirLight.shadow.camera.left = -100;
-        dirLight.shadow.camera.right = 100;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
-        scene.add(dirLight);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-        // --- PROCEDURAL TERRAIN ---
-        // Simple noise function for terrain generation without external libraries
-        function noise(x, z) {
-            return Math.sin(x * 0.05) * 5 + Math.cos(z * 0.04) * 4 + 
-                   Math.sin(x * 0.01 + z * 0.02) * 15 +
-                   Math.cos(x * 0.1) * Math.sin(z * 0.1) * 2;
+        // --- 4. LIGHTING ---
+        const ambientLight = new THREE.AmbientLight(0xffb599, 0.3); // Warm ambient
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffeadd, 1.2);
+        sunLight.position.set(100, 200, -50);
+        sunLight.castShadow = true;
+        
+        // Optimize shadow map
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 500;
+        const d = 50;
+        sunLight.shadow.camera.left = -d;
+        sunLight.shadow.camera.right = d;
+        sunLight.shadow.camera.top = d;
+        sunLight.shadow.camera.bottom = -d;
+        sunLight.shadow.bias = -0.0005;
+        scene.add(sunLight);
+
+        // --- 5. PROCEDURAL MARS TERRAIN ---
+        const terrainSize = 400;
+        const terrainSegments = 150;
+        const terrainGeo = new THREE.PlaneGeometry(terrainSize, terrainSize, terrainSegments, terrainSegments);
+        terrainGeo.rotateX(-Math.PI / 2);
+
+        const vertices = terrainGeo.attributes.position.array;
+        for (let i = 0; i < vertices.length; i += 3) {
+            const x = vertices[i];
+            const z = vertices[i + 2];
+            vertices[i + 1] = terrainHeight(x, z);
         }
+        terrainGeo.computeVertexNormals();
 
-        const terrainGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
-        terrainGeometry.rotateX(-Math.PI / 2);
-
-        const positionAttribute = terrainGeometry.attributes.position;
-        for (let i = 0; i < positionAttribute.count; i++) {
-            const x = positionAttribute.getX(i);
-            const z = positionAttribute.getZ(i);
-            const y = noise(x, z);
-            positionAttribute.setY(i, y);
-        }
-        terrainGeometry.computeVertexNormals();
-
-        // Realistic-ish dirt/grass material
-        const terrainMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0x3d5e3a, 
+        // Custom Shader Material for Mars surface (adds realism without textures)
+        const terrainMat = new THREE.MeshStandardMaterial({
+            color: 0xc1440e,
             roughness: 0.9,
-            metalness: 0.1
+            metalness: 0.05,
+            flatShading: false
         });
-        const terrain = new THREE.Mesh(terrainGeometry, terrainMaterial);
+
+        // Add some variation to the terrain color
+        const colors = [];
+        for (let i = 0; i < terrainGeo.attributes.position.count; i++) {
+            const y = terrainGeo.attributes.position.getY(i);
+            const r = 0.75 + (y * 0.01) + Math.random() * 0.05; // Darker in dips, lighter on peaks
+            const g = 0.26 + (y * 0.005);
+            const b = 0.05;
+            colors.push(r, g, b);
+        }
+        terrainGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        terrainMat.vertexColors = true;
+
+        const terrain = new THREE.Mesh(terrainGeo, terrainMat);
         terrain.receiveShadow = true;
         scene.add(terrain);
 
-        // --- PLAYER GENERATION ---
+        // Endless terrain logic variables
+        let terrainOffsetX = 0;
+        let terrainOffsetZ = 0;
+
+        // --- 6. SCATTERED ROCKS (InstancedMesh for performance) ---
+        const rockCount = 500;
+        const rockGeo = new THREE.DodecahedronGeometry(0.5, 1);
+        const rockMat = new THREE.MeshStandardMaterial({ color: 0x5a3a2a, roughness: 1.0 });
+        const rockMesh = new THREE.InstancedMesh(rockGeo, rockMat, rockCount);
+        rockMesh.castShadow = true;
+        rockMesh.receiveShadow = true;
+
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < rockCount; i++) {
+            const rx = (Math.random() - 0.5) * terrainSize;
+            const rz = (Math.random() - 0.5) * terrainSize;
+            const ry = terrainHeight(rx, rz);
+            const scale = Math.random() * 1.5 + 0.2;
+
+            dummy.position.set(rx, ry, rz);
+            dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+            dummy.scale.set(scale, scale, scale);
+            dummy.updateMatrix();
+            rockMesh.setMatrixAt(i, dummy.matrix);
+        }
+        scene.add(rockMesh);
+
+        // --- 7. DUST PARTICLE SYSTEM ---
+        const particleCount = 2000;
+        const particleGeo = new THREE.BufferGeometry();
+        const particlePos = new Float32Array(particleCount * 3);
+        const particleVel = [];
+
+        for(let i=0; i < particleCount * 3; i+=3) {
+            particlePos[i] = (Math.random() - 0.5) * 100;
+            particlePos[i+1] = Math.random() * 20;
+            particlePos[i+2] = (Math.random() - 0.5) * 100;
+            particleVel.push({
+                x: (Math.random() - 0.5) * 0.1,
+                y: (Math.random() - 0.5) * 0.1,
+                z: (Math.random() - 0.5) * 0.1 + 0.2 // Wind blowing
+            });
+        }
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
+        
+        // Round dust particles via shader
+        const particleMat = new THREE.PointsMaterial({
+            color: 0xdd8855,
+            size: 0.2,
+            transparent: true,
+            opacity: 0.4,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+        const particles = new THREE.Points(particleGeo, particleMat);
+        scene.add(particles);
+
+        // --- 8. PLAYER CHARACTER ---
         const playerGroup = new THREE.Group();
         scene.add(playerGroup);
 
-        // Body (Starts wide, gets thin)
-        const bodyGeo = new THREE.CylinderGeometry(0.5, 0.5, 2, 16);
-        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2222ff }); // Blue shirt
-        const playerBody = new THREE.Mesh(bodyGeo, bodyMat);
-        playerBody.position.y = 1; // Half height
-        playerBody.castShadow = true;
-        playerGroup.add(playerBody);
+        // Define body parts for procedural animation
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.7 }); // Tech suit
+        const trimMat = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x005555 }); // Neon trim
+
+        // Torso (This is what scales based on weight)
+        const torsoGeo = new THREE.CapsuleGeometry(0.6, 1.2, 16, 16);
+        const torso = new THREE.Mesh(torsoGeo, bodyMat);
+        torso.position.y = 1.2;
+        torso.castShadow = true;
+        playerGroup.add(torso);
 
         // Head
-        const headGeo = new THREE.SphereGeometry(0.4, 16, 16);
-        const headMat = new THREE.MeshStandardMaterial({ color: 0xffccaa }); // Skin tone
-        const playerHead = new THREE.Mesh(headGeo, headMat);
-        playerHead.position.y = 2.4;
-        playerHead.castShadow = true;
-        playerGroup.add(playerHead);
+        const headGeo = new THREE.SphereGeometry(0.35, 16, 16);
+        const head = new THREE.Mesh(headGeo, trimMat); // Helmet look
+        head.position.y = 2.4;
+        head.castShadow = true;
+        playerGroup.add(head);
 
-        // Position player in world
-        playerGroup.position.set(0, noise(0, 0), 0);
+        // Arms & Legs (Simple representation for running animation)
+        const limbGeo = new THREE.CylinderGeometry(0.15, 0.1, 1.2, 8);
+        
+        const legL = new THREE.Mesh(limbGeo, bodyMat);
+        legL.position.set(-0.3, 0.6, 0);
+        legL.castShadow = true;
+        playerGroup.add(legL);
 
-        // 3rd Person Camera Setup
-        const cameraOffset = new THREE.Vector3(0, 3, -7);
+        const legR = new THREE.Mesh(limbGeo, bodyMat);
+        legR.position.set(0.3, 0.6, 0);
+        legR.castShadow = true;
+        playerGroup.add(legR);
 
-        // --- CONTROLS ---
+        const armL = new THREE.Mesh(limbGeo, bodyMat);
+        armL.position.set(-0.8, 1.5, 0);
+        armL.castShadow = true;
+        playerGroup.add(armL);
+
+        const armR = new THREE.Mesh(limbGeo, bodyMat);
+        armR.position.set(0.8, 1.5, 0);
+        armR.castShadow = true;
+        playerGroup.add(armR);
+
+        // Start position
+        playerGroup.position.set(0, terrainHeight(0,0) + 0.1, 0);
+
+        // Camera rig
+        const cameraPivot = new THREE.Object3D();
+        playerGroup.add(cameraPivot);
+        // Position camera behind and above
+        camera.position.set(0, 3.5, -6);
+        cameraPivot.add(camera);
+        camera.lookAt(0, 1.5, 2);
+
+        // --- 9. INPUT HANDLING ---
         window.addEventListener('keydown', (e) => {
-            if(keys.hasOwnProperty(e.code)) keys[e.code] = true;
+            switch(e.code) {
+                case 'ArrowUp': case 'KeyW': Input.forward = true; break;
+                case 'ArrowDown': case 'KeyS': Input.backward = true; break;
+                case 'ArrowLeft': case 'KeyA': Input.left = true; break;
+                case 'ArrowRight': case 'KeyD': Input.right = true; break;
+            }
         });
+
         window.addEventListener('keyup', (e) => {
-            if(keys.hasOwnProperty(e.code)) keys[e.code] = false;
+            switch(e.code) {
+                case 'ArrowUp': case 'KeyW': Input.forward = false; break;
+                case 'ArrowDown': case 'KeyS': Input.backward = false; break;
+                case 'ArrowLeft': case 'KeyA': Input.left = false; break;
+                case 'ArrowRight': case 'KeyD': Input.right = false; break;
+            }
         });
+
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // --- GAME LOGIC & PHYSICS ---
+        // --- 10. GAME LOGIC & PHYSICS ---
         const clock = new THREE.Clock();
+        let runTime = 0; // For animation sine waves
 
         function updatePlayer(delta) {
-            let isMoving = false;
-            const turnSpeed = 2.0 * delta;
+            GameState.isMoving = false;
+
+            // 1. Calculate dynamic capability based on current weight
+            // Math maps weight range (350->160) to speed range (3.0->18.0)
+            const weightRatio = (GameState.maxWeight - GameState.weight) / (GameState.maxWeight - GameState.minWeight);
+            const maxVelocityCurrent = GameState.baseSpeed + (weightRatio * (GameState.maxSpeed - GameState.baseSpeed));
+
+            // Acceleration / Deceleration
+            if (Input.forward) {
+                GameState.currentSpeed += 10 * delta; // Accel
+                if (GameState.currentSpeed > maxVelocityCurrent) GameState.currentSpeed = maxVelocityCurrent;
+                GameState.isMoving = true;
+            } else if (Input.backward) {
+                GameState.currentSpeed -= 10 * delta;
+                if (GameState.currentSpeed < -maxVelocityCurrent * 0.4) GameState.currentSpeed = -maxVelocityCurrent * 0.4;
+                GameState.isMoving = true;
+            } else {
+                // Friction
+                if (GameState.currentSpeed > 0) {
+                    GameState.currentSpeed -= 15 * delta;
+                    if (GameState.currentSpeed < 0) GameState.currentSpeed = 0;
+                } else if (GameState.currentSpeed < 0) {
+                    GameState.currentSpeed += 15 * delta;
+                    if (GameState.currentSpeed > 0) GameState.currentSpeed = 0;
+                }
+            }
+
+            // Turning
+            if (Input.left) playerGroup.rotation.y += GameState.turnSpeed * delta;
+            if (Input.right) playerGroup.rotation.y -= GameState.turnSpeed * delta;
+
+            // Apply Movement
+            const moveAmt = GameState.currentSpeed * delta;
+            if (Math.abs(moveAmt) > 0.01) {
+                playerGroup.translateZ(moveAmt);
+                GameState.distanceRun += Math.abs(moveAmt);
+                
+                // Fitness Mechanics - Burn Fat
+                if (GameState.weight > GameState.minWeight) {
+                    // Burn fat based on distance moved and delta
+                    const burn = GameState.fatBurnRate * delta;
+                    GameState.weight -= burn;
+                    if (GameState.weight < GameState.minWeight) GameState.weight = GameState.minWeight;
+                }
+            }
+
+            // Terrain Collision / Ground Clamping
+            const px = playerGroup.position.x;
+            const pz = playerGroup.position.z;
+            const py = terrainHeight(px, pz);
             
-            // Calculate dynamic speed based on weight
-            // Formula maps weight (350 -> 160) to speed (0.5 -> 2.5)
-            const weightRatio = (350 - playerWeight) / (350 - 160);
-            currentSpeed = 0.5 + (weightRatio * (maxSpeed - 0.5));
+            // Smooth vertical transition (like suspension)
+            playerGroup.position.y += (py - playerGroup.position.y) * 0.2;
 
-            const moveDistance = currentSpeed * delta * 15;
+            // --- Endless Terrain Logic (Treadmill effect) ---
+            // If player moves too far from center, snap them back and move terrain vertices
+            const bounds = 100;
+            if (px > bounds || px < -bounds || pz > bounds || pz < -bounds) {
+                const snapX = Math.round(px / bounds) * bounds;
+                const snapZ = Math.round(pz / bounds) * bounds;
+                
+                playerGroup.position.x -= snapX;
+                playerGroup.position.z -= snapZ;
+                terrainOffsetX += snapX;
+                terrainOffsetZ += snapZ;
 
-            if (keys.ArrowUp) {
-                playerGroup.translateZ(moveDistance);
-                distanceRun += moveDistance;
-                isMoving = true;
+                // Regenerate terrain vertices around new offset
+                const verts = terrainGeo.attributes.position.array;
+                for (let i = 0; i < verts.length; i += 3) {
+                    const vx = verts[i] + terrainOffsetX;
+                    const vz = verts[i + 2] + terrainOffsetZ;
+                    verts[i + 1] = terrainHeight(vx, vz);
+                }
+                terrainGeo.attributes.position.needsUpdate = true;
+                terrainGeo.computeVertexNormals();
+
+                // Reposition rocks
+                for (let i = 0; i < rockCount; i++) {
+                    const matrix = new THREE.Matrix4();
+                    rockMesh.getMatrixAt(i, matrix);
+                    const pos = new THREE.Vector3().setFromMatrixPosition(matrix);
+                    pos.x -= snapX;
+                    pos.z -= snapZ;
+                    
+                    // If rock goes out of view, wrap it around
+                    if (pos.x > terrainSize/2) pos.x -= terrainSize;
+                    if (pos.x < -terrainSize/2) pos.x += terrainSize;
+                    if (pos.z > terrainSize/2) pos.z -= terrainSize;
+                    if (pos.z < -terrainSize/2) pos.z += terrainSize;
+                    
+                    pos.y = terrainHeight(pos.x + terrainOffsetX, pos.z + terrainOffsetZ);
+                    
+                    dummy.position.copy(pos);
+                    // Extract rotation/scale from existing matrix
+                    const quat = new THREE.Quaternion().setFromRotationMatrix(matrix);
+                    const scale = new THREE.Vector3().setFromMatrixScale(matrix);
+                    dummy.quaternion.copy(quat);
+                    dummy.scale.copy(scale);
+                    dummy.updateMatrix();
+                    rockMesh.setMatrixAt(i, dummy.matrix);
+                }
+                rockMesh.instanceMatrix.needsUpdate = true;
             }
-            if (keys.ArrowDown) {
-                playerGroup.translateZ(-moveDistance * 0.5); // Backpedal slower
-                isMoving = true;
-            }
-            if (keys.ArrowLeft) {
-                playerGroup.rotation.y += turnSpeed;
-            }
-            if (keys.ArrowRight) {
-                playerGroup.rotation.y -= turnSpeed;
-            }
 
-            // Fitness / Weight Loss Mechanic
-            if (isMoving && playerWeight > minWeight) {
-                // Burn fat as you run (faster weight loss for demonstration)
-                playerWeight -= delta * 0.5; 
-                if (playerWeight < minWeight) playerWeight = minWeight;
+            // --- VISUAL WEIGHT UPDATE ---
+            // Torso scale X and Z change based on weight
+            // 350lbs -> scale 2.5
+            // 160lbs -> scale 1.0
+            const bodyScale = 1.0 + ((GameState.weight - GameState.minWeight) / (GameState.maxWeight - GameState.minWeight)) * 1.5;
+            torso.scale.set(bodyScale, 1, bodyScale);
+
+            // Move arms out based on body width so they don't clip
+            armL.position.x = -0.4 - (bodyScale * 0.3);
+            armR.position.x = 0.4 + (bodyScale * 0.3);
+
+            // --- PROCEDURAL RUNNING ANIMATION ---
+            if (GameState.isMoving && Math.abs(GameState.currentSpeed) > 0.1) {
+                // Animation speed scales with movement speed
+                const animSpeed = GameState.currentSpeed * 0.5;
+                runTime += delta * animSpeed;
+
+                // Sine waves for limbs
+                legL.rotation.x = Math.sin(runTime) * 0.8;
+                legR.rotation.x = Math.sin(runTime + Math.PI) * 0.8;
+                
+                armL.rotation.x = Math.sin(runTime + Math.PI) * 0.8;
+                armR.rotation.x = Math.sin(runTime) * 0.8;
+
+                // Body bobbing
+                torso.position.y = 1.2 + Math.abs(Math.sin(runTime * 2)) * 0.1;
+            } else {
+                // Idle pose
+                legL.rotation.x *= 0.9;
+                legR.rotation.x *= 0.9;
+                armL.rotation.x *= 0.9;
+                armR.rotation.x *= 0.9;
+                torso.position.y += (1.2 - torso.position.y) * 0.1;
             }
-
-            // Visual Body Update: Scale X and Z based on weight
-            // At 350lbs, scale is ~2.5. At 160lbs, scale is 1.0.
-            const scaleFactor = 1.0 + ((playerWeight - 160) / 190) * 1.5;
-            playerBody.scale.set(scaleFactor, 1, scaleFactor);
-
-            // Ground Clamp (Keep player on terrain)
-            const terrainHeight = noise(playerGroup.position.x, playerGroup.position.z);
-            playerGroup.position.y = terrainHeight;
-
-            // Infinite Terrain Illusion (Wrap around if going too far)
-            if (playerGroup.position.x > 400) playerGroup.position.x = -400;
-            if (playerGroup.position.x < -400) playerGroup.position.x = 400;
-            if (playerGroup.position.z > 400) playerGroup.position.z = -400;
-            if (playerGroup.position.z < -400) playerGroup.position.z = 400;
         }
 
-        function updateCamera() {
-            // Calculate desired camera position behind the player
-            const relativeCameraOffset = cameraOffset.clone();
-            const cameraPos = relativeCameraOffset.applyMatrix4(playerGroup.matrixWorld);
+        function updateEnvironment(delta) {
+            // Animate dust particles
+            const positions = particles.geometry.attributes.position.array;
+            for(let i=0; i<particleCount * 3; i+=3) {
+                positions[i] += particleVel[i/3].x;
+                positions[i+1] += particleVel[i/3].y;
+                positions[i+2] += particleVel[i/3].z;
 
-            // Smoothly interpolate camera position for that 3rd person feel
-            camera.position.lerp(cameraPos, 0.1);
-
-            // Look slightly above the player's center
-            const lookAtPos = playerGroup.position.clone();
-            lookAtPos.y += 1.5;
-            camera.lookAt(lookAtPos);
+                // Wrap particles
+                if(positions[i+1] < 0) positions[i+1] = 20;
+                if(positions[i+2] > 50) positions[i+2] = -50;
+                if(positions[i+2] < -50) positions[i+2] = 50;
+                if(positions[i] > 50) positions[i] = -50;
+                if(positions[i] < -50) positions[i] = 50;
+            }
+            particles.geometry.attributes.position.needsUpdate = true;
+            
+            // Particles follow player
+            particles.position.copy(playerGroup.position);
         }
 
         function updateUI() {
-            document.getElementById('weightDisplay').innerText = playerWeight.toFixed(1);
-            document.getElementById('speedDisplay').innerText = currentSpeed.toFixed(2);
-            document.getElementById('distanceDisplay').innerText = Math.floor(distanceRun);
+            // Update Text
+            const wtStr = GameState.weight.toFixed(1);
+            const wEl = document.getElementById('weight-val');
+            wEl.innerText = wtStr;
+            
+            // Color logic for weight
+            if (GameState.weight > 300) wEl.style.color = 'var(--alert-red)';
+            else if (GameState.weight > 220) wEl.style.color = '#ffff44';
+            else wEl.style.color = 'var(--success-green)';
 
-            // Color coding UI based on progress
-            const weightSpan = document.getElementById('weightDisplay');
-            if(playerWeight > 300) weightSpan.style.color = '#ff4444';
-            else if(playerWeight > 220) weightSpan.style.color = '#ffff44';
-            else weightSpan.style.color = '#44ff44';
+            document.getElementById('speed-val').innerText = Math.abs(GameState.currentSpeed).toFixed(2);
+            document.getElementById('dist-val').innerText = GameState.distanceRun.toFixed(1);
+
+            // Update Progress Bar
+            const progressRange = GameState.maxWeight - GameState.minWeight;
+            const currentLost = GameState.maxWeight - GameState.weight;
+            const percentage = (currentLost / progressRange) * 100;
+            document.getElementById('progress-bar-fill').style.width = percentage + '%';
         }
 
-        // --- MAIN GAME LOOP ---
+        // --- 11. MAIN LOOP ---
         function animate() {
             requestAnimationFrame(animate);
             const delta = clock.getDelta();
 
-            updatePlayer(delta);
-            updateCamera();
+            // Cap delta to prevent massive physics jumps on lag
+            const safeDelta = Math.min(delta, 0.1); 
+
+            updatePlayer(safeDelta);
+            updateEnvironment(safeDelta);
             updateUI();
 
             renderer.render(scene, camera);
         }
 
-        // Start Game
-        animate();
+        // Initialize and Start
+        window.onload = () => {
+            // Simulate loading generation
+            setTimeout(() => {
+                document.getElementById('loading-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loading-screen').style.display = 'none';
+                }, 1000);
+            }, 1500);
+            
+            animate();
+        };
+
     </script>
 </body>
 </html>
