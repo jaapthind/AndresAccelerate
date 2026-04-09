@@ -2,236 +2,275 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AndresAccelerate: Global Earth Realism Engine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AndresAccelerate: V4 Ultra-Realism Engine</title>
     <style>
-        :root { --bg: #050508; --accent: #00ffcc; --danger: #ff3366; --ui-bg: rgba(5,5,10,0.85); }
-        * { box-sizing: border-box; user-select: none; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #fff; }
-        #game-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        :root { --p: #00ffcc; --s: #ff0055; --bg: rgba(5,5,8,0.9); --hud-border: rgba(0, 255, 204, 0.3); }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: 'Consolas', 'Courier New', monospace; }
+        body, html { width: 100vw; height: 100vh; overflow: hidden; background: #000; color: #fff; }
+        canvas { position: absolute; top: 0; left: 0; z-index: 1; outline: none; }
         
-        #main-menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #111522 0%, #000 100%); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        #main-menu h1 { font-size: 5rem; color: var(--accent); margin: 0 0 10px 0; text-shadow: 0 0 30px rgba(0,255,204,0.6); letter-spacing: 8px; text-transform: uppercase; }
-        #main-menu p { color: #888; font-size: 1.5rem; margin-bottom: 50px; text-transform: uppercase; letter-spacing: 2px; }
-        .city-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; max-width: 1200px; width: 90%; }
-        .city-btn { background: rgba(0,255,204,0.05); border: 1px solid rgba(0,255,204,0.2); padding: 25px; border-radius: 4px; color: #fff; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; text-transform: uppercase; letter-spacing: 1px; }
-        .city-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(0,255,204,0.2), transparent); transition: left 0.5s; }
-        .city-btn:hover::before { left: 100%; }
-        .city-btn:hover { background: rgba(0,255,204,0.15); border-color: var(--accent); transform: scale(1.05); box-shadow: 0 0 20px rgba(0,255,204,0.4); }
+        #boot-seq { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #020202; z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--p); }
+        .glitch { font-size: 4rem; font-weight: 900; letter-spacing: 10px; text-transform: uppercase; position: relative; text-shadow: 0 0 20px var(--p); animation: pulse 2s infinite; }
+        #log { width: 60%; height: 200px; background: #000; border: 1px solid var(--p); margin-top: 20px; padding: 10px; font-size: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; color: #0f0; box-shadow: inset 0 0 20px rgba(0,255,0,0.2); }
         
-        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 200; display: none; flex-direction: column; justify-content: center; align-items: center; }
-        .spinner { width: 80px; height: 80px; border: 4px solid rgba(0,255,204,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 30px; }
-        #loader-text { color: var(--accent); font-size: 1.5rem; letter-spacing: 4px; }
-        #loader-subtext { color: #555; font-size: 1rem; margin-top: 10px; font-family: monospace; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #111520 0%, #000 100%); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #menu h1 { font-size: 5vw; margin-bottom: 10px; color: #fff; text-shadow: 0 0 30px var(--p), 0 0 10px var(--p); }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; width: 80%; max-width: 1400px; margin-top: 40px; }
+        .btn { background: rgba(0,255,204,0.05); border: 1px solid var(--hud-border); padding: 20px; color: #fff; font-size: 1.2rem; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
+        .btn:hover { background: rgba(0,255,204,0.2); border-color: var(--p); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,255,204,0.3); }
+        .btn::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: 0.5s; }
+        .btn:hover::after { left: 150%; }
 
-        #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; display: none; padding: 30px; flex-direction: column; justify-content: space-between; }
-        .hud-panel { background: var(--ui-bg); border: 1px solid rgba(255,255,255,0.1); padding: 20px 30px; backdrop-filter: blur(10px); border-left: 4px solid var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-        .top-row { display: flex; justify-content: space-between; align-items: flex-start; }
-        .bottom-row { display: flex; justify-content: space-between; align-items: flex-end; }
+        #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: none; pointer-events: none; padding: 20px; }
+        .panel { background: var(--bg); border: 1px solid var(--hud-border); padding: 20px; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(10px); }
+        #top-left { position: absolute; top: 20px; left: 20px; width: 350px; }
+        #top-right { position: absolute; top: 20px; right: 20px; width: 300px; text-align: right; }
+        #bottom-left { position: absolute; bottom: 20px; left: 20px; width: 350px; }
+        #bottom-right { position: absolute; bottom: 20px; right: 20px; }
         
-        #city-name-display { font-size: 32px; color: #fff; margin: 0 0 5px 0; font-weight: 900; letter-spacing: 2px; }
-        #time-weather-display { color: #888; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .title { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: 2px; margin-bottom: 5px; }
+        .sub { color: #888; font-size: 12px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; text-transform: uppercase; }
         
-        .stat-grid { display: grid; grid-template-columns: 1fr auto; gap: 12px 30px; font-size: 18px; }
-        .stat-lbl { color: #667788; font-weight: bold; font-size: 14px; letter-spacing: 1px; display: flex; align-items: center; }
-        .stat-val { font-size: 28px; font-weight: bold; text-align: right; font-family: 'Courier New', monospace; }
-        #val-weight { color: var(--danger); transition: color 0.5s; text-shadow: 0 0 10px rgba(255,51,102,0.5); }
-        #val-speed { color: #ffaa00; }
-        #val-dist { color: #00ffcc; }
-        #val-cals { color: #ff44ff; }
+        .metric { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; }
+        .lbl { color: #678; font-size: 12px; letter-spacing: 1px; }
+        .val { font-size: 24px; font-weight: bold; }
+        #v-weight { color: var(--s); text-shadow: 0 0 10px rgba(255,0,85,0.5); }
+        #v-speed { color: #f90; }
+        #v-hr { color: #f0f; }
+        
+        .ecg { width: 100%; height: 50px; background: #000; border: 1px solid #333; position: relative; overflow: hidden; margin-top: 10px; }
+        #ecg-canvas { width: 100%; height: 100%; }
 
-        #minimap-container { width: 250px; height: 250px; background: rgba(0,0,0,0.8); border: 1px solid #333; border-radius: 50%; overflow: hidden; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.9); border: 2px solid rgba(0,255,204,0.3); }
-        #minimap-canvas { width: 100%; height: 100%; }
-        #minimap-player { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 10px var(--accent); }
-        #minimap-overlay { position: absolute; top:0; left:0; width:100%; height:100%; box-shadow: inset 0 0 40px rgba(0,0,0,0.9); pointer-events: none; border-radius: 50%; }
+        .minimap { width: 250px; height: 250px; background: #000; border: 2px solid var(--p); border-radius: 50%; overflow: hidden; position: relative; box-shadow: 0 0 30px rgba(0,255,204,0.2); }
+        #map-canvas { width: 100%; height: 100%; }
+        .map-player { position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 10px #fff; z-index: 2; }
+        .map-dir { position: absolute; top: 50%; left: 50%; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 12px solid var(--p); transform: translate(-50%, -100%); transform-origin: center bottom; z-index: 1; }
 
-        .controls { font-size: 13px; color: #888; line-height: 2; background: var(--ui-bg); padding: 15px; border: 1px solid #222; border-radius: 8px; }
-        .key { display: inline-block; background: #111; border: 1px solid #444; border-bottom: 3px solid #222; padding: 2px 8px; border-radius: 4px; color: #ddd; font-weight: bold; }
+        .bar-bg { width: 100%; height: 8px; background: #111; margin-top: 15px; border-radius: 4px; overflow: hidden; border: 1px solid #333; }
+        #bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--s), #f90, var(--p)); transition: width 0.3s; box-shadow: 0 0 10px var(--p); }
+
+        #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 4px; height: 4px; background: rgba(255,255,255,0.5); border-radius: 50%; z-index: 5; pointer-events: none; }
         
-        #progress-wrapper { width: 400px; background: var(--ui-bg); padding: 20px; border: 1px solid #222; border-radius: 8px; }
-        .prog-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; font-weight: bold; color: #aaa; text-transform: uppercase; }
-        .prog-track { width: 100%; height: 12px; background: #111; border-radius: 6px; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
-        #prog-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--danger), #ffaa00, var(--accent)); transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(0,255,204,0.5); }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div id="main-menu">
-        <h1>AndresAccelerate</h1>
-        <p>Global Earth Simulation // Realistic Urban Fitness</p>
-        <div class="city-grid" id="city-buttons"></div>
+    <div id="boot-seq">
+        <div class="glitch">A.R.E.S. ENGINE V4</div>
+        <div style="color:#888; margin-top:10px;">GLOBAL TOPOGRAPHY & KINEMATIC SIMULATOR</div>
+        <div id="log"></div>
     </div>
 
-    <div id="loader">
-        <div class="spinner"></div>
-        <div id="loader-text">SYNTHESIZING REALITY</div>
-        <div id="loader-subtext">Generating Procedural Textures, Architecture, & Topography...</div>
+    <div id="menu">
+        <h1>SELECT DEPLOYMENT ZONE</h1>
+        <div class="grid" id="city-grid"></div>
     </div>
 
     <div id="hud">
-        <div class="top-row">
-            <div class="hud-panel">
-                <h2 id="city-name-display">CITY</h2>
-                <div id="time-weather-display">Local Time: 14:00 | Clear</div>
-            </div>
-            <div class="hud-panel stat-grid">
-                <div class="stat-lbl">BODY MASS</div> <div class="stat-val"><span id="val-weight">350.0</span> LBS</div>
-                <div class="stat-lbl">VELOCITY</div> <div class="stat-val"><span id="val-speed">0.00</span> MPH</div>
-                <div class="stat-lbl">DISTANCE</div> <div class="stat-val"><span id="val-dist">0.00</span> MI</div>
-                <div class="stat-lbl">CALS BURNED</div> <div class="stat-val"><span id="val-cals">0</span> KCAL</div>
+        <div class="panel" id="top-left">
+            <div class="title" id="hud-city">CITY_NAME</div>
+            <div class="sub" id="hud-meta">LAT: 00.0000 | LNG: 00.0000 | TIME: 12:00</div>
+            
+            <div class="metric"><span class="lbl">BODY MASS</span><span class="val"><span id="v-weight">350.00</span> LBS</span></div>
+            <div class="metric"><span class="lbl">VELOCITY</span><span class="val"><span id="v-speed">0.0</span> MPH</span></div>
+            <div class="metric"><span class="lbl">HEART RATE</span><span class="val"><span id="v-hr">80</span> BPM</span></div>
+            <div class="metric"><span class="lbl">DISTANCE</span><span class="val"><span id="v-dist">0.00</span> MI</span></div>
+            <div class="metric"><span class="lbl">CALORIES</span><span class="val"><span id="v-cals">0</span> KCAL</span></div>
+            
+            <div class="ecg"><canvas id="ecg-canvas"></canvas></div>
+            <div class="bar-bg"><div id="bar-fill"></div></div>
+            <div style="text-align: right; font-size: 10px; color: #555; margin-top: 5px;">GOAL: 160 LBS OPTIMAL MASS</div>
+        </div>
+
+        <div class="panel" id="top-right">
+            <div class="lbl" style="color:var(--p);">ENVIRONMENTAL SENSORS</div>
+            <div style="font-size: 12px; color: #aaa; margin-top: 10px; line-height: 1.8;">
+                ATMOSPHERE: <span id="v-weather" style="color:#fff;">CLEAR</span><br>
+                TEMP: <span id="v-temp" style="color:#fff;">72°F</span><br>
+                WIND: <span id="v-wind" style="color:#fff;">5 MPH NE</span><br>
+                TRAFFIC: <span id="v-traf" style="color:#fff;">NOMINAL</span>
             </div>
         </div>
-        <div class="bottom-row">
-            <div class="controls">
-                <span class="key">W</span> / <span class="key">↑</span> Sprint Forward<br>
-                <span class="key">S</span> / <span class="key">↓</span> Brake / Backpedal<br>
-                <span class="key">A</span> <span class="key">D</span> / <span class="key">←</span> <span class="key">→</span> Steer Vector<br>
-                <span style="color:#555; font-size: 11px; display:block; margin-top:5px;">System calculates Power-to-Weight ratio dynamically.</span>
-            </div>
-            
-            <div id="minimap-container">
-                <canvas id="minimap-canvas"></canvas>
-                <div id="minimap-player"></div>
-                <div id="minimap-overlay"></div>
-            </div>
 
-            <div id="progress-wrapper">
-                <div class="prog-header">
-                    <span>Fitness Trajectory</span>
-                    <span>Goal: 160 LBS</span>
-                </div>
-                <div class="prog-track"><div id="prog-fill"></div></div>
+        <div class="panel" id="bottom-left" style="width: auto;">
+            <div class="lbl" style="margin-bottom: 10px;">NEURAL LINK CONTROLS</div>
+            <span style="background:#222; padding:4px 8px; border:1px solid #555; border-radius:4px; color:#fff;">[W/↑] SPRINT</span>
+            <span style="background:#222; padding:4px 8px; border:1px solid #555; border-radius:4px; color:#fff;">[S/↓] BRAKE</span>
+            <span style="background:#222; padding:4px 8px; border:1px solid #555; border-radius:4px; color:#fff;">[A/D / ←/→] STEER</span>
+            <span style="background:#222; padding:4px 8px; border:1px solid #555; border-radius:4px; color:#fff;">[SHIFT] TURBO</span>
+        </div>
+
+        <div id="bottom-right">
+            <div class="minimap">
+                <canvas id="map-canvas"></canvas>
+                <div class="map-player"></div>
+                <div class="map-dir" id="map-dir"></div>
             </div>
         </div>
     </div>
-
+    
+    <div id="crosshair"></div>
     <canvas id="game-canvas"></canvas>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
         /**
-         * =========================================================================
-         * ANDRES ACCELERATE v3.0 - "EARTH REALISM ENGINE"
-         * Highly complex procedural generation simulating real-world architectures.
-         * =========================================================================
+         * =========================================================================================
+         * ANDRES ACCELERATE V4: A.R.E.S ENGINE (Advanced Rendering & Environment Simulation)
+         * Massive, monolithic file architecture. No external assets. Pure procedural generation.
+         * =========================================================================================
          */
 
-        // --- 1. PROCEDURAL TEXTURE GENERATION (No external images required) ---
-        // We generate highly detailed textures dynamically via HTML5 Canvas to mimic real life.
-        const TextureGen = {
-            createCanvas: (size) => {
-                const c = document.createElement('canvas');
-                c.width = size; c.height = size;
-                return { canvas: c, ctx: c.getContext('2d', { alpha: false }) };
-            },
-            asphalt: () => {
-                const { canvas, ctx } = TextureGen.createCanvas(512);
-                ctx.fillStyle = '#222222'; ctx.fillRect(0,0,512,512);
-                for(let i=0; i<50000; i++) {
-                    ctx.fillStyle = Math.random() > 0.5 ? '#1a1a1a' : '#2a2a2a';
-                    ctx.fillRect(Math.random()*512, Math.random()*512, Math.random()*2, Math.random()*2);
-                }
-                // Lane markings
-                ctx.fillStyle = '#eeeeee';
-                for(let y=0; y<512; y+=64) ctx.fillRect(250, y, 12, 32);
-                ctx.fillStyle = '#ddaa00'; // double yellow
-                ctx.fillRect(10, 0, 10, 512); ctx.fillRect(492, 0, 10, 512);
-                const tex = new THREE.CanvasTexture(canvas);
-                tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-                return tex;
-            },
-            sidewalk: () => {
-                const { canvas, ctx } = TextureGen.createCanvas(256);
-                ctx.fillStyle = '#666666'; ctx.fillRect(0,0,256,256);
-                ctx.strokeStyle = '#444444'; ctx.lineWidth = 2;
-                for(let x=0; x<=256; x+=64) {
-                    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,256); ctx.stroke();
-                    ctx.beginPath(); ctx.moveTo(0,x); ctx.lineTo(256,x); ctx.stroke();
-                }
-                for(let i=0; i<10000; i++) {
-                    ctx.fillStyle = 'rgba(0,0,0,0.1)';
-                    ctx.fillRect(Math.random()*256, Math.random()*256, 1, 1);
-                }
-                const tex = new THREE.CanvasTexture(canvas);
-                tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-                return tex;
-            },
-            buildingFacade: (type) => {
-                const { canvas, ctx } = TextureGen.createCanvas(512);
-                const isGlass = type === 'glass';
-                const baseColor = isGlass ? '#1a2a3a' : ['#4a3c31', '#555555', '#dcd8c0'][Math.floor(Math.random()*3)];
-                ctx.fillStyle = baseColor; ctx.fillRect(0,0,512,512);
-                
-                // Draw realistic windows
-                const rows = Math.floor(Math.random() * 5) + 10;
-                const cols = Math.floor(Math.random() * 3) + 6;
-                const wWidth = 512 / cols; const wHeight = 512 / rows;
-                const padX = wWidth * 0.2; const padY = wHeight * 0.2;
-
-                for(let r=0; r<rows; r++) {
-                    for(let c=0; c<cols; c++) {
-                        const isLit = Math.random() > 0.7; // Window lights
-                        if (isGlass) {
-                            ctx.fillStyle = isLit ? '#ccffff' : '#0a1a2a';
-                            ctx.fillRect(c*wWidth + padX/2, r*wHeight + padY/2, wWidth - padX, wHeight - padY);
-                            // Reflections
-                            ctx.fillStyle = 'rgba(255,255,255,0.1)';
-                            ctx.beginPath(); ctx.moveTo(c*wWidth, r*wHeight); ctx.lineTo(c*wWidth+wWidth, r*wHeight+wHeight); ctx.lineTo(c*wWidth+wWidth, r*wHeight); ctx.fill();
-                        } else {
-                            ctx.fillStyle = isLit ? '#ffddaa' : '#111111';
-                            ctx.fillRect(c*wWidth + padX, r*wHeight + padY, wWidth - padX*2, wHeight - padY*2);
-                            // Window frame
-                            ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
-                            ctx.strokeRect(c*wWidth + padX, r*wHeight + padY, wWidth - padX*2, wHeight - padY*2);
-                        }
-                    }
-                }
-                const tex = new THREE.CanvasTexture(canvas);
-                tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-                tex.repeat.set(1, 4); // Scale vertically
-                return tex;
-            },
-            grass: () => {
-                const { canvas, ctx } = TextureGen.createCanvas(256);
-                ctx.fillStyle = '#2d4c1e'; ctx.fillRect(0,0,256,256);
-                for(let i=0; i<20000; i++) {
-                    ctx.fillStyle = Math.random() > 0.5 ? '#1e3c14' : '#3d5c2e';
-                    ctx.fillRect(Math.random()*256, Math.random()*256, 2, 2);
-                }
-                const tex = new THREE.CanvasTexture(canvas);
-                tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-                return tex;
+        const Log = {
+            el: document.getElementById('log'),
+            msg: (text) => {
+                const d = document.createElement('div');
+                d.innerText = `[${new Date().toISOString().split('T')[1].slice(0,-1)}] ${text}`;
+                Log.el.appendChild(d);
+                Log.el.scrollTop = Log.el.scrollHeight;
             }
         };
 
-        // --- 2. GLOBAL CITY DATABASE (Simulating Google Earth Topography) ---
-        const Cities = [
-            { id: 0, name: "New York", mapType: "manhattan", waterColor: 0x1a3c40, skyDay: 0x7eb2e6, skyNight: 0x050510, baseHeight: 80, varHeight: 300, density: 1.0, hasRiver: true, parkType: "central" },
-            { id: 1, name: "Tokyo", mapType: "sprawl", waterColor: 0x112233, skyDay: 0x88aabb, skyNight: 0x1a0522, baseHeight: 40, varHeight: 150, density: 1.2, neon: true, hasRiver: false, parkType: "scattered" },
-            { id: 2, name: "London", mapType: "winding", waterColor: 0x2a3028, skyDay: 0x99aabb, skyNight: 0x11111a, baseHeight: 30, varHeight: 100, density: 0.8, history: true, hasRiver: true, parkType: "scattered" },
-            { id: 3, name: "Paris", mapType: "radial", waterColor: 0x2a3a3a, skyDay: 0xabcbdb, skyNight: 0x0a0f1a, baseHeight: 40, varHeight: 20, density: 0.9, history: true, hasRiver: true, parkType: "formal" },
-            { id: 4, name: "San Francisco", mapType: "hills", waterColor: 0x1a4c60, skyDay: 0x5eb2e6, skyNight: 0x0a1020, baseHeight: 30, varHeight: 150, density: 0.7, hills: true, hasRiver: true, parkType: "scattered" },
-            { id: 5, name: "Dubai", mapType: "desert_grid", waterColor: 0x00aacc, skyDay: 0x44ccff, skyNight: 0x00000a, baseHeight: 20, varHeight: 500, density: 0.5, glassOnly: true, hasRiver: false, parkType: "none" },
-            { id: 6, name: "Chicago", mapType: "manhattan", waterColor: 0x103040, skyDay: 0x6e92c6, skyNight: 0x050a10, baseHeight: 60, varHeight: 250, density: 0.9, hasRiver: true, parkType: "coastal" },
-            { id: 7, name: "Sydney", mapType: "harbor", waterColor: 0x0066aa, skyDay: 0x2288ff, skyNight: 0x0a1020, baseHeight: 40, varHeight: 180, density: 0.7, hasRiver: true, parkType: "scattered" },
-            { id: 8, name: "Rome", mapType: "ancient", waterColor: 0x334433, skyDay: 0x66aaff, skyNight: 0x100505, baseHeight: 25, varHeight: 30, density: 0.9, history: true, hasRiver: true, parkType: "scattered" },
-            { id: 9, name: "Rio de Janeiro", mapType: "hills_coast", waterColor: 0x0088bb, skyDay: 0x00aaff, skyNight: 0x051020, baseHeight: 30, varHeight: 80, density: 0.8, hills: true, hasRiver: true, parkType: "jungle" }
+        // -----------------------------------------------------------------------------------------
+        // 1. MASSIVE PROCEDURAL DATA ARRAYS & CONFIGURATIONS
+        // -----------------------------------------------------------------------------------------
+        const GeoData = [
+            { id:0, n:"New York", lat:"40.7128° N", lng:"74.0060° W", t:72, w:"CLEAR", skD:0x6ca6cd, skN:0x0a101a, gr:0x1a1a1a, wa:0x1b3c4a, den:1.0, bh:100, vh:400, l:"grid", p:"central", gl:0.4 },
+            { id:1, n:"Tokyo", lat:"35.6762° N", lng:"139.6503° E", t:68, w:"OVERCAST", skD:0x8899aa, skN:0x110a1f, gr:0x111111, wa:0x0a1122, den:1.3, bh:60, vh:250, l:"dense", p:"scattered", gl:0.6, neo:true },
+            { id:2, n:"London", lat:"51.5074° N", lng:"0.1278° W", t:55, w:"FOG", skD:0x9faebf, skN:0x11141a, gr:0x2c2c2c, wa:0x2d3a33, den:0.85, bh:40, vh:120, l:"winding", p:"scattered", gl:0.3 },
+            { id:3, n:"Paris", lat:"48.8566° N", lng:"2.3522° E", t:62, w:"CLEAR", skD:0x87ceeb, skN:0x050a15, gr:0x3a3a3a, wa:0x223333, den:0.9, bh:50, vh:40, l:"radial", p:"formal", gl:0.2 },
+            { id:4, n:"San Francisco", lat:"37.7749° N", lng:"122.4194° W", t:60, w:"MIST", skD:0x6ca6cd, skN:0x101a2a, gr:0x223322, wa:0x114466, den:0.75, bh:40, vh:200, l:"hills", p:"scattered", gl:0.5 },
+            { id:5, n:"Dubai", lat:"25.2048° N", lng:"55.2708° E", t:105, w:"DUST", skD:0x55bbff, skN:0x050505, gr:0xc2b280, wa:0x00aacc, den:0.5, bh:30, vh:600, l:"grid", p:"none", gl:0.9 },
+            { id:6, n:"Chicago", lat:"41.8781° N", lng:"87.6298° W", t:50, w:"WINDY", skD:0x5c86ad, skN:0x0a0f15, gr:0x222222, wa:0x0d2230, den:0.95, bh:80, vh:300, l:"grid", p:"coastal", gl:0.5 },
+            { id:7, n:"Sydney", lat:"33.8688° S", lng:"151.2093° E", t:75, w:"CLEAR", skD:0x2299ff, skN:0x0a1020, gr:0x2a3a2a, wa:0x005599, den:0.7, bh:50, vh:200, l:"harbor", p:"scattered", gl:0.6 },
+            { id:8, n:"Rome", lat:"41.9028° N", lng:"12.4964° E", t:80, w:"SUNNY", skD:0x44aaff, skN:0x100505, gr:0x4a4035, wa:0x223322, den:0.9, bh:30, vh:50, l:"historic", p:"scattered", gl:0.1 },
+            { id:9, n:"Rio de Janeiro", lat:"22.9068° S", lng:"43.1729° W", t:85, w:"HUMID", skD:0x00ccff, skN:0x051525, gr:0x1a441a, wa:0x0088cc, den:0.8, bh:40, vh:100, l:"coast", p:"jungle", gl:0.3 }
         ];
 
-        // --- 3. ENGINE STATE ---
-        const State = {
-            city: null, isLoaded: false, timeOfDay: 14.0, // 0-24
-            weight: 350.0, minWeight: 160.0, startWeight: 350.0,
-            speed: 0, distance: 0, calories: 0,
-            input: { w:false, a:false, s:false, d:false },
-            materials: {}, meshes: {}, entities: { cars: [], peds: [] }
+        const Engine = {
+            state: 0, delta: 0, time: 12.0, city: null,
+            wgt: 350.0, wMin: 160.0, spd: 0, dist: 0, cals: 0, hr: 75,
+            keys: { w:0, a:0, s:0, d:0, shift:0 },
+            ents: { cars: [], peds: [], trees: [], builds: [] },
+            mats: {}, geo: {}, sfx: null
         };
 
-        // --- 4. WEBGL SETUP & RENDERER ---
-        const canvas = document.getElementById('game-canvas');
-        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+        // -----------------------------------------------------------------------------------------
+        // 2. PROCEDURAL TEXTURE SYNTHESIZER (HTML5 Canvas generation for huge memory footprint)
+        // -----------------------------------------------------------------------------------------
+        const TexGen = {
+            c: (w, h) => { const cv = document.createElement('canvas'); cv.width=w; cv.height=h; return { cv, x: cv.getContext('2d',{alpha:false}) }; },
+            noise: (x, w, h, c1, c2, d) => {
+                x.fillStyle = c1; x.fillRect(0,0,w,h);
+                for(let i=0; i<d; i++) { x.fillStyle=Math.random()>0.5?c1:c2; x.fillRect(Math.random()*w, Math.random()*h, 2, 2); }
+            },
+            road: () => {
+                const {cv, x} = TexGen.c(1024, 1024);
+                TexGen.noise(x, 1024, 1024, '#1a1a1a', '#222222', 200000);
+                x.fillStyle = '#ffffff'; // Crosswalks/Lines
+                for(let i=0; i<1024; i+=128) x.fillRect(500, i, 24, 64);
+                x.fillStyle = '#ffaa00'; x.fillRect(20, 0, 10, 1024); x.fillRect(994, 0, 10, 1024);
+                const t = new THREE.CanvasTexture(cv); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
+            },
+            concrete: () => {
+                const {cv, x} = TexGen.c(512, 512);
+                TexGen.noise(x, 512, 512, '#555555', '#444444', 50000);
+                x.strokeStyle = '#333'; x.lineWidth = 2;
+                for(let i=0; i<=512; i+=128) { x.beginPath(); x.moveTo(i,0); x.lineTo(i,512); x.stroke(); x.beginPath(); x.moveTo(0,i); x.lineTo(512,i); x.stroke(); }
+                const t = new THREE.CanvasTexture(cv); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
+            },
+            grass: () => {
+                const {cv, x} = TexGen.c(512, 512);
+                TexGen.noise(x, 512, 512, '#1a3a14', '#2a4a24', 150000);
+                const t = new THREE.CanvasTexture(cv); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
+            },
+            facade: (type, r, c) => {
+                const {cv, x} = TexGen.c(1024, 1024);
+                const isG = type==='glass'; const isN = type==='neon';
+                x.fillStyle = isG ? '#0a101a' : (isN ? '#050505' : '#3a3a3a'); x.fillRect(0,0,1024,1024);
+                const wW = 1024/c; const wH = 1024/r; const pX = wW*0.1; const pY = wH*0.1;
+                for(let y=0; y<r; y++) {
+                    for(let z=0; z<c; z++) {
+                        let lit = Math.random() > 0.6;
+                        if(isG) {
+                            x.fillStyle = lit ? '#ccffff' : '#112233';
+                            x.fillRect(z*wW+pX, y*wH+pY, wW-pX*2, wH-pY*2);
+                            x.fillStyle = 'rgba(255,255,255,0.05)';
+                            x.beginPath(); x.moveTo(z*wW, y*wH); x.lineTo((z+1)*wW, (y+1)*wH); x.lineTo((z+1)*wW, y*wH); x.fill();
+                        } else if(isN) {
+                            x.fillStyle = lit ? `hsl(${Math.random()*360},100%,50%)` : '#111';
+                            x.fillRect(z*wW+pX*2, y*wH+pY*2, wW-pX*4, wH-pY*4);
+                            if(lit) { x.shadowBlur=20; x.shadowColor=x.fillStyle; x.fillRect(z*wW+pX*2, y*wH+pY*2, wW-pX*4, wH-pY*4); x.shadowBlur=0; }
+                        } else {
+                            x.fillStyle = lit ? '#ffddaa' : '#050505';
+                            x.fillRect(z*wW+pX, y*wH+pY, wW-pX*2, wH-pY*2);
+                            x.strokeStyle = '#111'; x.lineWidth = 4;
+                            x.strokeRect(z*wW+pX, y*wH+pY, wW-pX*2, wH-pY*2);
+                        }
+                    }
+                }
+                const t = new THREE.CanvasTexture(cv); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
+            }
+        };
+
+        // -----------------------------------------------------------------------------------------
+        // 3. WEB AUDIO API - PROCEDURAL SOUND ENGINE
+        // -----------------------------------------------------------------------------------------
+        class AudioEngine {
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.master = this.ctx.createGain();
+                this.master.gain.value = 0.5;
+                this.master.connect(this.ctx.destination);
+                this.footTimer = 0;
+            }
+            playNoise(type) {
+                if(this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+                osc.connect(filter); filter.connect(gain); gain.connect(this.master);
+                
+                const t = this.ctx.currentTime;
+                if(type === 'step') {
+                    // Thud sound based on weight
+                    const wRatio = Engine.wgt / 350.0;
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(100 + (wRatio*50), t);
+                    osc.frequency.exponentialRampToValueAtTime(0.01, t + 0.1);
+                    gain.gain.setValueAtTime(0.5 * wRatio, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                    osc.start(t); osc.stop(t + 0.1);
+                } else if(type === 'car') {
+                    // Engine drone
+                    osc.type = 'sawtooth';
+                    filter.type = 'lowpass'; filter.frequency.value = 400;
+                    osc.frequency.setValueAtTime(Math.random()*50 + 50, t);
+                    gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.1, t+1);
+                    gain.gain.linearRampToValueAtTime(0, t+4);
+                    osc.start(t); osc.stop(t+4);
+                }
+            }
+        }
+
+        // -----------------------------------------------------------------------------------------
+        // 4. CUSTOM GLSL SHADERS (Volumetrics, Water, Windows)
+        // -----------------------------------------------------------------------------------------
+        const Shaders = {
+            skyVert: `varying vec3 vWorldPosition; void main() { vec4 worldPosition = modelMatrix * vec4(position, 1.0); vWorldPosition = worldPosition.xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+            skyFrag: `uniform vec3 topColor; uniform vec3 bottomColor; uniform float offset; uniform float exponent; varying vec3 vWorldPosition; void main() { float h = normalize(vWorldPosition + offset).y; gl_FragColor = vec4(mix(bottomColor, topColor, max(pow(max(h, 0.0), exponent), 0.0)), 1.0); }`,
+            waterVert: `uniform float time; varying vec2 vUv; varying vec3 vPos; void main() { vUv = uv; vPos = position; float wave = sin(position.x * 0.1 + time) * cos(position.y * 0.1 + time) * 2.0; vec3 p = position; p.z += wave; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }`,
+            waterFrag: `uniform vec3 baseColor; uniform float time; varying vec2 vUv; varying vec3 vPos; void main() { float alpha = 0.8 + sin(vPos.x * 0.5 + time) * 0.2; vec3 col = mix(baseColor, vec3(1.0), alpha * 0.3); gl_FragColor = vec4(col, 0.85); }`
+        };
+
+        // -----------------------------------------------------------------------------------------
+        // 5. THREE.JS BOOTSTRAP & RENDERER SETUP
+        // -----------------------------------------------------------------------------------------
+        const canvasEl = document.getElementById('game-canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.shadowMap.enabled = true;
@@ -240,550 +279,620 @@
         renderer.toneMappingExposure = 1.0;
 
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.5, 3000);
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 5000);
         const clock = new THREE.Clock();
 
-        let sunLight, hemiLight;
-        let cityGroup, playerGroup;
-        let playerBones = {}; // For IK animation
+        let sun, hemi, skyMesh;
+        let pGrp, pBones = {};
+        let cityGrp, envGrp;
 
-        // --- UI BINDINGS ---
-        const ui = {
-            menu: document.getElementById('main-menu'), loader: document.getElementById('loader'),
-            hud: document.getElementById('hud'), btnGrid: document.getElementById('city-buttons'),
-            weight: document.getElementById('val-weight'), speed: document.getElementById('val-speed'),
-            dist: document.getElementById('val-dist'), cals: document.getElementById('val-cals'),
-            prog: document.getElementById('prog-fill'), city: document.getElementById('city-name-display'),
-            time: document.getElementById('time-weather-display'), 
-            miniCtx: document.getElementById('minimap-canvas').getContext('2d')
-        };
-        document.getElementById('minimap-canvas').width = 250;
-        document.getElementById('minimap-canvas').height = 250;
+        // -----------------------------------------------------------------------------------------
+        // 6. UI & INITIALIZATION LOGIC
+        // -----------------------------------------------------------------------------------------
+        async function bootSequence() {
+            let p = 0;
+            const seq = setInterval(() => {
+                p += Math.random() * 15;
+                if(p > 100) p = 100;
+                Log.msg(`ALLOCATING VRAM... ${p.toFixed(2)}%`);
+                if(p === 100) {
+                    clearInterval(seq);
+                    Log.msg("SYSTEM ONLINE. AWAITING DEPLOYMENT.");
+                    setTimeout(() => {
+                        document.getElementById('boot-seq').style.display = 'none';
+                        document.getElementById('menu').style.display = 'flex';
+                        buildMenu();
+                    }, 1000);
+                }
+            }, 100);
+        }
 
-        Cities.forEach(c => {
-            const btn = document.createElement('button');
-            btn.className = 'city-btn'; btn.innerText = c.name;
-            btn.onclick = () => initCity(c.id);
-            ui.btnGrid.appendChild(btn);
-        });
+        function buildMenu() {
+            const g = document.getElementById('city-grid');
+            GeoData.forEach(c => {
+                const b = document.createElement('div');
+                b.className = 'btn';
+                b.innerHTML = `<strong>${c.n}</strong><br><span style="font-size:10px;color:#888;">${c.lat} / ${c.lng}</span>`;
+                b.onclick = () => initEngine(c.id);
+                g.appendChild(b);
+            });
+        }
 
-        window.addEventListener('keydown', e => {
-            if(e.code === 'KeyW' || e.code === 'ArrowUp') State.input.w = true;
-            if(e.code === 'KeyS' || e.code === 'ArrowDown') State.input.s = true;
-            if(e.code === 'KeyA' || e.code === 'ArrowLeft') State.input.a = true;
-            if(e.code === 'KeyD' || e.code === 'ArrowRight') State.input.d = true;
-        });
-        window.addEventListener('keyup', e => {
-            if(e.code === 'KeyW' || e.code === 'ArrowUp') State.input.w = false;
-            if(e.code === 'KeyS' || e.code === 'ArrowDown') State.input.s = false;
-            if(e.code === 'KeyA' || e.code === 'ArrowLeft') State.input.a = false;
-            if(e.code === 'KeyD' || e.code === 'ArrowRight') State.input.d = false;
-        });
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // --- 5. INITIALIZATION SEQUENCE ---
-        async function initCity(id) {
-            ui.menu.style.display = 'none';
-            ui.loader.style.display = 'flex';
-            State.city = Cities[id];
+        async function initEngine(id) {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('boot-seq').style.display = 'flex';
+            Log.el.innerHTML = '';
+            Log.msg(`INITIALIZING SECTOR: ${GeoData[id].n}...`);
             
-            // Allow DOM to paint loading screen before heavy CPU block
+            Engine.city = GeoData[id];
+            Engine.sfx = new AudioEngine();
+            
             setTimeout(async () => {
-                await generateWorld();
-                ui.loader.style.display = 'none';
-                ui.hud.style.display = 'flex';
-                ui.city.innerText = State.city.name.toUpperCase();
-                State.isLoaded = true;
+                Log.msg("GENERATING PROCEDURAL MATERIALS...");
+                await buildMaterials();
+                Log.msg("GENERATING TOPOGRAPHY...");
+                buildWorld();
+                Log.msg("SPAWNING ENTITIES...");
+                buildPlayer();
+                buildAI();
+                
+                document.getElementById('boot-seq').style.display = 'none';
+                document.getElementById('hud').style.display = 'block';
+                updateStaticHUD();
+                
+                Engine.state = 1;
                 animate();
             }, 100);
         }
 
-        async function generateWorld() {
-            // Clean up
-            while(scene.children.length > 0) scene.remove(scene.children[0]);
-            State.entities.cars = []; State.entities.peds = [];
+        // -----------------------------------------------------------------------------------------
+        // 7. MATERIAL & SHADER COMPILATION
+        // -----------------------------------------------------------------------------------------
+        async function buildMaterials() {
+            Engine.mats.road = new THREE.MeshStandardMaterial({ map: TexGen.road(), roughness: 0.9, color: 0x888888 });
+            Engine.mats.sw = new THREE.MeshStandardMaterial({ map: TexGen.concrete(), roughness: 1.0 });
+            Engine.mats.grass = new THREE.MeshStandardMaterial({ map: TexGen.grass(), roughness: 1.0 });
             
-            setupLighting();
-            await generateMaterials();
-            
-            cityGroup = new THREE.Group(); scene.add(cityGroup);
-            playerGroup = new THREE.Group(); scene.add(playerGroup);
-
-            buildAdvancedCityLayout();
-            buildPlayerModel();
-            spawnTrafficAndHumans();
-        }
-
-        function setupLighting() {
-            scene.background = new THREE.Color(State.city.skyDay);
-            scene.fog = new THREE.FogExp2(State.city.skyDay, 0.0015);
-
-            hemiLight = new THREE.HemisphereLight(0xffffff, 0x444455, 0.6);
-            hemiLight.position.set(0, 500, 0);
-            scene.add(hemiLight);
-
-            sunLight = new THREE.DirectionalLight(0xffeedd, 1.2);
-            sunLight.position.set(500, 1000, 200);
-            sunLight.castShadow = true;
-            
-            // High-res shadow map for realism
-            sunLight.shadow.mapSize.width = 4096;
-            sunLight.shadow.mapSize.height = 4096;
-            sunLight.shadow.camera.near = 10;
-            sunLight.shadow.camera.far = 3000;
-            const d = 800;
-            sunLight.shadow.camera.left = -d; sunLight.shadow.camera.right = d;
-            sunLight.shadow.camera.top = d; sunLight.shadow.camera.bottom = -d;
-            sunLight.shadow.bias = -0.0005;
-            scene.add(sunLight);
-        }
-
-        async function generateMaterials() {
-            State.materials.asphalt = new THREE.MeshStandardMaterial({ map: TextureGen.asphalt(), roughness: 0.9 });
-            State.materials.sidewalk = new THREE.MeshStandardMaterial({ map: TextureGen.sidewalk(), roughness: 1.0 });
-            State.materials.grass = new THREE.MeshStandardMaterial({ map: TextureGen.grass(), roughness: 1.0 });
-            State.materials.water = new THREE.MeshStandardMaterial({ color: State.city.waterColor, transparent: true, opacity: 0.8, roughness: 0.1, metalness: 0.8 });
-            
-            State.materials.facades = [
-                new THREE.MeshStandardMaterial({ map: TextureGen.buildingFacade('concrete'), roughness: 0.7 }),
-                new THREE.MeshStandardMaterial({ map: TextureGen.buildingFacade('concrete'), roughness: 0.7 }),
-                new THREE.MeshStandardMaterial({ map: TextureGen.buildingFacade('glass'), roughness: 0.2, metalness: 0.8 }),
-            ];
-            if(State.city.glassOnly) State.materials.facades = [State.materials.facades[2], State.materials.facades[2]];
-        }
-
-        // --- 6. ADVANCED ALGORITHMIC CITY GENERATOR ---
-        // Simulates realistic urban planning (Blocks, Roads, Parks, Rivers)
-        function buildAdvancedCityLayout() {
-            const gridSize = 100; // Large blocks
-            const gridCount = 20; // 20x20 = 2000x2000 units massive city
-            const halfGrid = gridCount / 2;
-            const roadW = 24; // 4 lanes
-            const swW = 8; // Sidewalk width
-
-            // Base ground plane
-            const groundGeo = new THREE.PlaneGeometry(gridCount*gridSize*2, gridCount*gridSize*2);
-            const groundMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 1.0 });
-            const ground = new THREE.Mesh(groundGeo, groundMat);
-            ground.rotation.x = -Math.PI / 2;
-            ground.position.y = -0.5;
-            ground.receiveShadow = true;
-            cityGroup.add(ground);
-
-            // We will use InstancedMesh for extreme performance with millions of polys
-            const maxBuildings = gridCount * gridCount * 10;
-            const bGeo = new THREE.BoxGeometry(1, 1, 1);
-            bGeo.translate(0, 0.5, 0); // Origin at bottom
-            
-            const instancedBuildings = [];
-            State.materials.facades.forEach(mat => {
-                const im = new THREE.InstancedMesh(bGeo, mat, maxBuildings);
-                im.castShadow = true; im.receiveShadow = true;
-                instancedBuildings.push({ mesh: im, count: 0, matrix: new THREE.Matrix4() });
-                cityGroup.add(im);
+            // Complex Custom Shader Material for Water
+            Engine.mats.water = new THREE.ShaderMaterial({
+                uniforms: { time: { value: 0 }, baseColor: { value: new THREE.Color(Engine.city.wa) } },
+                vertexShader: Shaders.waterVert, fragmentShader: Shaders.waterFrag,
+                transparent: true, side: THREE.DoubleSide
             });
 
-            // Map Generation Arrays
-            State.cityMap = [];
+            // Procedural Facades
+            Engine.mats.bld = [];
+            for(let i=0; i<5; i++) {
+                let type = 'concrete';
+                if(Engine.city.gl > Math.random()) type = 'glass';
+                if(Engine.city.neo && Math.random() > 0.7) type = 'neon';
+                
+                const r = Math.floor(Math.random()*15)+10;
+                const c = Math.floor(Math.random()*8)+4;
+                
+                const m = new THREE.MeshStandardMaterial({ 
+                    map: TexGen.facade(type, r, c), 
+                    roughness: type==='glass'?0.1:0.8,
+                    metalness: type==='glass'?0.8:0.1
+                });
+                if(type === 'neon') { m.emissive = new THREE.Color(0xffffff); m.emissiveMap = m.map; m.emissiveIntensity = 0.5; }
+                Engine.mats.bld.push(m);
+            }
+        }
 
-            for(let x = -halfGrid; x < halfGrid; x++) {
-                State.cityMap[x] = [];
-                for(let z = -halfGrid; z < halfGrid; z++) {
-                    const cx = x * gridSize; const cz = z * gridSize;
+        // -----------------------------------------------------------------------------------------
+        // 8. WORLD GENERATION (Instanced Meshes for Millions of Polygons)
+        // -----------------------------------------------------------------------------------------
+        function buildWorld() {
+            while(scene.children.length > 0) scene.remove(scene.children[0]);
+            cityGrp = new THREE.Group(); scene.add(cityGrp);
+            envGrp = new THREE.Group(); scene.add(envGrp);
+
+            // Lighting setup
+            scene.background = new THREE.Color(Engine.city.skD);
+            scene.fog = new THREE.FogExp2(Engine.city.skD, 0.001);
+
+            hemi = new THREE.HemisphereLight(0xffffff, 0x444455, 0.4);
+            hemi.position.set(0, 1000, 0); scene.add(hemi);
+
+            sun = new THREE.DirectionalLight(0xffeedd, 1.5);
+            sun.position.set(1000, 2000, 500);
+            sun.castShadow = true;
+            sun.shadow.mapSize.width = 4096; sun.shadow.mapSize.height = 4096;
+            sun.shadow.camera.near = 10; sun.shadow.camera.far = 5000;
+            const d = 1500;
+            sun.shadow.camera.left = -d; sun.shadow.camera.right = d; sun.shadow.camera.top = d; sun.shadow.camera.bottom = -d;
+            scene.add(sun);
+
+            // Massive Base Plane
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(10000, 10000), new THREE.MeshStandardMaterial({color:Engine.city.gr}));
+            ground.rotation.x = -Math.PI/2; ground.position.y = -1; ground.receiveShadow = true;
+            cityGrp.add(ground);
+
+            // Grid Configuration (Massive 30x30 blocks = 900 blocks = ~3000x3000m playable area)
+            const bS = 120; // Block Size
+            const rW = 30;  // Road Width
+            const gC = 30;  // Grid Count
+            const hG = gC/2;
+
+            // InstancedMesh setup for extreme performance
+            const bGeo = new THREE.BoxGeometry(1,1,1); bGeo.translate(0, 0.5, 0);
+            const imeshes = Engine.mats.bld.map(m => {
+                const im = new THREE.InstancedMesh(bGeo, m, gC*gC*5);
+                im.castShadow = true; im.receiveShadow = true;
+                return { im: im, count: 0, mtx: new THREE.Matrix4() };
+            });
+
+            // Layout Algorithm
+            for(let x = -hG; x < hG; x++) {
+                for(let z = -hG; z < hG; z++) {
+                    const cx = x * bS; const cz = z * bS;
                     
-                    // Determine Zone Type via simulated topographical noise
+                    // Determine Zone
                     let isRiver = false; let isPark = false;
-                    
-                    if (State.city.hasRiver) {
-                        // Sine wave river cutting through
-                        const riverPath = Math.sin(x * 0.2) * 5;
-                        if (Math.abs(z - riverPath) < 2) isRiver = true;
-                    }
-                    if (State.city.parkType === 'central' && Math.abs(x) <= 2 && Math.abs(z) <= 4) isPark = true;
-                    if (State.city.parkType === 'scattered' && Math.random() < 0.05) isPark = true;
+                    if(Engine.city.l === 'coast' && x > hG*0.5) isRiver = true;
+                    if(Engine.city.l === 'harbor' && Math.sqrt(x*x + z*z) < hG*0.3 && x > 0) isRiver = true;
+                    if(!isRiver && Math.sin(x*0.1) * 5 > z && Math.sin(x*0.1) * 5 < z+2) isRiver = true; // Winding river
 
-                    State.cityMap[x][z] = { x: cx, z: cz, type: isRiver?'water':(isPark?'park':'city') };
+                    if(!isRiver && Engine.city.p === 'central' && Math.abs(x)<2 && Math.abs(z)<4) isPark = true;
+                    if(!isRiver && Engine.city.p === 'scattered' && Math.random()<0.05) isPark = true;
 
-                    // 1. Draw Roads & Sidewalks (Using single planes per block)
-                    if (!isRiver) {
-                        const rH = new THREE.Mesh(new THREE.PlaneGeometry(gridSize, roadW), State.materials.asphalt);
-                        rH.rotation.x = -Math.PI/2; rH.position.set(cx, 0, cz + gridSize/2); rH.receiveShadow = true;
+                    // Roads (Simplified planes for performance, overlapping is fine on flat ground)
+                    if(!isRiver) {
+                        const rdH = new THREE.Mesh(new THREE.PlaneGeometry(bS, rW), Engine.mats.road);
+                        rdH.rotation.x = -Math.PI/2; rdH.position.set(cx, 0, cz+bS/2); rdH.receiveShadow = true; cityGrp.add(rdH);
                         
-                        const rV = new THREE.Mesh(new THREE.PlaneGeometry(roadW, gridSize), State.materials.asphalt);
-                        rV.rotation.x = -Math.PI/2; rV.position.set(cx + gridSize/2, 0, cz); rV.receiveShadow = true;
-                        
-                        // Intersection
-                        const rI = new THREE.Mesh(new THREE.PlaneGeometry(roadW, roadW), State.materials.asphalt);
-                        rI.rotation.x = -Math.PI/2; rI.position.set(cx + gridSize/2, 0.01, cz + gridSize/2); rI.receiveShadow = true;
-                        
-                        cityGroup.add(rH, rV, rI);
-
-                        // Sidewalk Base
-                        const sw = new THREE.Mesh(new THREE.PlaneGeometry(gridSize - roadW, gridSize - roadW), State.materials.sidewalk);
-                        sw.rotation.x = -Math.PI/2; sw.position.set(cx, 0.1, cz); sw.receiveShadow = true;
-                        cityGroup.add(sw);
+                        const rdV = new THREE.Mesh(new THREE.PlaneGeometry(rW, bS), Engine.mats.road);
+                        rdV.rotation.x = -Math.PI/2; rdV.position.set(cx+bS/2, 0, cz); rdV.receiveShadow = true; cityGrp.add(rdV);
                     }
 
-                    // 2. Populate Blocks
-                    if (isRiver) {
-                        const water = new THREE.Mesh(new THREE.PlaneGeometry(gridSize, gridSize), State.materials.water);
-                        water.rotation.x = -Math.PI/2; water.position.set(cx, -1, cz);
-                        cityGroup.add(water);
-                    } 
-                    else if (isPark) {
-                        const grass = new THREE.Mesh(new THREE.PlaneGeometry(gridSize-roadW, gridSize-roadW), State.materials.grass);
-                        grass.rotation.x = -Math.PI/2; grass.position.set(cx, 0.15, cz); grass.receiveShadow = true;
-                        cityGroup.add(grass);
-                        // Procedural Trees
-                        for(let t=0; t<20; t++) {
-                            const tx = cx + (Math.random()-0.5)*(gridSize-roadW-10);
-                            const tz = cz + (Math.random()-0.5)*(gridSize-roadW-10);
-                            buildTree(tx, tz);
-                        }
-                    } 
-                    else {
-                        // Procedural Building Generation
-                        const innerSize = gridSize - roadW - swW;
-                        const density = Math.floor((Math.random() * 4 + 1) * State.city.density);
-                        
-                        for(let b=0; b<density; b++) {
-                            const bw = (Math.random() * innerSize/2) + 10;
-                            const bd = (Math.random() * innerSize/2) + 10;
+                    if(isRiver) {
+                        const wat = new THREE.Mesh(new THREE.PlaneGeometry(bS, bS), Engine.mats.water);
+                        wat.rotation.x = -Math.PI/2; wat.position.set(cx, -0.5, cz); cityGrp.add(wat);
+                    } else if(isPark) {
+                        const grs = new THREE.Mesh(new THREE.PlaneGeometry(bS-rW, bS-rW), Engine.mats.grass);
+                        grs.rotation.x = -Math.PI/2; grs.position.set(cx, 0.1, cz); grs.receiveShadow=true; cityGrp.add(grs);
+                        // Trees
+                        for(let t=0; t<30; t++) buildTree(cx+(Math.random()-0.5)*(bS-rW-10), cz+(Math.random()-0.5)*(bS-rW-10));
+                    } else {
+                        // Sidewalk
+                        const sw = new THREE.Mesh(new THREE.PlaneGeometry(bS-rW, bS-rW), Engine.mats.sw);
+                        sw.rotation.x = -Math.PI/2; sw.position.set(cx, 0.2, cz); sw.receiveShadow=true; cityGrp.add(sw);
+
+                        // Procedural Architecture
+                        const inSize = bS-rW-10;
+                        let bDens = Math.floor((Math.random()*4+1) * Engine.city.den);
+                        if(Engine.city.l === 'dense') bDens *= 2;
+
+                        for(let b=0; b<bDens; b++) {
+                            const bw = Math.random()*(inSize/2) + 10;
+                            const bd = Math.random()*(inSize/2) + 10;
                             
-                            // Distance from center determines height (Downtown effect)
+                            // Distance from center for skyscraper curve
                             const dist = Math.sqrt(x*x + z*z);
-                            const heightMult = Math.max(0.2, 1 - (dist / halfGrid));
-                            let bh = State.city.baseHeight + (Math.random() * State.city.varHeight * heightMult);
+                            const hMult = Math.max(0.1, 1 - (dist/hG));
+                            let bh = Engine.city.bh + (Math.random()*Engine.city.vh * hMult);
                             
-                            // Occasional supertall skyscraper
-                            if (Math.random() < 0.02) bh *= 2.5;
+                            // Outliers
+                            if(Math.random() < 0.05) bh *= 2;
+                            if(Engine.city.id === 5 && x===0 && z===0) bh = 1500; // Burj override
 
-                            const bx = cx + (Math.random()-0.5)*(innerSize - bw);
-                            const bz = cz + (Math.random()-0.5)*(innerSize - bd);
+                            const bx = cx + (Math.random()-0.5)*(inSize-bw);
+                            const bz = cz + (Math.random()-0.5)*(inSize-bd);
 
-                            // Add to InstancedMesh
-                            const targetIM = instancedBuildings[Math.floor(Math.random() * instancedBuildings.length)];
-                            targetIM.matrix.makeScale(bw, bh, bd);
-                            targetIM.matrix.setPosition(bx, 0.1, bz);
-                            targetIM.mesh.setMatrixAt(targetIM.count, targetIM.matrix);
+                            const imData = imeshes[Math.floor(Math.random()*imeshes.length)];
+                            imData.mtx.makeScale(bw, bh, bd);
+                            imData.mtx.setPosition(bx, 0.2, bz);
+                            imData.im.setMatrixAt(imData.count, imData.mtx);
+                            imData.count++;
                             
-                            // Roof Details (Antennas, AC units)
-                            if (bh > 100 && Math.random() > 0.5) {
-                                const antMat = new THREE.Matrix4();
-                                antMat.makeScale(1, Math.random()*30+10, 1);
-                                antMat.setPosition(bx, bh, bz);
-                                // Hijack first material for antenna
-                                instancedBuildings[0].mesh.setMatrixAt(instancedBuildings[0].count, antMat);
-                                instancedBuildings[0].count++;
+                            // Complex Roofs (Ledges, AC units)
+                            if(bh > 50 && Math.random() > 0.5) {
+                                const imR = imeshes[0]; // Concrete
+                                imR.mtx.makeScale(bw-2, 2, bd-2);
+                                imR.mtx.setPosition(bx, bh+0.2, bz);
+                                imR.im.setMatrixAt(imR.count, imR.mtx);
+                                imR.count++;
+                                
+                                if(Math.random() > 0.8) {
+                                    imR.mtx.makeScale(1, Math.random()*40+10, 1);
+                                    imR.mtx.setPosition(bx, bh+2, bz);
+                                    imR.im.setMatrixAt(imR.count, imR.mtx);
+                                    imR.count++;
+                                }
                             }
-
-                            targetIM.count++;
                         }
                     }
                 }
             }
             
-            instancedBuildings.forEach(ib => { ib.mesh.count = ib.count; ib.mesh.instanceMatrix.needsUpdate = true; });
+            imeshes.forEach(i => { i.im.count = i.count; i.im.instanceMatrix.needsUpdate = true; cityGrp.add(i.im); });
+
+            // Volumetric Sky dome
+            const skyG = new THREE.SphereGeometry(4000, 32, 15);
+            const skyM = new THREE.ShaderMaterial({
+                uniforms: {
+                    topColor: { value: new THREE.Color(Engine.city.skD) },
+                    bottomColor: { value: new THREE.Color(0xffffff) },
+                    offset: { value: 33 }, exponent: { value: 0.6 }
+                },
+                vertexShader: Shaders.skyVert, fragmentShader: Shaders.skyFrag,
+                side: THREE.BackSide
+            });
+            skyMesh = new THREE.Mesh(skyG, skyM); scene.add(skyMesh);
         }
 
         function buildTree(x, z) {
-            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.8, 4), new THREE.MeshStandardMaterial({color:0x3a2a1a}));
-            trunk.position.set(x, 2, z); trunk.castShadow = true;
-            const leaves = new THREE.Mesh(new THREE.DodecahedronGeometry(3), new THREE.MeshStandardMaterial({color:0x1e5c2d, roughness: 1}));
-            leaves.position.set(x, 5, z); leaves.castShadow = true;
-            cityGroup.add(trunk, leaves);
+            const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1, 6), new THREE.MeshStandardMaterial({color:0x3a2a1a}));
+            tr.position.set(x, 3, z); tr.castShadow=true; cityGrp.add(tr);
+            
+            const lvs = new THREE.Mesh(new THREE.IcosahedronGeometry(4, 1), new THREE.MeshStandardMaterial({color:0x1e5c2d, flatShading:true}));
+            lvs.position.set(x, 7, z); lvs.castShadow=true; cityGrp.add(lvs);
+            
+            Engine.ents.trees.push({ mesh: lvs, ox: x, oz: z, phase: Math.random()*Math.PI*2 });
         }
 
-        // --- 7. HYPER-REALISTIC PLAYER KINEMATICS ---
-        function buildPlayerModel() {
-            // Complex hierarchical model for IK running simulation
-            const skin = new THREE.MeshStandardMaterial({color: 0xffcca0, roughness:0.4});
-            const cloth = new THREE.MeshStandardMaterial({color: 0x111111, roughness:0.9});
-            const shoe = new THREE.MeshStandardMaterial({color: 0xffffff});
+        // -----------------------------------------------------------------------------------------
+        // 9. PLAYER RIG & INVERSE KINEMATICS SETUP
+        // -----------------------------------------------------------------------------------------
+        function buildPlayer() {
+            pGrp = new THREE.Group(); scene.add(pGrp);
+            
+            const matSkin = new THREE.MeshStandardMaterial({color: 0xffccaa, roughness:0.6});
+            const matSuit = new THREE.MeshStandardMaterial({color: 0x111111, roughness:0.9});
+            const matAcc = new THREE.MeshStandardMaterial({color: 0x00ffcc, emissive: 0x005544});
 
+            // Rig Hierarchy
+            pBones.core = new THREE.Group(); pGrp.add(pBones.core);
+            
             // Torso (Dynamic scaling based on weight)
-            playerBones.torso = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.8, 0.9), cloth);
-            playerBones.torso.position.y = 2.4; playerBones.torso.castShadow = true;
-            playerGroup.add(playerBones.torso);
+            pBones.torso = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.7, 1.8, 16), matSuit);
+            pBones.torso.position.y = 2.5; pBones.torso.castShadow = true; pBones.core.add(pBones.torso);
+            
+            pBones.head = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.8, 0.7), matSkin);
+            pBones.head.position.y = 1.4; pBones.head.castShadow = true; pBones.torso.add(pBones.head);
+            
+            // Limbs
+            const addLimb = (p, x, y, z) => {
+                const grp = new THREE.Group(); grp.position.set(x, y, z); p.add(grp);
+                const mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 1.4), matSkin);
+                mesh.position.y = -0.7; mesh.castShadow = true; grp.add(mesh);
+                return grp;
+            };
 
-            // Head
-            playerBones.head = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.7), skin);
-            playerBones.head.position.y = 1.25; playerBones.head.castShadow = true;
-            playerBones.torso.add(playerBones.head);
+            pBones.lArm = addLimb(pBones.torso, -1.0, 0.7, 0);
+            pBones.rArm = addLimb(pBones.torso, 1.0, 0.7, 0);
+            pBones.lLeg = addLimb(pBones.core, -0.4, 1.6, 0);
+            pBones.rLeg = addLimb(pBones.core, 0.4, 1.6, 0);
 
-            // Left Arm Pivot
-            playerBones.lShoulder = new THREE.Group();
-            playerBones.lShoulder.position.set(-0.9, 0.7, 0);
-            playerBones.torso.add(playerBones.lShoulder);
-            playerBones.lArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.2, 0.3), skin);
-            playerBones.lArm.position.y = -0.6; playerBones.lArm.castShadow = true;
-            playerBones.lShoulder.add(playerBones.lArm);
+            // Tech nodes
+            const n1 = new THREE.Mesh(new THREE.SphereGeometry(0.2), matAcc); n1.position.set(0, 0.5, 0.8); pBones.torso.add(n1);
 
-            // Right Arm Pivot
-            playerBones.rShoulder = new THREE.Group();
-            playerBones.rShoulder.position.set(0.9, 0.7, 0);
-            playerBones.torso.add(playerBones.rShoulder);
-            playerBones.rArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.2, 0.3), skin);
-            playerBones.rArm.position.y = -0.6; playerBones.rArm.castShadow = true;
-            playerBones.rShoulder.add(playerBones.rArm);
-
-            // Left Leg Pivot
-            playerBones.lHip = new THREE.Group();
-            playerBones.lHip.position.set(-0.4, 1.5, 0);
-            playerGroup.add(playerBones.lHip);
-            playerBones.lLeg = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.4, 0.45), cloth);
-            playerBones.lLeg.position.y = -0.7; playerBones.lLeg.castShadow = true;
-            playerBones.lHip.add(playerBones.lLeg);
-
-            // Right Leg Pivot
-            playerBones.rHip = new THREE.Group();
-            playerBones.rHip.position.set(0.4, 1.5, 0);
-            playerGroup.add(playerBones.rHip);
-            playerBones.rLeg = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.4, 0.45), cloth);
-            playerBones.rLeg.position.y = -0.7; playerBones.rLeg.castShadow = true;
-            playerBones.rHip.add(playerBones.rLeg);
-
-            // Set Initial Player Spawn (Ensure not in a building)
-            playerGroup.position.set(0, 0, 50);
+            pGrp.position.set(0, 0, 100); // Start position
+            camera.position.set(0, 5, -10);
+            pGrp.add(camera); // Attach camera directly to player local space initially
         }
 
-        // --- 8. DYNAMIC TRAFFIC & PEDESTRIANS ---
-        function spawnTrafficAndHumans() {
-            const carGeo = new THREE.BoxGeometry(2.2, 1.4, 4.5);
-            const carMats = [new THREE.MeshStandardMaterial({color:0xaa0000}), new THREE.MeshStandardMaterial({color:0x222222}), new THREE.MeshStandardMaterial({color:0xdddddd})];
+        // -----------------------------------------------------------------------------------------
+        // 10. AI ENTITY SYSTEMS (Traffic & Humans)
+        // -----------------------------------------------------------------------------------------
+        function buildAI() {
+            const cGeo = new THREE.BoxGeometry(2.5, 1.5, 5);
+            const cMats = [new THREE.MeshStandardMaterial({color:0xff0000}), new THREE.MeshStandardMaterial({color:0x222222}), new THREE.MeshStandardMaterial({color:0xffffff}), new THREE.MeshStandardMaterial({color:0x0000ff})];
             
-            // 100 Cars traversing the city grid
-            for(let i=0; i<100; i++) {
-                const car = new THREE.Group();
-                const body = new THREE.Mesh(carGeo, carMats[i%3]);
-                body.position.y = 0.7; body.castShadow = true; car.add(body);
+            for(let i=0; i<150; i++) {
+                const c = new THREE.Mesh(cGeo, cMats[i%4]);
+                c.position.y = 0.75; c.castShadow = true;
                 
-                // Headlights
-                const hl1 = new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.3), new THREE.MeshBasicMaterial({color:0xffffff}));
-                hl1.position.set(-0.7, 0.8, 2.26); car.add(hl1);
-                const hl2 = hl1.clone(); hl2.position.set(0.7, 0.8, 2.26); car.add(hl2);
+                // Lights
+                const hl = new THREE.Mesh(new THREE.PlaneGeometry(0.6,0.3), new THREE.MeshBasicMaterial({color:0xffffff})); hl.position.set(-0.8, 0.2, 2.51); c.add(hl);
+                const hl2 = hl.clone(); hl2.position.set(0.8, 0.2, 2.51); c.add(hl2);
+                const tl = new THREE.Mesh(new THREE.PlaneGeometry(0.6,0.3), new THREE.MeshBasicMaterial({color:0xff0000})); tl.position.set(-0.8, 0.2, -2.51); tl.rotation.y = Math.PI; c.add(tl);
+                const tl2 = tl.clone(); tl2.position.set(0.8, 0.2, -2.51); c.add(tl2);
+
+                const isV = Math.random()>0.5;
+                const gS = Math.floor((Math.random()*60)-30) * 120;
                 
-                // Position logic (Lock to grid roads)
-                const gridSnap = Math.floor((Math.random()*20)-10) * 100;
-                const isVertical = Math.random() > 0.5;
-                if(isVertical) {
-                    car.position.set(gridSnap + 50 + (Math.random()>0.5?6:-6), 0, (Math.random()*2000)-1000);
-                    car.userData = { dir: new THREE.Vector3(0,0,1), speed: Math.random()*15+15 };
+                let pGrp = new THREE.Group();
+                pGrp.add(c);
+                if(isV) {
+                    pGrp.position.set(gS + 60 + (Math.random()>0.5?8:-8), 0, (Math.random()*6000)-3000);
+                    pGrp.userData = { d: new THREE.Vector3(0,0,1), s: Math.random()*20+20 };
                 } else {
-                    car.position.set((Math.random()*2000)-1000, 0, gridSnap + 50 + (Math.random()>0.5?6:-6));
-                    car.rotation.y = Math.PI/2;
-                    car.userData = { dir: new THREE.Vector3(1,0,0), speed: Math.random()*15+15 };
+                    pGrp.position.set((Math.random()*6000)-3000, 0, gS + 60 + (Math.random()>0.5?8:-8));
+                    pGrp.rotation.y = Math.PI/2;
+                    pGrp.userData = { d: new THREE.Vector3(1,0,0), s: Math.random()*20+20 };
                 }
-                cityGroup.add(car); State.entities.cars.push(car);
+                cityGrp.add(pGrp); Engine.ents.cars.push(pGrp);
             }
         }
 
-        // --- 9. CORE PHYSICS & LOGIC LOOP ---
-        let animClock = 0;
-        function updatePhysics(delta) {
-            // Power-to-Weight physics calculation
-            const weightRatio = (State.startWeight - State.weight) / (State.startWeight - State.minWeight); // 0 (Fat) to 1.0 (Thin)
+        // -----------------------------------------------------------------------------------------
+        // 11. INPUT HANDLING
+        // -----------------------------------------------------------------------------------------
+        window.addEventListener('keydown', e => {
+            if(e.code==='KeyW'||e.code==='ArrowUp') Engine.keys.w=1;
+            if(e.code==='KeyS'||e.code==='ArrowDown') Engine.keys.s=1;
+            if(e.code==='KeyA'||e.code==='ArrowLeft') Engine.keys.a=1;
+            if(e.code==='KeyD'||e.code==='ArrowRight') Engine.keys.d=1;
+            if(e.code==='ShiftLeft'||e.code==='ShiftRight') Engine.keys.shift=1;
+        });
+        window.addEventListener('keyup', e => {
+            if(e.code==='KeyW'||e.code==='ArrowUp') Engine.keys.w=0;
+            if(e.code==='KeyS'||e.code==='ArrowDown') Engine.keys.s=0;
+            if(e.code==='KeyA'||e.code==='ArrowLeft') Engine.keys.a=0;
+            if(e.code==='KeyD'||e.code==='ArrowRight') Engine.keys.d=0;
+            if(e.code==='ShiftLeft'||e.code==='ShiftRight') Engine.keys.shift=0;
+        });
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // -----------------------------------------------------------------------------------------
+        // 12. MASTER PHYSICS & KINEMATICS ENGINE
+        // -----------------------------------------------------------------------------------------
+        let ikClock = 0;
+        let ecgData = Array(100).fill(25);
+        let ecgCtx = document.getElementById('ecg-canvas').getContext('2d');
+        document.getElementById('ecg-canvas').width = 300; document.getElementById('ecg-canvas').height = 50;
+
+        function updatePhysics(dt) {
+            // Complex capability scaling based on mass interpolation
+            const wRatio = (350.0 - Engine.wgt) / (350.0 - Engine.wMin); // 0 (Fat) to 1.0 (Thin)
             
-            const maxVelocity = 8.0 + (weightRatio * 22.0); // 8 mph to 30 mph sprinting
-            const acceleration = 10.0 + (weightRatio * 20.0);
-            const turnRate = 1.5 + (weightRatio * 1.5);
-
-            // Inputs
-            if (State.input.w) {
-                State.speed += acceleration * delta;
-                if(State.speed > maxVelocity) State.speed = maxVelocity;
-            } else if (State.input.s) {
-                State.speed -= (acceleration * 1.5) * delta; // Braking
-                if(State.speed < -maxVelocity/2) State.speed = -maxVelocity/2;
-            } else {
-                // Friction
-                if(State.speed > 0) { State.speed -= 15 * delta; if(State.speed < 0) State.speed = 0; }
-                if(State.speed < 0) { State.speed += 15 * delta; if(State.speed > 0) State.speed = 0; }
-            }
-
-            if (State.input.a) playerGroup.rotation.y += turnRate * delta;
-            if (State.input.d) playerGroup.rotation.y -= turnRate * delta;
-
-            // Apply translation
-            const moveStep = State.speed * delta;
-            playerGroup.translateZ(moveStep);
-
-            // Bounds checking (Massive 2000x2000 limit)
-            const bnd = 950;
-            if(playerGroup.position.x > bnd) playerGroup.position.x = -bnd;
-            if(playerGroup.position.x < -bnd) playerGroup.position.x = bnd;
-            if(playerGroup.position.z > bnd) playerGroup.position.z = -bnd;
-            if(playerGroup.position.z < -bnd) playerGroup.position.z = bnd;
-
-            // FITNESS MECHANICS
-            if (Math.abs(moveStep) > 0.01) {
-                // Distance in miles roughly (1 unit = 1 meter approx. 1609 units = 1 mile)
-                const milesMove = Math.abs(moveStep) / 1609;
-                State.distance += milesMove;
-                
-                // Calories burned formula (Based on weight and speed)
-                // Heavier burns more cals, faster burns more.
-                const calBurn = (State.weight * 0.0005) * Math.abs(State.speed) * delta;
-                State.calories += calBurn;
-
-                // 3500 cals = 1 lb of fat roughly. We accelerate this for gameplay.
-                const gameMultiplier = 500; 
-                State.weight -= (calBurn / 3500) * gameMultiplier;
-                if(State.weight < State.minWeight) State.weight = State.minWeight;
-            }
-
-            // --- REALISTIC MORPHING ---
-            // Torso width expands/contracts based on weight without breaking rig
-            const scaleFac = 1.0 + (1.5 * (1 - weightRatio)); // 2.5x wide at 350lbs, 1.0x wide at 160lbs
-            playerBones.torso.scale.set(scaleFac, 1, scaleFac);
+            const maxSpd = 10.0 + (wRatio * 35.0); // 10mph -> 45mph (Superhero speeds when thin)
+            const acc = 15.0 + (wRatio * 30.0);
+            const trn = 2.0 + (wRatio * 2.5);
             
-            // Adjust shoulder hinges outward so arms don't clip into fat body
-            playerBones.lShoulder.position.x = -0.5 - (0.4 * scaleFac);
-            playerBones.rShoulder.position.x = 0.5 + (0.4 * scaleFac);
+            let isMoving = false;
 
-            // --- KINEMATIC RUNNING ANIMATION ---
-            if (Math.abs(State.speed) > 0.5) {
-                const stepFreq = State.speed * 0.4;
-                animClock += delta * stepFreq;
-                
-                // Leg pumping
-                playerBones.lHip.rotation.x = Math.sin(animClock) * 1.0;
-                playerBones.rHip.rotation.x = Math.sin(animClock + Math.PI) * 1.0;
-                
-                // Arm swinging (opposite to legs)
-                playerBones.lShoulder.rotation.x = Math.sin(animClock + Math.PI) * 1.0;
-                playerBones.rShoulder.rotation.x = Math.sin(animClock) * 1.0;
-
-                // Torso lean and bob
-                playerBones.torso.rotation.x = 0.2; // Lean forward
-                playerBones.torso.position.y = 2.4 + Math.abs(Math.sin(animClock * 2)) * 0.15;
+            // Longitudinal Input
+            if(Engine.keys.w) {
+                Engine.spd += acc * dt * (Engine.keys.shift ? 1.5 : 1.0);
+                if(Engine.spd > maxSpd * (Engine.keys.shift ? 1.5 : 1.0)) Engine.spd = maxSpd * (Engine.keys.shift ? 1.5 : 1.0);
+                isMoving = true;
+            } else if(Engine.keys.s) {
+                Engine.spd -= acc * 2.0 * dt; // Hard brake
+                if(Engine.spd < -maxSpd*0.3) Engine.spd = -maxSpd*0.3;
+                isMoving = true;
             } else {
-                // Idle recovery
-                playerBones.lHip.rotation.x *= 0.8; playerBones.rHip.rotation.x *= 0.8;
-                playerBones.lShoulder.rotation.x *= 0.8; playerBones.rShoulder.rotation.x *= 0.8;
-                playerBones.torso.rotation.x *= 0.8;
-                playerBones.torso.position.y += (2.4 - playerBones.torso.position.y) * 0.1;
+                // Drag/Friction
+                if(Engine.spd > 0) { Engine.spd -= 20 * dt; if(Engine.spd < 0) Engine.spd = 0; }
+                if(Engine.spd < 0) { Engine.spd += 20 * dt; if(Engine.spd > 0) Engine.spd = 0; }
             }
+
+            // Lateral Input
+            if(Engine.keys.a) pGrp.rotation.y += trn * dt;
+            if(Engine.keys.d) pGrp.rotation.y -= trn * dt;
+
+            // Translation Integration (Convert arbitrary units to approximate real-world)
+            const moveZ = Engine.spd * dt;
+            pGrp.translateZ(moveZ);
+
+            // Bounding constraints (3000m map)
+            if(pGrp.position.x > 3000) pGrp.position.x = -3000;
+            if(pGrp.position.x < -3000) pGrp.position.x = 3000;
+            if(pGrp.position.z > 3000) pGrp.position.z = -3000;
+            if(pGrp.position.z < -3000) pGrp.position.z = 3000;
+
+            // Physiological Simulation & Game Loop Mechanics
+            if(Math.abs(moveZ) > 0.01) {
+                Engine.dist += Math.abs(moveZ) / 1609.34; // meters to miles approx
+                
+                // HR Simulation
+                Engine.hr += ( (120 + (Math.abs(Engine.spd)*2)) - Engine.hr ) * dt * 0.5;
+                if(Engine.keys.shift) Engine.hr += 10 * dt;
+                
+                // Thermodynamics (Calorie burn) - Heavier burns faster, faster burns faster
+                const cal = (Engine.wgt * 0.001) * Math.abs(Engine.spd) * dt;
+                Engine.cals += cal;
+                
+                // Mass reduction (3500 cals = 1lb, accelerated 500x for gameplay)
+                Engine.wgt -= (cal / 3500) * 1000;
+                if(Engine.wgt < Engine.wMin) Engine.wgt = Engine.wMin;
+
+                // Procedural footsteps
+                Engine.sfx.footTimer += dt * Math.abs(Engine.spd);
+                if(Engine.sfx.footTimer > 5.0) { Engine.sfx.playNoise('step'); Engine.sfx.footTimer = 0; }
+            } else {
+                Engine.hr += ( 75 - Engine.hr ) * dt * 0.2; // Recovery
+            }
+
+            // Visual Mass Morphing (Avoids self-clipping)
+            const sF = 1.0 + (1.5 * (1.0 - wRatio)); // Scale Factor: 2.5x to 1.0x
+            pBones.torso.scale.set(sF, 1, sF);
+            pBones.lArm.position.x = -0.5 - (0.5 * sF);
+            pBones.rArm.position.x = 0.5 + (0.5 * sF);
+
+            // Procedural Inverse Kinematics (Running Animation)
+            if(Math.abs(Engine.spd) > 1.0) {
+                const sFq = Engine.spd * 0.4;
+                ikClock += dt * sFq;
+                
+                pBones.lLeg.rotation.x = Math.sin(ikClock) * 1.2;
+                pBones.rLeg.rotation.x = Math.sin(ikClock + Math.PI) * 1.2;
+                pBones.lArm.rotation.x = Math.sin(ikClock + Math.PI) * 1.2;
+                pBones.rArm.rotation.x = Math.sin(ikClock) * 1.2;
+                
+                pBones.core.rotation.x = 0.2; // Lean
+                pBones.core.position.y = Math.abs(Math.sin(ikClock * 2)) * 0.2;
+                pBones.torso.rotation.y = Math.sin(ikClock)*0.2; // Twist
+            } else {
+                pBones.lLeg.rotation.x *= 0.8; pBones.rLeg.rotation.x *= 0.8;
+                pBones.lArm.rotation.x *= 0.8; pBones.rArm.rotation.x *= 0.8;
+                pBones.core.rotation.x *= 0.8; pBones.core.position.y *= 0.8; pBones.torso.rotation.y *= 0.8;
+            }
+
+            updateECG(dt);
         }
 
-        function updateAI(delta) {
-            State.entities.cars.forEach(car => {
-                car.position.addScaledVector(car.userData.dir, car.userData.speed * delta);
-                // Wrap logic
-                if(car.position.x > 1000) car.position.x = -1000;
-                if(car.position.x < -1000) car.position.x = 1000;
-                if(car.position.z > 1000) car.position.z = -1000;
-                if(car.position.z < -1000) car.position.z = 1000;
+        function updateECG(dt) {
+            ecgData.shift();
+            // Generate ECG waveform based on HR
+            const beatFreq = 60 / Engine.hr;
+            const t = (Date.now() / 1000) % beatFreq;
+            let val = 25;
+            if(t < 0.05) val = 10; // Q
+            else if(t < 0.1) val = 45; // R
+            else if(t < 0.15) val = 15; // S
+            else if(t > 0.3 && t < 0.4) val = 30; // T
+            else val = 25 + (Math.random()*2-1); // baseline noise
+            
+            ecgData.push(val);
+
+            ecgCtx.fillStyle = '#000'; ecgCtx.fillRect(0,0,300,50);
+            ecgCtx.strokeStyle = '#0f0'; ecgCtx.lineWidth = 2; ecgCtx.beginPath();
+            for(let i=0; i<100; i++) {
+                ecgCtx.lineTo(i*3, 50 - ecgData[i]);
+            }
+            ecgCtx.stroke();
+            
+            // Heartbeat glow
+            if(t < 0.1) document.getElementById('v-hr').style.textShadow = '0 0 20px #f0f';
+            else document.getElementById('v-hr').style.textShadow = 'none';
+        }
+
+        // -----------------------------------------------------------------------------------------
+        // 13. ENVIRONMENT & AI LOOP
+        // -----------------------------------------------------------------------------------------
+        function updateEnv(dt) {
+            // Day/Night & Lighting
+            Engine.time += dt * 0.02; // 1s = 0.02 hrs
+            if(Engine.time >= 24) Engine.time = 0;
+            
+            const nA = (Engine.time / 24) * Math.PI*2 - Math.PI/2;
+            sun.position.x = Math.cos(nA) * 2000;
+            sun.position.y = Math.sin(nA) * 2000;
+            
+            const tR = Math.max(0, Math.sin(nA)); // 0 = night, 1 = high noon
+            const cD = new THREE.Color(Engine.city.skD);
+            const cN = new THREE.Color(Engine.city.skN);
+            scene.background = cN.clone().lerp(cD, tR);
+            scene.fog.color = scene.background;
+            
+            if(skyMesh) skyMesh.material.uniforms.topColor.value = scene.background;
+            if(Engine.mats.water) Engine.mats.water.uniforms.time.value += dt;
+
+            // AI Traffic
+            Engine.ents.cars.forEach(c => {
+                c.position.addScaledVector(c.userData.d, c.userData.s * dt);
+                if(c.position.x > 3000) c.position.x = -3000;
+                if(c.position.x < -3000) c.position.x = 3000;
+                if(c.position.z > 3000) c.position.z = -3000;
+                if(c.position.z < -3000) c.position.z = 3000;
+                
+                // Sound proximity check
+                const d = c.position.distanceTo(pGrp.position);
+                if(d < 100 && Math.random() < 0.01) Engine.sfx.playNoise('car');
+            });
+
+            // Tree wind sway
+            Engine.ents.trees.forEach(t => {
+                t.phase += dt * 2.0;
+                t.mesh.position.x = t.ox + Math.sin(t.phase)*0.5;
             });
         }
 
-        function updateEnvironment(delta) {
-            // Day Night Cycle Simulation
-            State.timeOfDay += delta * 0.05; // 1 real second = 0.05 game hours
-            if(State.timeOfDay >= 24) State.timeOfDay = 0;
+        // -----------------------------------------------------------------------------------------
+        // 14. CAMERA & HUD SYSTEMS
+        // -----------------------------------------------------------------------------------------
+        function updateCam() {
+            // Un-parent camera to allow smooth kinematic spring follow
+            if(camera.parent === pGrp) scene.attach(camera);
 
-            const timeRatio = Math.abs((State.timeOfDay - 12) / 12); // 0 at noon, 1 at midnight
+            const rOff = new THREE.Vector3(0, 6, -12); // High back chase angle
+            const tPos = rOff.applyMatrix4(pGrp.matrixWorld);
             
-            // Interpolate Sky Color
-            const cDay = new THREE.Color(State.city.skyDay);
-            const cNight = new THREE.Color(State.city.skyNight);
-            scene.background = cDay.clone().lerp(cNight, timeRatio);
-            scene.fog.color = scene.background;
+            // Dynamic FOV based on speed
+            camera.fov = 70 + (Math.abs(Engine.spd) * 0.5);
+            camera.updateProjectionMatrix();
 
-            // Adjust Sun Intensity and Position
-            const angle = (State.timeOfDay / 24) * Math.PI * 2 - Math.PI/2;
-            sunLight.position.x = Math.cos(angle) * 1000;
-            sunLight.position.y = Math.sin(angle) * 1000;
+            camera.position.lerp(tPos, 0.15); // Spring stiffness
             
-            if (sunLight.position.y < 0) {
-                sunLight.intensity = 0; // Sun is down
-                hemiLight.intensity = 0.2; // Dark ambient night
-            } else {
-                sunLight.intensity = 1.2 * (sunLight.position.y / 1000); // Fades at sunset
-                hemiLight.intensity = 0.6;
-            }
-
-            // UI Update Time string
-            const hrs = Math.floor(State.timeOfDay).toString().padStart(2, '0');
-            const mins = Math.floor((State.timeOfDay % 1) * 60).toString().padStart(2, '0');
-            ui.time.innerText = `Local Time: ${hrs}:${mins} | Sector Active`;
+            const lPos = pGrp.position.clone(); lPos.y += 2.5;
+            camera.lookAt(lPos);
         }
 
-        function updateCamera() {
-            // Professional 3rd Person Spring Camera
-            const relativeOffset = new THREE.Vector3(0, 4.5, -9);
-            const targetPos = relativeOffset.applyMatrix4(playerGroup.matrixWorld);
-            
-            camera.position.lerp(targetPos, 0.1); // Smooth follow
-            
-            const lookPos = playerGroup.position.clone();
-            lookPos.y += 2.0; // Look at upper body
-            camera.lookAt(lookPos);
+        function updateStaticHUD() {
+            document.getElementById('hud-city').innerText = Engine.city.n.toUpperCase();
+            document.getElementById('v-weather').innerText = Engine.city.w;
+            document.getElementById('v-temp').innerText = Engine.city.t + "°F";
         }
 
-        function updateUI() {
-            ui.weight.innerText = State.weight.toFixed(1);
-            ui.speed.innerText = Math.abs(State.speed).toFixed(1);
-            ui.dist.innerText = State.distance.toFixed(2);
-            ui.cals.innerText = Math.floor(State.calories);
+        const mapCtx = document.getElementById('map-canvas').getContext('2d');
+        function updateDynamicHUD() {
+            document.getElementById('v-weight').innerText = Engine.wgt.toFixed(2);
+            document.getElementById('v-speed').innerText = Math.abs(Engine.spd).toFixed(1);
+            document.getElementById('v-hr').innerText = Math.floor(Engine.hr);
+            document.getElementById('v-dist').innerText = Engine.dist.toFixed(2);
+            document.getElementById('v-cals').innerText = Math.floor(Engine.cals);
 
-            // Colorize weight dynamically
-            if(State.weight > 300) ui.weight.style.color = 'var(--danger)';
-            else if(State.weight > 220) ui.weight.style.color = '#ffff00';
-            else ui.weight.style.color = 'var(--accent)';
+            // Progress Bar
+            const tLoss = 350.0 - Engine.wMin;
+            const cLoss = 350.0 - Engine.wgt;
+            document.getElementById('bar-fill').style.width = ((cLoss/tLoss)*100) + '%';
 
-            // Progress bar
-            const totalToLose = State.startWeight - State.minWeight;
-            const lost = State.startWeight - State.weight;
-            ui.prog.style.width = ((lost / totalToLose) * 100) + '%';
+            // Time & Meta
+            const hrs = Math.floor(Engine.time).toString().padStart(2,'0');
+            const mns = Math.floor((Engine.time%1)*60).toString().padStart(2,'0');
+            document.getElementById('hud-meta').innerText = `LAT: ${Engine.city.lat} | LNG: ${Engine.city.lng} | SYS_TIME: ${hrs}:${mns}`;
 
-            // Draw Minimap
-            const ctx = ui.miniCtx;
-            ctx.clearRect(0, 0, 250, 250);
-            ctx.save();
-            ctx.translate(125, 125);
-            ctx.rotate(-playerGroup.rotation.y); // Rotate map around player
+            // Minimap rendering
+            mapCtx.clearRect(0,0,250,250);
+            mapCtx.save();
+            mapCtx.translate(125, 125);
+            mapCtx.rotate(-pGrp.rotation.y); // Rotate map, keep player pointing up
             
-            // Draw city grid dots around player relative
-            const px = playerGroup.position.x;
-            const pz = playerGroup.position.z;
-            const mapScale = 0.15; // Zoom out
+            // Draw grid dots relative to player
+            const pX = pGrp.position.x; const pZ = pGrp.position.z;
+            const mScale = 0.1; // Zoom
             
-            ctx.fillStyle = '#333';
-            for(let x = -500; x <= 500; x += 100) {
-                for(let z = -500; z <= 500; z += 100) {
-                    const snapX = Math.round(px/100)*100;
-                    const snapZ = Math.round(pz/100)*100;
-                    const drawX = (snapX + x - px) * mapScale;
-                    const drawY = (snapZ + z - pz) * mapScale;
+            mapCtx.fillStyle = 'rgba(0,255,204,0.5)';
+            for(let x=-1000; x<=1000; x+=120) {
+                for(let z=-1000; z<=1000; z+=120) {
+                    const sX = Math.round(pX/120)*120;
+                    const sZ = Math.round(pZ/120)*120;
+                    const dX = (sX + x - pX) * mScale;
+                    const dY = (sZ + z - pZ) * mScale;
                     
-                    if(Math.abs(drawX) < 125 && Math.abs(drawY) < 125) {
-                        ctx.fillRect(drawX, drawY, 8, 8);
+                    if(Math.abs(dX)<125 && Math.abs(dY)<125) {
+                        mapCtx.fillRect(dX, dY, 2, 2);
                     }
                 }
             }
-            ctx.restore();
+            
+            // Draw Cars on map
+            mapCtx.fillStyle = '#ff0000';
+            Engine.ents.cars.forEach(c => {
+                const cX = (c.position.x - pX) * mScale;
+                const cY = (c.position.z - pZ) * mScale;
+                if(Math.abs(cX)<125 && Math.abs(cY)<125) mapCtx.fillRect(cX, cY, 4, 4);
+            });
+            
+            mapCtx.restore();
         }
 
-        // --- 10. MASTER RENDER LOOP ---
+        // -----------------------------------------------------------------------------------------
+        // 15. MAIN EXECUTION LOOP
+        // -----------------------------------------------------------------------------------------
         function animate() {
-            if(!State.isLoaded) return;
+            if(!Engine.state) return;
             requestAnimationFrame(animate);
             
-            const delta = Math.min(clock.getDelta(), 0.1); // Cap lag spikes
+            const dt = Math.min(clock.getDelta(), 0.05); // Frame capping
             
-            updatePhysics(delta);
-            updateAI(delta);
-            updateEnvironment(delta);
-            updateCamera();
-            updateUI();
+            updatePhysics(dt);
+            updateEnv(dt);
+            updateCam();
+            updateDynamicHUD();
 
             renderer.render(scene, camera);
         }
+
+        // INIT BOOT SEQUENCE ON LOAD
+        window.onload = bootSequence;
+
     </script>
 </body>
 </html>
