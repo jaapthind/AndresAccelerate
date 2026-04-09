@@ -1563,7 +1563,7 @@
 
 
                         // --- MASSIVE FOOT TRAFFIC GENERATION ---
-            const pedCount = Math.floor(1000 * Env.city.traffic); // Cranked to 1000 for crowd chaos
+            const pedCount = Math.floor(459 * Env.city.traffic); // Cranked to 1000 for crowd chaos
             const pGeo = new THREE.BoxGeometry(0.6, 1.8, 0.4);
             const pMat = new THREE.MeshStandardMaterial({color: 0x444444});
             
@@ -1605,7 +1605,6 @@
                 // Apply geometry to the mesh
                 const bdy = new THREE.Mesh(carBody, cMats[i % cMats.length]);
                 const car = new THREE.Group();
-                const bdy = new THREE.Mesh(cGeo, cMats[i%cMats.length]);
                 bdy.position.y = 0.8; bdy.castShadow = true; car.add(bdy);
                 
                 // Lights
