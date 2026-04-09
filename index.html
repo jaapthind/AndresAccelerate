@@ -1630,7 +1630,12 @@
         let animPhase = 0;
         
         function checkCollision(nx, nz) {
-            // Simple AABB vs Point collision
+            // SAFE ZONE: If the player is within 60m of the center, 
+            // ignore collisions so they can move around the McDonald's freely.
+            const distFromCenter = Math.sqrt(nx * nx + nz * nz);
+            if (distFromCenter < 60) return false;
+
+            // Standard AABB vs Point collision for the rest of the city
             for(let i=0; i<Env.colliders.length; i++) {
                 const c = Env.colliders[i];
                 if(nx > c.minX && nx < c.maxX && nz > c.minZ && nz < c.maxZ) return true;
