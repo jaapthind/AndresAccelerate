@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AndresAccelerate</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #87CEEB; /* Sky blue */
+            font-family: 'Courier New', Courier, monospace;
+        }
+        #ui-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #FFF;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 25px;
+            border-radius: 8px;
+            border: 2px solid #444;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            pointer-events: none;
+            user-select: none;
+        }
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            text-transform: uppercase;
+            color: #00FFcc;
+        }
+        .stat {
+            font-size: 18px;
+            margin: 5px 0;
+        }
+        #controls-help {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            text-align: right;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-container">
+        <h1>AndresAccelerate</h1>
+        <div class="stat">Weight: <span id="weightDisplay" style="color: #ff4444;">350.0</span> lbs</div>
+        <div class="stat">Speed: <span id="speedDisplay" style="color: #ffaa00;">0.5</span>x</div>
+        <div class="stat">Distance: <span id="distanceDisplay">0</span> m</div>
+    </div>
+
+    <div id="controls-help">
+        [UP] Run Forward<br>
+        [DOWN] Run Backward<br>
+        [LEFT/RIGHT] Turn
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // --- GAME STATE & VARIABLES ---
+        let playerWeight = 350.0; // Starts fat
+        const minWeight = 160.0;  // Goal weight
+        let currentSpeed = 0.5;   // Starts slow
+        const maxSpeed = 2.5;     // Gets fast
+        let distanceRun = 0;
+        
+        // Input state
+        const keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false
+        };
+
+        // --- SCENE SETUP ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
+        scene.fog = new THREE.FogExp2(0x87CEEB, 0.002);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        // --- LIGHTING ---
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+        hemiLight.position.set(0, 200, 0);
+        scene.add(hemiLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(100, 200, 50);
+        dirLight.castShadow = true;
+        dirLight.shadow.camera.top = 100;
+        dirLight.shadow.camera.bottom = -100;
+        dirLight.shadow.camera.left = -100;
+        dirLight.shadow.camera.right = 100;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        scene.add(dirLight);
+
+        // --- PROCEDURAL TERRAIN ---
+        // Simple noise function for terrain generation without external libraries
+        function noise(x, z) {
+            return Math.sin(x * 0.05) * 5 + Math.cos(z * 0.04) * 4 + 
+                   Math.sin(x * 0.01 + z * 0.02) * 15 +
+                   Math.cos(x * 0.1) * Math.sin(z * 0.1) * 2;
+        }
+
+        const terrainGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
+        terrainGeometry.rotateX(-Math.PI / 2);
+
+        const positionAttribute = terrainGeometry.attributes.position;
+        for (let i = 0; i < positionAttribute.count; i++) {
+            const x = positionAttribute.getX(i);
+            const z = positionAttribute.getZ(i);
+            const y = noise(x, z);
+            positionAttribute.setY(i, y);
+        }
+        terrainGeometry.computeVertexNormals();
+
+        // Realistic-ish dirt/grass material
+        const terrainMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x3d5e3a, 
+            roughness: 0.9,
+            metalness: 0.1
+        });
+        const terrain = new THREE.Mesh(terrainGeometry, terrainMaterial);
+        terrain.receiveShadow = true;
+        scene.add(terrain);
+
+        // --- PLAYER GENERATION ---
+        const playerGroup = new THREE.Group();
+        scene.add(playerGroup);
+
+        // Body (Starts wide, gets thin)
+        const bodyGeo = new THREE.CylinderGeometry(0.5, 0.5, 2, 16);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2222ff }); // Blue shirt
+        const playerBody = new THREE.Mesh(bodyGeo, bodyMat);
+        playerBody.position.y = 1; // Half height
+        playerBody.castShadow = true;
+        playerGroup.add(playerBody);
+
+        // Head
+        const headGeo = new THREE.SphereGeometry(0.4, 16, 16);
+        const headMat = new THREE.MeshStandardMaterial({ color: 0xffccaa }); // Skin tone
+        const playerHead = new THREE.Mesh(headGeo, headMat);
+        playerHead.position.y = 2.4;
+        playerHead.castShadow = true;
+        playerGroup.add(playerHead);
+
+        // Position player in world
+        playerGroup.position.set(0, noise(0, 0), 0);
+
+        // 3rd Person Camera Setup
+        const cameraOffset = new THREE.Vector3(0, 3, -7);
+
+        // --- CONTROLS ---
+        window.addEventListener('keydown', (e) => {
+            if(keys.hasOwnProperty(e.code)) keys[e.code] = true;
+        });
+        window.addEventListener('keyup', (e) => {
+            if(keys.hasOwnProperty(e.code)) keys[e.code] = false;
+        });
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- GAME LOGIC & PHYSICS ---
+        const clock = new THREE.Clock();
+
+        function updatePlayer(delta) {
+            let isMoving = false;
+            const turnSpeed = 2.0 * delta;
+            
+            // Calculate dynamic speed based on weight
+            // Formula maps weight (350 -> 160) to speed (0.5 -> 2.5)
+            const weightRatio = (350 - playerWeight) / (350 - 160);
+            currentSpeed = 0.5 + (weightRatio * (maxSpeed - 0.5));
+
+            const moveDistance = currentSpeed * delta * 15;
+
+            if (keys.ArrowUp) {
+                playerGroup.translateZ(moveDistance);
+                distanceRun += moveDistance;
+                isMoving = true;
+            }
+            if (keys.ArrowDown) {
+                playerGroup.translateZ(-moveDistance * 0.5); // Backpedal slower
+                isMoving = true;
+            }
+            if (keys.ArrowLeft) {
+                playerGroup.rotation.y += turnSpeed;
+            }
+            if (keys.ArrowRight) {
+                playerGroup.rotation.y -= turnSpeed;
+            }
+
+            // Fitness / Weight Loss Mechanic
+            if (isMoving && playerWeight > minWeight) {
+                // Burn fat as you run (faster weight loss for demonstration)
+                playerWeight -= delta * 0.5; 
+                if (playerWeight < minWeight) playerWeight = minWeight;
+            }
+
+            // Visual Body Update: Scale X and Z based on weight
+            // At 350lbs, scale is ~2.5. At 160lbs, scale is 1.0.
+            const scaleFactor = 1.0 + ((playerWeight - 160) / 190) * 1.5;
+            playerBody.scale.set(scaleFactor, 1, scaleFactor);
+
+            // Ground Clamp (Keep player on terrain)
+            const terrainHeight = noise(playerGroup.position.x, playerGroup.position.z);
+            playerGroup.position.y = terrainHeight;
+
+            // Infinite Terrain Illusion (Wrap around if going too far)
+            if (playerGroup.position.x > 400) playerGroup.position.x = -400;
+            if (playerGroup.position.x < -400) playerGroup.position.x = 400;
+            if (playerGroup.position.z > 400) playerGroup.position.z = -400;
+            if (playerGroup.position.z < -400) playerGroup.position.z = 400;
+        }
+
+        function updateCamera() {
+            // Calculate desired camera position behind the player
+            const relativeCameraOffset = cameraOffset.clone();
+            const cameraPos = relativeCameraOffset.applyMatrix4(playerGroup.matrixWorld);
+
+            // Smoothly interpolate camera position for that 3rd person feel
+            camera.position.lerp(cameraPos, 0.1);
+
+            // Look slightly above the player's center
+            const lookAtPos = playerGroup.position.clone();
+            lookAtPos.y += 1.5;
+            camera.lookAt(lookAtPos);
+        }
+
+        function updateUI() {
+            document.getElementById('weightDisplay').innerText = playerWeight.toFixed(1);
+            document.getElementById('speedDisplay').innerText = currentSpeed.toFixed(2);
+            document.getElementById('distanceDisplay').innerText = Math.floor(distanceRun);
+
+            // Color coding UI based on progress
+            const weightSpan = document.getElementById('weightDisplay');
+            if(playerWeight > 300) weightSpan.style.color = '#ff4444';
+            else if(playerWeight > 220) weightSpan.style.color = '#ffff44';
+            else weightSpan.style.color = '#44ff44';
+        }
+
+        // --- MAIN GAME LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+
+            updatePlayer(delta);
+            updateCamera();
+            updateUI();
+
+            renderer.render(scene, camera);
+        }
+
+        // Start Game
+        animate();
+    </script>
+</body>
+</html>
