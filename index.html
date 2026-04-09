@@ -2121,57 +2121,459 @@
             }, 500); // Allow DOM to repaint
         }
                     function buildMcDonalds() {
-                const mcd = new THREE.Group();
-                const red = new THREE.MeshStandardMaterial({color: 0xdd2910});
-                const yellow = new THREE.MeshStandardMaterial({color: 0xffc72c, emissive: 0xffc72c, emissiveIntensity: 0.5});
-                const black = new THREE.MeshStandardMaterial({color: 0x111111});
+            const mcd = new THREE.Group();
             
-                // Floor & Roof
-                const structure = new THREE.Mesh(new THREE.BoxGeometry(40, 12, 40), new THREE.MeshStandardMaterial({color: 0x333333, transparent: true, opacity: 0.9}));
-                structure.position.y = 6;
-                mcd.add(structure);
-            
-                // Front Counter
-                const counter = new THREE.Mesh(new THREE.BoxGeometry(20, 4, 2), black);
-                counter.position.set(0, 2, -15);
-                mcd.add(counter);
-            
-                // Kiosks (The big touch screens)
-                for(let i of [-8, -4, 4, 8]) {
-                    const k = new THREE.Mesh(new THREE.BoxGeometry(1.5, 7, 0.5), black);
-                    k.position.set(i, 3.5, -10);
-                    const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 3), new THREE.MeshBasicMaterial({color: 0xffffff}));
-                    screen.position.set(i, 4.5, -9.74);
-                    mcd.add(k, screen);
-                }
-            
-                // The Golden Arches (Outside)
-                 // The Golden Arches "M" (Standing Upright)
-                    const archGeo = new THREE.TorusGeometry(5, 0.6, 16, 100, Math.PI);
-                    
-                    // Left Arch
-                    const arch1 = new THREE.Mesh(archGeo, yellow);
-                    arch1.position.set(-4.5, 12, 19.5);
-                    arch1.rotation.z = 0; // Standing upright
-                    
-                    // Right Arch
-                    const arch2 = new THREE.Mesh(archGeo, yellow);
-                    arch2.position.set(4.5, 12, 19.5);
-                    arch2.rotation.z = 0; // Standing upright
-                    
-                    mcd.add(arch1, arch2);
-                    
-                    // Add a Red sign board behind the arches for better visibility
-                    const signBoard = new THREE.Mesh(new THREE.BoxGeometry(22, 12, 1), red);
-                    signBoard.position.set(0, 10, 19);
-                    mcd.add(signBoard);
-            
-                scene.add(mcd);
-                
-                // Clear city buildings from spawning on top of the restaurant
-                Env.colliders = Env.colliders.filter(c => Math.abs(c.minX) > 25 || Math.abs(c.minZ) > 25);
-                SysLog.print("LOCATION: McDonald's Franchise Loaded at 0,0,0.");
+            // ==========================================
+            // 1. TOPOGRAPHY, SAFETY ZONE & CLEARANCE
+            // ==========================================
+            let spawnY = 0;
+            if(Env.city.layout.includes('hill') || Env.city.layout.includes('coast')) {
+                spawnY = NoiseGen.fbm(0, 0, 4, 0.5, 0.001) * Env.city.varHeight;
             }
+            mcd.position.set(0, spawnY, 0);
+
+            // The "Chicago Fix" - Bulldoze 90m radius for the mega-franchise
+            Env.colliders = Env.colliders.filter(c => {
+                const dist = Math.sqrt(Math.pow(c.minX, 2) + Math.pow(c.minZ, 2));
+                return dist > 90;
+            });
+            Env.entities.cars = Env.entities.cars.filter(car => {
+                const isNear = car.position.length() < 100;
+                if(isNear) cityGroup.remove(car);
+                return !isNear;
+            });
+            Env.entities.peds = Env.entities.peds.filter(p => {
+                const isNear = p.position.length() < 80;
+                if(isNear) cityGroup.remove(p);
+                return !isNear;
+            });
+
+            // ==========================================
+            // 2. ULTRA-HD MATERIALS LIBRARY
+            // ==========================================
+            const matDarkFascia = new THREE.MeshStandardMaterial({color: 0x1f1f1f, roughness: 0.9}); 
+            const matLightFascia = new THREE.MeshStandardMaterial({color: 0x777777, roughness: 0.8});
+            const matGlass = new THREE.MeshStandardMaterial({color: 0xaaccff, transparent: true, opacity: 0.25, metalness: 0.9, roughness: 0.05});
+            const matWindowFrame = new THREE.MeshStandardMaterial({color: 0x111111, metalness: 0.5, roughness: 0.5});
+            const matLouver = new THREE.MeshStandardMaterial({color: 0xc0c0c0, metalness: 0.7, roughness: 0.3});
+            const matRed = new THREE.MeshStandardMaterial({color: 0xda291c, roughness: 0.4});
+            const matGold = new THREE.MeshStandardMaterial({color: 0xffc72c, roughness: 0.3, emissive: 0xffc72c, emissiveIntensity: 0.4});
+            const matSignWhite = new THREE.MeshStandardMaterial({color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.8});
+            const matAsphalt = new THREE.MeshStandardMaterial({color: 0x2a2a2a, roughness: 1.0});
+            const matConcrete = new THREE.MeshStandardMaterial({color: 0x999999, roughness: 1.0});
+            const matCurbYellow = new THREE.MeshStandardMaterial({color: 0xeedd00, roughness: 0.8});
+            const matBush = new THREE.MeshStandardMaterial({color: 0x1a3300, roughness: 0.9});
+            const matWood = new THREE.MeshStandardMaterial({color: 0x8b5a2b, roughness: 0.6});
+            const matBlack = new THREE.MeshStandardMaterial({color: 0x050505, roughness: 0.5});
+            const matPlayYellow = new THREE.MeshStandardMaterial({color: 0xfacc00, roughness: 0.3, metalness: 0.1});
+            const matPlayGreen = new THREE.MeshStandardMaterial({color: 0x55aa00, roughness: 0.3, metalness: 0.1});
+            const matStainless = new THREE.MeshStandardMaterial({color: 0xaaaaaa, metalness: 0.8, roughness: 0.2});
+            const matTileWhite = new THREE.MeshStandardMaterial({color: 0xeeeeee, roughness: 0.2});
+            const matTileGrey = new THREE.MeshStandardMaterial({color: 0xbbbbbb, roughness: 0.2});
+
+            // ==========================================
+            // 3. MAIN ARCHITECTURAL SHELL
+            // ==========================================
+            const building = new THREE.Group();
+
+            // Core Dark Block (Kitchen, Bathrooms, Drive-Thru side)
+            const coreMesh = new THREE.Mesh(new THREE.BoxGeometry(26, 18, 40), matDarkFascia);
+            coreMesh.position.set(-10, 9, 0);
+            coreMesh.castShadow = true;
+            coreMesh.receiveShadow = true;
+            building.add(coreMesh);
+
+            // Roof Parapet detailing
+            const parapet = new THREE.Mesh(new THREE.BoxGeometry(28, 2, 42), matDarkFascia);
+            parapet.position.set(-10, 19, 0);
+            building.add(parapet);
+
+            // Roof HVAC Units
+            for(let i=0; i<3; i++) {
+                const hvac = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 5), matStainless);
+                hvac.position.set(-15 + (i*5), 19.5, -10 + (i*8));
+                building.add(hvac);
+            }
+
+            // Glass Dining Room Box (Right Side)
+            const diningWidth = 32;
+            const diningDepth = 30;
+            const diningHeight = 16;
+            
+            // Dining Room Roof & Ceiling
+            const diningRoof = new THREE.Mesh(new THREE.BoxGeometry(diningWidth, 2, diningDepth), matLightFascia);
+            diningRoof.position.set(19, diningHeight + 1, 5);
+            diningRoof.castShadow = true;
+            building.add(diningRoof);
+
+            // The exact horizontal Louvers / Silver Slats spanning the glass
+            const louverGroup = new THREE.Group();
+            for(let i = 0; i < 14; i++) {
+                const slat = new THREE.Mesh(new THREE.BoxGeometry(diningWidth + 1, 0.4, 1.2), matLouver);
+                slat.position.set(19, 7.5 + (i * 0.65), 20.6); // Front facade
+                slat.castShadow = true;
+                louverGroup.add(slat);
+                
+                const slatSide = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, diningDepth + 1), matLouver);
+                slatSide.position.set(35.6, 7.5 + (i * 0.65), 5); // Right facade
+                slatSide.castShadow = true;
+                louverGroup.add(slatSide);
+            }
+            building.add(louverGroup);
+
+            // ==========================================
+            // 4. DETAILED GLASS FACADE & MULLIONS
+            // ==========================================
+            const glassGroup = new THREE.Group();
+            
+            // Large Front Glass Panes
+            const frontGlass = new THREE.Mesh(new THREE.BoxGeometry(diningWidth, diningHeight, 0.5), matGlass);
+            frontGlass.position.set(19, diningHeight/2, 20);
+            glassGroup.add(frontGlass);
+            
+            // Side Glass Panes
+            const sideGlass = new THREE.Mesh(new THREE.BoxGeometry(0.5, diningHeight, diningDepth), matGlass);
+            sideGlass.position.set(35, diningHeight/2, 5);
+            glassGroup.add(sideGlass);
+
+            // Window Mullions (Vertical and Horizontal frames)
+            for(let i=0; i<=6; i++) {
+                const vMullion = new THREE.Mesh(new THREE.BoxGeometry(0.4, diningHeight, 0.6), matWindowFrame);
+                vMullion.position.set(3 + (i * 5.33), diningHeight/2, 20);
+                glassGroup.add(vMullion);
+            }
+            for(let i=0; i<=5; i++) {
+                const sideMullion = new THREE.Mesh(new THREE.BoxGeometry(0.6, diningHeight, 0.4), matWindowFrame);
+                sideMullion.position.set(35, diningHeight/2, -10 + (i * 6));
+                glassGroup.add(sideMullion);
+            }
+            // Horizontal door line mullion
+            const hMullion = new THREE.Mesh(new THREE.BoxGeometry(diningWidth, 0.4, 0.6), matWindowFrame);
+            hMullion.position.set(19, 7, 20);
+            glassGroup.add(hMullion);
+
+            // Main Entrance Doors
+            const doorLeft = new THREE.Mesh(new THREE.BoxGeometry(2.5, 7, 0.8), matGlass);
+            doorLeft.position.set(13.5, 3.5, 20);
+            const doorRight = new THREE.Mesh(new THREE.BoxGeometry(2.5, 7, 0.8), matGlass);
+            doorRight.position.set(16.5, 3.5, 20);
+            const doorHandleL = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 3), matStainless);
+            doorHandleL.position.set(14.5, 3.5, 20.5);
+            const doorHandleR = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 3), matStainless);
+            doorHandleR.position.set(15.5, 3.5, 20.5);
+            glassGroup.add(doorLeft, doorRight, doorHandleL, doorHandleR);
+
+            building.add(glassGroup);
+
+            // ==========================================
+            // 5. THE PLAYPLACE COMPLEX (IMAGE ACCURATE)
+            // ==========================================
+            const playGroup = new THREE.Group();
+            
+            // Central Square Tower Structure
+            const playTower = new THREE.Mesh(new THREE.BoxGeometry(7, 14, 7), matGlass);
+            playTower.position.set(28, 7, 14);
+            const towerFrame1 = new THREE.Mesh(new THREE.BoxGeometry(7.2, 1, 7.2), matPlayGreen);
+            towerFrame1.position.set(28, 7, 14);
+            const towerFrame2 = new THREE.Mesh(new THREE.BoxGeometry(7.2, 1, 7.2), matPlayYellow);
+            towerFrame2.position.set(28, 12, 14);
+            playGroup.add(playTower, towerFrame1, towerFrame2);
+
+            // Yellow Tube Slide (Curving down)
+            const tubeCurveYellow = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(28, 12, 14),
+                new THREE.Vector3(23, 10, 18),
+                new THREE.Vector3(25, 7, 21),
+                new THREE.Vector3(30, 4, 18),
+                new THREE.Vector3(28, 1.5, 14)
+            ]);
+            const yellowSlide = new THREE.Mesh(new THREE.TubeGeometry(tubeCurveYellow, 32, 1.8, 12, false), matPlayYellow);
+            playGroup.add(yellowSlide);
+
+            // Green Crawl Tube (Straight out and down)
+            const tubeCurveGreen = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(28, 8, 10),
+                new THREE.Vector3(32, 8, 8),
+                new THREE.Vector3(33, 4, 10),
+                new THREE.Vector3(31, 1.5, 12)
+            ]);
+            const greenSlide = new THREE.Mesh(new THREE.TubeGeometry(tubeCurveGreen, 24, 1.6, 12, false), matPlayGreen);
+            playGroup.add(greenSlide);
+
+            // PlayPlace Support Pillars
+            const supportPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 10), matStainless);
+            supportPillar.position.set(25, 5, 21);
+            const supportPillar2 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 8), matStainless);
+            supportPillar2.position.set(33, 4, 8);
+            playGroup.add(supportPillar, supportPillar2);
+
+            building.add(playGroup);
+
+            // ==========================================
+            // 6. ULTRA-DETAILED INTERIOR
+            // ==========================================
+            const interior = new THREE.Group();
+
+            // Checkered Tile Floor
+            for(let x=0; x<15; x++) {
+                for(let z=0; z<14; z++) {
+                    const isWhite = (x+z) % 2 === 0;
+                    const tile = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), isWhite ? matTileWhite : matTileGrey);
+                    tile.rotation.x = -Math.PI/2;
+                    tile.position.set(4 + (x*2), 0.1, -8 + (z*2));
+                    interior.add(tile);
+                }
+            }
+
+            // The Main Counter & Registers
+            const counterBox = new THREE.Mesh(new THREE.BoxGeometry(16, 3.5, 3.5), matDarkFascia);
+            counterBox.position.set(0, 1.75, 5);
+            const counterTop = new THREE.Mesh(new THREE.BoxGeometry(16.5, 0.2, 4), matStainless);
+            counterTop.position.set(0, 3.6, 5);
+            interior.add(counterBox, counterTop);
+
+            // Point of Sale (POS) Systems
+            for(let i=0; i<3; i++) {
+                const posStand = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1), matBlack);
+                posStand.position.set(-4 + (i*4), 4, 6);
+                const posScreen = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.1), matBlack);
+                posScreen.position.set(-4 + (i*4), 4.5, 6.2);
+                posScreen.rotation.x = -0.2;
+                interior.add(posStand, posScreen);
+            }
+
+            // Digital Menu Boards behind counter
+            const menuBacker = new THREE.Mesh(new THREE.BoxGeometry(16, 3, 0.5), matDarkFascia);
+            menuBacker.position.set(0, 11, -1);
+            interior.add(menuBacker);
+            for(let i=0; i<4; i++) {
+                const screen = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 2.5), matSignWhite);
+                screen.position.set(-5.5 + (i*3.7), 11, -0.7);
+                interior.add(screen);
+            }
+
+            // Kiosks (Self-Ordering)
+            for(let i=0; i<3; i++) {
+                const kBase = new THREE.Mesh(new THREE.BoxGeometry(1.5, 5.5, 0.6), matBlack);
+                kBase.position.set(10 + (i * 3.5), 2.75, 14);
+                const kScreen = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 3), matSignWhite);
+                kScreen.position.set(10 + (i * 3.5), 3.5, 14.31);
+                interior.add(kBase, kScreen);
+            }
+
+            // Dining Tables & Seating
+            for(let r=0; r<4; r++) {
+                for(let c=0; c<3; c++) {
+                    const tX = 14 + (c * 6);
+                    const tZ = -5 + (r * 5);
+                    
+                    const table = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.2, 2.5), matWood);
+                    table.position.set(tX, 2.5, tZ);
+                    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2.5), matStainless);
+                    leg.position.set(tX, 1.25, tZ);
+                    interior.add(table, leg);
+                    
+                    // 4 Stools per table
+                    const offsets = [[-1.5, 0], [1.5, 0], [0, -1.5], [0, 1.5]];
+                    offsets.forEach(off => {
+                        const stool = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1.5), matRed);
+                        stool.position.set(tX + off[0], 0.75, tZ + off[1]);
+                        interior.add(stool);
+                    });
+                }
+            }
+
+            // Trash Receptacles
+            for(let i=0; i<2; i++) {
+                const trash = new THREE.Mesh(new THREE.BoxGeometry(2, 3.5, 2), matWood);
+                trash.position.set(7 + (i*20), 1.75, 18);
+                const trashTray = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.2, 1.8), matBlack);
+                trashTray.position.set(7 + (i*20), 3.6, 18);
+                interior.add(trash, trashTray);
+            }
+
+            building.add(interior);
+            mcd.add(building);
+
+            // ==========================================
+            // 7. THE ICONIC ROAD SIGN (PERFECT RECREATION)
+            // ==========================================
+            const signGroup = new THREE.Group();
+            
+            // Mega Sign Pole
+            const signPole = new THREE.Mesh(new THREE.BoxGeometry(2.5, 35, 2.5), matDarkFascia);
+            signPole.position.set(-45, 17.5, 40);
+            signPole.castShadow = true;
+            signGroup.add(signPole);
+
+            // Giant Red Header Box
+            const redBoard = new THREE.Mesh(new THREE.BoxGeometry(26, 12, 4), matRed);
+            redBoard.position.set(-45, 30, 40);
+            signGroup.add(redBoard);
+
+            // "McDonald's" White Text Blocks (Abstracted)
+            const mainText = new THREE.Mesh(new THREE.BoxGeometry(22, 2.5, 4.2), matSignWhite);
+            mainText.position.set(-45, 31, 40);
+            signGroup.add(mainText);
+
+            // Yellow "OVER 99 BILLION SERVED" line
+            const subText = new THREE.Mesh(new THREE.BoxGeometry(18, 1, 4.2), matGold);
+            subText.position.set(-45, 27.5, 40);
+            signGroup.add(subText);
+
+            // The Golden Arches (M)
+            const archExtrudeSettings = { depth: 1.5, bevelEnabled: false };
+            const leftArchShape = new THREE.Shape();
+            leftArchShape.absarc(0, 0, 6, 0, Math.PI, false);
+            leftArchShape.absarc(0, 0, 4, Math.PI, 0, true);
+            const leftArchGeo = new THREE.ExtrudeGeometry(leftArchShape, archExtrudeSettings);
+            const mLeft = new THREE.Mesh(leftArchGeo, matGold);
+            mLeft.position.set(-49, 36, 39.25);
+            
+            const mRight = new THREE.Mesh(leftArchGeo, matGold);
+            mRight.position.set(-41, 36, 39.25);
+            signGroup.add(mLeft, mRight);
+
+            // The Reader Board ("SNACK WRAP IS BACK")
+            const readerBoard = new THREE.Mesh(new THREE.BoxGeometry(18, 7, 3.5), matGold);
+            readerBoard.position.set(-45, 18, 40);
+            signGroup.add(readerBoard);
+            
+            // Reader Board Text Lines
+            const track1 = new THREE.Mesh(new THREE.BoxGeometry(14, 1.2, 3.7), matBlack);
+            track1.position.set(-45, 19.5, 40);
+            const track2 = new THREE.Mesh(new THREE.BoxGeometry(12, 1.2, 3.7), matBlack);
+            track2.position.set(-45, 16.5, 40);
+            signGroup.add(track1, track2);
+
+            mcd.add(signGroup);
+
+            // ==========================================
+            // 8. DRIVE-THRU COMPLEX
+            // ==========================================
+            const dtGroup = new THREE.Group();
+            
+            // Pickup Window Frame
+            const dtWindowFrame = new THREE.Mesh(new THREE.BoxGeometry(0.8, 5, 8), matDarkFascia);
+            dtWindowFrame.position.set(-23.1, 5, 0);
+            const dtWindowGlass = new THREE.Mesh(new THREE.BoxGeometry(0.4, 4.5, 7.5), matGlass);
+            dtWindowGlass.position.set(-23.1, 5, 0);
+            dtGroup.add(dtWindowFrame, dtWindowGlass);
+
+            // Overhanging Red Awning
+            const dtAwning = new THREE.Mesh(new THREE.BoxGeometry(4, 0.8, 10), matRed);
+            dtAwning.position.set(-25, 8.5, 0);
+            dtGroup.add(dtAwning);
+
+            // Payment Window (Further back)
+            const payWindowGlass = new THREE.Mesh(new THREE.BoxGeometry(0.4, 4, 4), matGlass);
+            payWindowGlass.position.set(-23.1, 5, -12);
+            dtGroup.add(payWindowGlass);
+
+            // Dual Drive-Thru Ordering Stations
+            for(let i=0; i<2; i++) {
+                const zPos = -25 - (i*12);
+                // Digital Menu Board
+                const dtMenu = new THREE.Mesh(new THREE.BoxGeometry(1.5, 7, 4.5), matDarkFascia);
+                dtMenu.position.set(-35, 3.5, zPos);
+                const dtScreen = new THREE.Mesh(new THREE.PlaneGeometry(4, 6), matSignWhite);
+                dtScreen.position.set(-34.2, 4, zPos);
+                dtScreen.rotation.y = Math.PI / 2;
+                
+                // Speaker Box & Mic
+                const speaker = new THREE.Mesh(new THREE.BoxGeometry(1, 4, 1), matBlack);
+                speaker.position.set(-32, 2, zPos + 3);
+                const micPlate = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6), matStainless);
+                micPlate.position.set(-31.4, 3, zPos + 3);
+                micPlate.rotation.y = Math.PI / 2;
+
+                dtGroup.add(dtMenu, dtScreen, speaker, micPlate);
+            }
+
+            mcd.add(dtGroup);
+
+            // ==========================================
+            // 9. EXTERIOR LANDSCAPING & PARKING LOT
+            // ==========================================
+            const landscape = new THREE.Group();
+
+            // Main Asphalt Lot
+            const lot = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), matAsphalt);
+            lot.rotation.x = -Math.PI/2;
+            lot.position.set(0, 0.05, 0);
+            lot.receiveShadow = true;
+            landscape.add(lot);
+
+            // Wrap-around Concrete Sidewalk
+            const sidewalkMain = new THREE.Mesh(new THREE.BoxGeometry(75, 0.4, 20), matConcrete);
+            sidewalkMain.position.set(7.5, 0.2, 30);
+            sidewalkMain.receiveShadow = true;
+            landscape.add(sidewalkMain);
+            
+            // Side Sidewalk (Drive thru barrier)
+            const sidewalkSide = new THREE.Mesh(new THREE.BoxGeometry(6, 0.4, 60), matConcrete);
+            sidewalkSide.position.set(-26, 0.2, 10);
+            landscape.add(sidewalkSide);
+
+            // Yellow Safety Bollards
+            for(let i=0; i<6; i++) {
+                const bollard = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 4), matGold);
+                bollard.position.set(-28, 2, -15 + (i * 8));
+                landscape.add(bollard);
+            }
+
+            // Precisely placed Bushes (Matching the image front edge)
+            for(let i=0; i<10; i++) {
+                const bScale = 0.8 + Math.random() * 0.5;
+                const bush = new THREE.Mesh(new THREE.BoxGeometry(5, 3.5, 4), matBush);
+                bush.scale.set(1, bScale, 1);
+                bush.position.set(-25 + (i * 6), 1.5 * bScale, 36);
+                bush.castShadow = true;
+                landscape.add(bush);
+            }
+
+            // Parking Lot Lines & ADA Spots
+            for(let i=0; i<12; i++) {
+                const line = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 16), matSignWhite);
+                line.rotation.x = -Math.PI/2;
+                line.position.set(-15 + (i * 8), 0.1, 60);
+                landscape.add(line);
+                
+                // Blue ADA box for the first two spots
+                if(i < 2) {
+                    const adaBox = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 16), new THREE.MeshStandardMaterial({color: 0x0055ff}));
+                    adaBox.rotation.x = -Math.PI/2;
+                    adaBox.position.set(-11 + (i * 8), 0.08, 60);
+                    landscape.add(adaBox);
+                }
+            }
+
+            // Tall Parking Lot Lights
+            for(let i=0; i<4; i++) {
+                const lightPole = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 25), matConcrete);
+                lightPole.position.set(-30 + (i*30), 12.5, 80);
+                const lightBox = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 4), matStainless);
+                lightBox.position.set(-30 + (i*30), 25, 78);
+                landscape.add(lightPole, lightBox);
+            }
+
+            mcd.add(landscape);
+
+            // ==========================================
+            // 10. COLLISION MAP REGISTRATION
+            // ==========================================
+            Env.colliders.push({ minX: -24, maxX: 36, minZ: -21, maxZ: 21 }); // Building
+            Env.colliders.push({ minX: -47, maxX: -43, minZ: 38, maxZ: 42 }); // Mega Sign Pole
+            Env.colliders.push({ minX: -36, maxX: -30, minZ: -30, maxZ: -10 }); // DT Menus
+            
+            scene.add(mcd);
+            
+            // Set Player Spawn facing the masterpiece
+            playerGroup.position.set(15, spawnY + 2, 75);
+            playerGroup.rotation.y = Math.PI; // Face the building
+            
+            SysLog.print("A.R.E.S. V5: McDonald's Ultra-HD Architecture (300+ Lines) fully compiled and injected.");
+        }
         // Fire Boot Sequence
         window.onload = startBoot;
 
