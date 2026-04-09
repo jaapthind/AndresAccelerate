@@ -2100,26 +2100,28 @@
                 buildPlayerRig();
                 spawnAI();
                 buildMcDonalds(); 
-                playerGroup.position.set(0, 1.5, 0);
+                // --- NEW UN-GLITCHABLE SPAWN LOGIC ---
+                let startY = 0;
+                // We calculate the hill height before placing the player
+                if(Env.city.layout.includes('hill') || Env.city.layout.includes('coast')) {
+                    startY = NoiseGen.fbm(0, 0, 4, 0.5, 0.001) * Env.city.varHeight;
+                }
                 
-                // UI Setup
+                // We set you 20 meters in the air so you "drop in" safely
+                playerGroup.position.set(0, startY + 20, 15); 
+                Env.yVel = 0; 
+                Env.isGrounded = false; 
+
+                // UI Setup (Keep this part)
                 document.getElementById('hud-loc-name').innerText = Env.city.name.toUpperCase();
                 document.getElementById('env-atm').innerText = Env.city.weather;
                 document.getElementById('env-tmp').innerText = Env.city.temp + "°C";
                 document.getElementById('env-hum').innerText = Env.city.hum + "%";
                 document.getElementById('env-trf').innerText = (Env.city.traffic * 100).toFixed(0) + "% CAP";
                 
-                // Hide boot, show game
+                // Final Engine Start
                 document.getElementById('boot-seq').style.display = 'none';
                 document.getElementById('hud-container').style.display = 'block';
-                
-                // Fix canvas sizes for graphs
-                document.getElementById('ecg-canvas').width = document.querySelector('.graph-container').clientWidth;
-                document.getElementById('ecg-canvas').height = 60;
-                document.getElementById('perf-canvas').width = document.querySelector('.graph-container').clientWidth;
-                document.getElementById('perf-canvas').height = 60;
-                document.getElementById('map-canvas').width = 300;
-                document.getElementById('map-canvas').height = 300;
 
                 Env.active = true;
                 clock.start();
