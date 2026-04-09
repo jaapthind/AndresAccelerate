@@ -1283,15 +1283,17 @@
                     }
                     else {
                         // Roads
-                        // Roads - Raised to 0.2 to prevent Z-Fighting (flickering surfaces)
+                        // Roads
+                        // Horizontal Road remains at 0.2
                         const rH = new THREE.Mesh(new THREE.PlaneGeometry(gridSize, roadWidth), Env.mats.asphalt);
                         rH.rotation.x = -Math.PI/2; 
                         rH.position.set(cx, cy + 0.2, cz + gridSize / 2); 
                         rH.receiveShadow = true;
                         
+                        // Vertical Road raised to 0.21 to prevent Z-Fighting (flickering)
                         const rV = new THREE.Mesh(new THREE.PlaneGeometry(roadWidth, gridSize), Env.mats.asphalt);
                         rV.rotation.x = -Math.PI/2; 
-                        rV.position.set(cx + gridSize / 2, cy + 0.2, cz); 
+                        rV.position.set(cx + gridSize / 2, cy + 0.21, cz); // <-- CHANGE THIS LINE
                         rV.receiveShadow = true;
                         
                         cityGroup.add(rH); cityGroup.add(rV);
