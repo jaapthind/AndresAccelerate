@@ -1282,31 +1282,21 @@
                         }
                     }
                     else {
-                        // --- 1. HORIZONTAL ROADS (BENDING) ---
-                        const rH = new THREE.Mesh(new THREE.PlaneGeometry(gridSize, roadWidth, 10, 10), Env.mats.asphalt);
+                        // Roads
+                        // Roads
+                        // Horizontal Road remains at 0.2
+                        const rH = new THREE.Mesh(new THREE.PlaneGeometry(gridSize, roadWidth), Env.mats.asphalt);
                         rH.rotation.x = -Math.PI/2; 
-                        const vH = rH.geometry.attributes.position.array;
-                        for(let i=0; i<vH.length; i+=3) {
-                            let wX = cx + vH[i];
-                            let wZ = (cz + gridSize/2) - vH[i+1];
-                            vH[i+2] = NoiseGen.fbm(wX, wZ, 4, 0.5, 0.001) * Env.city.varHeight + 0.2;
-                        }
-                        rH.geometry.computeVertexNormals();
-                        cityGroup.add(rH);
-
-                        // --- 2. VERTICAL ROADS (BENDING) ---
-                        const rV = new THREE.Mesh(new THREE.PlaneGeometry(roadWidth, gridSize, 10, 10), Env.mats.asphalt);
+                        rH.position.set(cx, cy + 0.2, cz + gridSize / 2); 
+                        rH.receiveShadow = true;
+                        
+                        // Vertical Road raised to 0.21 to prevent Z-Fighting (flickering)
+                        const rV = new THREE.Mesh(new THREE.PlaneGeometry(roadWidth, gridSize), Env.mats.asphalt);
                         rV.rotation.x = -Math.PI/2; 
-                        const vV = rV.geometry.attributes.position.array;
-                        for(let i=0; i<vV.length; i+=3) {
-                            let wX = (cx + gridSize/2) + vV[i];
-                            let wZ = cz - vV[i+1];
-                            vV[i+2] = NoiseGen.fbm(wX, wZ, 4, 0.5, 0.001) * Env.city.varHeight + 0.21;
-                        }
-                        rV.geometry.computeVertexNormals();
-                        cityGroup.add(rV);
-
-                        // --- 3. ARCHITECTURE (KEEP THIS LINE) ---
+                        rV.position.set(cx + gridSize / 2, cy + 0.21, cz); // <-- CHANGE THIS LINE
+                        rV.receiveShadow = true;
+                        
+                        cityGroup.add(rH); cityGroup.add(rV);
 
                         // Architecture / Buildings
                         const buildArea = gridSize - roadWidth;
@@ -1698,12 +1688,8 @@
             const pz = playerGroup.position.z;
             let groundY = 0;
             if(Env.city.layout.includes('hill') || Env.city.layout.includes('coast')) {
-                // We use the exact same math as the roads + a tiny offset to snap feet to pavement
-                groundY = (NoiseGen.fbm(px, pz, 4, 0.5, 0.001) * Env.city.varHeight) + 0.25;
+                groundY = NoiseGen.fbm(px, pz, 4, 0.5, 0.001) * Env.city.varHeight;
             }
-            
-            // This line stays the same:
-            playerGroup.position.y += Env.yVel * dt;
             
             playerGroup.position.y += Env.yVel * dt;
 
