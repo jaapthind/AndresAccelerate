@@ -1291,13 +1291,15 @@
                         // Horizontal Road remains at 0.2
                         const rH = new THREE.Mesh(new THREE.PlaneGeometry(gridSize, roadWidth), Env.mats.asphalt);
                         rH.rotation.x = -Math.PI/2; 
-                        rH.position.set(cx, cy + 0.2, cz + gridSize / 2); 
+                        const terrainH = NoiseGen.fbm(cx, cz + gridSize/2, 4, 0.5, 0.001) * Env.city.varHeight;
+                        rH.position.set(cx, terrainH + 0.22, cz + gridSize / 2);
                         rH.receiveShadow = true;
                         
                         // Vertical Road raised to 0.21 to prevent Z-Fighting (flickering)
                         const rV = new THREE.Mesh(new THREE.PlaneGeometry(roadWidth, gridSize), Env.mats.asphalt);
                         rV.rotation.x = -Math.PI/2; 
-                        rV.position.set(cx + gridSize / 2, cy + 0.21, cz); // <-- CHANGE THIS LINE
+                        const terrainV = NoiseGen.fbm(cx + gridSize/2, cz, 4, 0.5, 0.001) * Env.city.varHeight;
+                        rV.position.set(cx + gridSize / 2, terrainV + 0.23, cz);
                         rV.receiveShadow = true;
                         
                         cityGroup.add(rH); cityGroup.add(rV);
@@ -1690,12 +1692,11 @@
             // Calculate Topography Height at current position
             const px = playerGroup.position.x;
             const pz = playerGroup.position.z;
-            let groundY = 0;
-            // The 0.25 offset ensures your feet touch the "Road" layer (0.2) and not the grass
-            if(Env.city.layout.includes('hill') || Env.city.layout.includes('coast')) {
-                groundY = (NoiseGen.fbm(px, pz, 4, 0.5, 0.001) * Env.city.varHeight) + 0.25;
-            } else {
-                groundY = 0.25; // Flat cities need snapping too
+            // REPLACE the existing groundY logic with this:
+            let groundY = 0.25; 
+            if(Env.city.layout.includes('hill')) {
+                // This looks at the EXACT noise value at your current X and Z
+                groundY = (NoiseGen.fbm(px, pz, 4, 0.5, 0.001) * Env.city.varHeight) + 0.3;
             }
             
             playerGroup.position.y += Env.yVel * dt;
@@ -2138,6 +2139,12 @@
         }
                     function buildMcDonalds() {
             const mcd = new THREE.Group();
+                        // SF Foundation Pad
+            const matPad = new THREE.MeshStandardMaterial({color: 0x444444, roughness: 1.0});
+            const foundation = new THREE.Mesh(new THREE.BoxGeometry(120, 2, 120), matPad);
+            foundation.position.set(0, -0.9, 0); // Sinks slightly to hide the hill-clip
+            mcd.add(foundation);
+                        
             
             // ==========================================
             // 1. TOPOGRAPHY, SAFETY ZONE & CLEARANCE
