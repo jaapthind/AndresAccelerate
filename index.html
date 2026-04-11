@@ -464,6 +464,15 @@
         <div class="city-grid" id="city-selector-grid"></div>
     </div>
 
+        <div id="upgrade-shop" style="display:none; position:absolute; top:10%; left:50%; transform:translateX(-50%); width:600px; background:rgba(5,10,15,0.95); border:2px solid #00ffcc; z-index:9000; padding:30px; box-shadow: 0 0 50px rgba(0,255,204,0.3); backdrop-filter:blur(10px); color:#fff; font-family:monospace;">
+        <h2 style="color:#00ffcc; text-align:center; font-size:2rem; letter-spacing:5px; margin-bottom:10px;">BLACK MARKET UPGRADES</h2>
+        <div style="text-align:center; color:#ff0055; font-size:1.5rem; margin-bottom:20px;">FUNDS: <span id="shop-wallet">0 ₿</span></div>
+        
+        <div id="shop-items" style="display:flex; flex-direction:column; gap:15px;"></div>
+        
+        <div style="text-align:center; margin-top:20px; color:#88aacc; font-size:12px;">PRESS [TAB] TO CLOSE</div>
+    </div>
+    
     <div id="hud-container">
         
         <div class="hud-panel" id="hud-top-left">
@@ -494,7 +503,7 @@
             <div class="graph-container"><canvas id="ecg-canvas"></canvas></div>
             
             <div class="prog-track"><div id="prog-fill"></div></div>
-            <div style="text-align: right; font-size: 9px; color: #558877; margin-top: 5px; letter-spacing: 1px;">OPTIMAL TARGET MASS: 160.00 LBS</div>
+            <div style="text-align: right; font-size: 9px; color: #558877; margin-top: 5px; letter-spacing: 1px;">OPTIMAL TARGET MASS: 100.00 LBS</div>
         </div>
 
         <div class="hud-panel" id="hud-top-right">
@@ -601,7 +610,73 @@
                 SysLog.element.scrollTop = SysLog.element.scrollHeight;
             }
         };
-
+        // ==========================================
+// THE UPGRADE SHOP CONTROLLER
+// ==========================================
+        const Shop = {
+            isOpen: false,
+            items: [
+                { id: 'accel', name: "KINETIC OVERDRIVE", desc: "+20% Acceleration & Top Speed", cost: 250, bought: 0, max: 5 },
+                { id: 'jump', name: "HYPER-PNEUMATIC LEGS", desc: "+30% Vertical Jump Force", cost: 300, bought: 0, max: 3 },
+                { id: 'magnet', name: "GRAVITY TETHER", desc: "Increase Coin Magnet Radius", cost: 500, bought: 0, max: 4 },
+                { id: 'burn', name: "THERMO-FURNACE", desc: "Burn Calories 1.5x Faster", cost: 800, bought: 0, max: 1 },
+                { id: 'liposuction', name: "EMERGENCY MASS DUMP", desc: "Instantly lose 50 lbs", cost: 1500, bought: 0, max: 99 }
+            ],
+            toggle: () => {
+                Shop.isOpen = !Shop.isOpen;
+                document.getElementById('upgrade-shop').style.display = Shop.isOpen ? 'block' : 'none';
+                if(Shop.isOpen) Shop.render();
+            },
+            buy: (index) => {
+                const item = Shop.items[index];
+                if(Env.coins >= item.cost && item.bought < item.max) {
+                    Env.coins -= item.cost;
+                    item.bought++;
+                    item.cost = Math.floor(item.cost * 1.5); // Price goes up each time
+                    
+                    // Apply Upgrades
+                    if(item.id === 'accel') Env.upgrades.accelMult += 0.2;
+                    if(item.id === 'jump') Env.upgrades.jumpMult += 0.3;
+                    if(item.id === 'magnet') Env.upgrades.magnetDist += 2.0;
+                    if(item.id === 'burn') Env.upgrades.burnRate = 1.5;
+                    if(item.id === 'liposuction') Env.mass = Math.max(Env.massMin, Env.mass - 50);
+        
+                    document.getElementById('shop-wallet').innerText = Env.coins + ' ₿';
+                    Shop.render();
+                }
+            },
+            render: () => {
+                const container = document.getElementById('shop-items');
+                container.innerHTML = '';
+                Shop.items.forEach((item, i) => {
+                    const isMaxed = item.bought >= item.max;
+                    const canAfford = Env.coins >= item.cost && !isMaxed;
+                    
+                    container.innerHTML += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,255,204,0.05); border:1px solid #00ffcc; padding:15px;">
+                            <div>
+                                <div style="font-size:1.2rem; font-weight:bold; color:${isMaxed ? '#888' : '#fff'};">${item.name} [Lvl ${item.bought}/${item.max}]</div>
+                                <div style="font-size:0.8rem; color:#88aacc;">${item.desc}</div>
+                            </div>
+                            <button 
+                                onclick="Shop.buy(${i})" 
+                                style="background:${canAfford ? '#00ffcc' : '#333'}; color:${canAfford ? '#000' : '#888'}; border:none; padding:10px 20px; font-weight:bold; cursor:${canAfford ? 'pointer' : 'not-allowed'}; font-family:monospace;"
+                                ${!canAfford ? 'disabled' : ''}>
+                                ${isMaxed ? 'MAXED' : item.cost + ' ₿'}
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+        };
+        
+        // Bind the TAB key to open the shop
+        window.addEventListener('keydown', e => {
+            if(e.code === 'Tab') {
+                e.preventDefault(); // Stop it from tabbing out of the window
+                if(Env.active) Shop.toggle();
+            }
+        });
         // ==========================================
         // 2. SIMPLEX NOISE IMPLEMENTATION
         // ==========================================
@@ -694,10 +769,6 @@
               layout:"radial_boulevards", density:0.9, baseHeight:60, varHeight:40, parkType:"formal_gardens", riverType:"seine",
               materials:['stone', 'plaster', 'zinc_roof'], neonProb:0.02, history:true, traffic:0.85 },
               
-            { id:4, name:"San Francisco", country:"USA", lat:"37.7749° N", lng:"122.4194° W", temp:15, weather:"HEAVY FOG", wind:8.5, hum:72, elev:15, 
-              skyDay:0x5ea6cd, skyNight:0x101a2a, ground:0x223322, water:0x004466, 
-              layout:"hilly_grid", density:0.75, baseHeight:40, varHeight:250, parkType:"wild_hills", riverType:"bay",
-              materials:['wood', 'concrete', 'glass', 'plaster'], neonProb:0.1, history:false, traffic:0.7 },
               
             { id:5, name:"Dubai", country:"ARE", lat:"25.2048° N", lng:"55.2708° E", temp:42, weather:"SANDSTORM", wind:12.0, hum:40, elev:16, 
               skyDay:0xddaa77, skyNight:0x050505, ground:0xd2b48c, water:0x00aacc, 
@@ -1063,15 +1134,19 @@
         // ==========================================
         // 7. ENGINE STATE & PHYSICS VARIABLES
         // ==========================================
-        const Env = {
+               const Env = {
             active: false,
             city: null,
             audio: null,
             
-            // Physics / Player Data
-            mass: 350.0,
-            massMin: 160.0,
-            massMax: 350.0,
+            // --- UPDATED PHYSICS & ECONOMY ---
+            mass: 1000.0,      // You start at 1000 lbs (Insanely slow)
+            massMin: 100.0,    // Target weight
+            massMax: 1000.0,
+            coins: 0,          // Wallet
+            upgrades: { accelMult: 1.0, jumpMult: 1.0, magnetDist: 2.5, burnRate: 1.0 }, // Shop mods
+            // ---------------------------------
+        
             velocity: 0,
             distTotal: 0,
             calsBurned: 0,
@@ -1079,6 +1154,7 @@
             gravity: 9.81,
             yVel: 0,
             isGrounded: true,
+// ... Keep the rest of Env exactly the same ...
             
             // Environment Data
             timeOfDay: 12.0,
@@ -1118,6 +1194,31 @@
         // ==========================================
         // 9. PROCEDURAL WORLD BUILDER
         // ==========================================
+                function spawnCoins() {
+            SysLog.print("SCATTERING DIGITAL CURRENCY...");
+            Env.entities.coins = [];
+            // Coin Geometry
+            const cGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.15, 16);
+            cGeo.rotateX(Math.PI/2); // Stand them upright
+            const cMat = new THREE.MeshStandardMaterial({
+                color: 0xffd700, 
+                metalness: 1.0, 
+                roughness: 0.1, 
+                emissive: 0xffaa00, 
+                emissiveIntensity: 0.5
+            });
+        
+            for(let i=0; i<1000; i++) {
+                const coin = new THREE.Mesh(cGeo, cMat);
+                // Scatter them across the 6000x6000 map
+                coin.position.set((Math.random()-0.5)*5000, 1.0, (Math.random()-0.5)*5000);
+                cityGroup.add(coin);
+                Env.entities.coins.push({ mesh: coin, active: true });
+            }
+        }
+
+
+        
         async function constructWorld() {
             SysLog.print("FLUSHING PREVIOUS GEOMETRY...");
             while(cityGroup.children.length > 0) {
@@ -1656,11 +1757,11 @@
             const wR = (Env.massMax - Env.mass) / (Env.massMax - Env.massMin); // 0 (Heavy) -> 1.0 (Thin)
             
             // Capabilities
-            const maxV = 12.0 + (wR * 40.0); // 12mph -> 52mph
-            const accel = 15.0 + (wR * 35.0);
+            // Capabilities hooked into the Upgrade Shop modifiers
+            const maxV = (12.0 + (wR * 40.0)) * Env.upgrades.accelMult; 
+            const accel = (15.0 + (wR * 35.0)) * Env.upgrades.accelMult;
             const turnR = 2.0 + (wR * 3.0);
-            const jumpF = 15.0 + (wR * 20.0);
-
+            const jumpF = (15.0 + (wR * 20.0)) * Env.upgrades.jumpMult;
             // Longitudinal Input
             if(Env.input.w) {
                 Env.velocity += accel * dt * (Env.input.shift ? 1.5 : 1.0);
@@ -1767,6 +1868,31 @@
             skeleton.rArm.shoulder.position.x = 0.5 + (0.5 * sf);
             skeleton.lLeg.hip.position.x = -0.1 - (0.3 * sf);
             skeleton.rLeg.hip.position.x = 0.1 + (0.3 * sf);
+
+            // COIN COLLECTION & ROTATION LOOP
+            Env.entities.coins.forEach(c => {
+                if(c.active) {
+                    c.mesh.rotation.y += 3 * dt; // Spin the coin
+                    // Check distance to player. Uses 'magnetDist' upgrade!
+                    const dist = playerGroup.position.distanceTo(c.mesh.position);
+                    if(dist < Env.upgrades.magnetDist) {
+                        c.active = false;
+                        c.mesh.visible = false;
+                        Env.coins += 50; // 50 coins per pickup
+                        document.getElementById('shop-wallet').innerText = Env.coins + ' ₿';
+                        // Play a quick beep using our audio engine if available
+                        if(Env.audio && Env.audio.ctx) {
+                            const osc = Env.audio.ctx.createOscillator();
+                            osc.type = 'sine'; osc.frequency.setValueAtTime(1200, Env.audio.ctx.currentTime);
+                            osc.connect(Env.audio.master);
+                            osc.start(); osc.stop(Env.audio.ctx.currentTime + 0.1);
+                        }
+                    }
+                }
+            });
+            
+            // UPGRADE HOOK: Burn rate modifier
+            const cBurn = ((Env.mass * 0.0012) * Math.abs(Env.velocity) * dt) * Env.upgrades.burnRate;
 
             // Inverse Kinematics Animation System
             if(Math.abs(Env.velocity) > 0.5 && Env.isGrounded) {
@@ -2108,6 +2234,7 @@
                 buildPlayerRig();
                 spawnAI();
                 buildMcDonalds(); 
+                spawnCoins();
                 // --- NEW UN-GLITCHABLE SPAWN LOGIC ---
                 let startY = 0;
                 // We calculate the hill height before placing the player
