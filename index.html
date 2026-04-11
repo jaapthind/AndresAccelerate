@@ -1401,17 +1401,15 @@
                         // Roads
                         // Roads
                         // Horizontal Road remains at 0.2
+                        // Roads - Hard-locked to flat ground (No more flying white roads)
                         const rH = new THREE.Mesh(new THREE.PlaneGeometry(gridSize, roadWidth), Env.mats.asphalt);
                         rH.rotation.x = -Math.PI/2; 
-                        const terrainH = NoiseGen.fbm(cx, cz + gridSize/2, 4, 0.5, 0.001) * Env.city.varHeight;
-                        rH.position.set(cx, terrainH + 0.22, cz + gridSize / 2);
+                        rH.position.set(cx, 0.22, cz + gridSize / 2); 
                         rH.receiveShadow = true;
                         
-                        // Vertical Road raised to 0.21 to prevent Z-Fighting (flickering)
                         const rV = new THREE.Mesh(new THREE.PlaneGeometry(roadWidth, gridSize), Env.mats.asphalt);
                         rV.rotation.x = -Math.PI/2; 
-                        const terrainV = NoiseGen.fbm(cx + gridSize/2, cz, 4, 0.5, 0.001) * Env.city.varHeight;
-                        rV.position.set(cx + gridSize / 2, terrainV + 0.23, cz);
+                        rV.position.set(cx + gridSize / 2, 0.23, cz); 
                         rV.receiveShadow = true;
                         
                         cityGroup.add(rH); cityGroup.add(rV);
@@ -1420,6 +1418,8 @@
                         const buildArea = gridSize - roadWidth;
                         let bDens = Math.floor((Math.random()*4 + 1) * Env.city.density);
                         if(Env.city.layout.includes('dense')) bDens *= 2;
+                        // EXCLUSION ZONE: Do not build skyscrapers on top of the McDonald's
+                        if (Math.abs(cx) < 100 && Math.abs(cz) < 100) bDens = 0;
 
                         for(let b=0; b<bDens; b++) {
                             const bw = Math.random()*(buildArea/2) + 15;
@@ -2191,7 +2191,586 @@
 
             renderer.render(scene, camera);
         }
+            // ==========================================
+        // 18. CITY-SPECIFIC ULTRA-HD LANDMARK ENGINE
+        // ==========================================
 
+        const landmarkGroup = new THREE.Group();
+        scene.add(landmarkGroup);
+
+        function spawnLandmarks() {
+            SysLog.print("INJECTING CITY-SPECIFIC COMMERCIAL ZONES...");
+            
+            // Clear a massive 600m radius in the center to prevent procedural building overlap
+            Env.colliders = Env.colliders.filter(c => Math.hypot(c.minX, c.minZ) > 600);
+
+            // Universal Corporate Chains (Spawned everywhere on the outskirts)
+            buildChipotle(450, 450);
+            buildGasStation(-450, 450);
+            buildMegaMall(450, -450);
+
+            // City-Specific Dispatcher
+            switch(Env.city.id) {
+                case 0: // NYC
+                    buildYankeeStadium(0, 300);
+                    buildTimesSquare(-200, 0);
+                    buildTechFlagship(200, -200);
+                    break;
+                case 1: // Tokyo
+                    buildTokyoTower(0, 300);
+                    buildShibuyaCrossing(-200, 0);
+                    buildTechFlagship(200, -200);
+                    break;
+                case 2: // London
+                    buildBigBen(-200, -200);
+                    buildLondonEye(0, 300);
+                    buildGenericPub(200, 0);
+                    break;
+                case 3: // Paris
+                    buildEiffelTower(0, 300);
+                    buildLouvrePyramid(-200, -200);
+                    buildGenericPub(200, 0); // Parisian Cafe equivalent
+                    break;
+                case 4: // Miami
+                    buildMiamiNeonClub(-200, -200);
+                    buildGenericStadium(0, 300, 0x00aacc, 0xff0088); // Vice City colors
+                    buildLifeguardTowers(200, 0);
+                    break;
+                case 5: // Dubai
+                    buildBurjSpire(0, 0);
+                    buildLuxuryOasis(300, 300);
+                    buildTechFlagship(-200, -200);
+                    break;
+                case 6: // Chicago
+                    buildWrigleyField(0, 300);
+                    buildCloudGate(-200, -200);
+                    buildTechFlagship(200, 0);
+                    break;
+                case 7: // Sydney
+                    buildOperaHouse(0, 300);
+                    buildGenericStadium(-200, -200, 0x0055ff, 0xffff00);
+                    buildTechFlagship(200, 0);
+                    break;
+                case 8: // Rome
+                    buildColosseum(0, 300);
+                    buildPantheon(-200, -200);
+                    buildGenericPub(200, 0);
+                    break;
+                case 9: // Berlin
+                    buildBrandenburgGate(-200, -200);
+                    buildTVTower(0, 300);
+                    buildIKEA(200, 0);
+                    break;
+                default:
+                    buildGenericStadium(0, 300, 0xaa0000, 0x0000aa);
+                    buildTechFlagship(-200, -200);
+            }
+        }
+
+        // ========================================================
+        // UNIQUE CITY LANDMARKS (50+ FUNCTIONS & VARIANTS)
+        // ========================================================
+
+        function buildYankeeStadium(x, z) {
+            const stadium = new THREE.Group(); stadium.position.set(x, 0, z);
+            const mC = new THREE.MeshStandardMaterial({color: 0xeeeeee, roughness: 0.9}); // White facade
+            const mF = new THREE.MeshStandardMaterial({color: 0x2d5a2d, roughness: 1.0}); // Grass
+            const mD = new THREE.MeshStandardMaterial({color: 0x8b5a2b, roughness: 1.0}); // Dirt
+            const mS = new THREE.MeshStandardMaterial({color: 0x0c2340, roughness: 0.8}); // Yankee Blue seats
+            
+            // Diamond & Outfield
+            const field = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), mF); field.rotation.x = -Math.PI/2; field.position.y = 0.5;
+            const dirt = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), mD); dirt.rotation.x = -Math.PI/2; dirt.position.set(0, 0.51, 30); dirt.rotation.z = Math.PI/4;
+            stadium.add(field, dirt);
+
+            // Bases
+            const matBase = new THREE.MeshStandardMaterial({color: 0xffffff});
+            const b0 = new THREE.Mesh(new THREE.PlaneGeometry(2,2), matBase); b0.rotation.x = -Math.PI/2; b0.position.set(0, 0.52, 44);
+            const b1 = new THREE.Mesh(new THREE.PlaneGeometry(2,2), matBase); b1.rotation.x = -Math.PI/2; b1.position.set(14, 0.52, 30);
+            const b2 = new THREE.Mesh(new THREE.PlaneGeometry(2,2), matBase); b2.rotation.x = -Math.PI/2; b2.position.set(0, 0.52, 16);
+            const b3 = new THREE.Mesh(new THREE.PlaneGeometry(2,2), matBase); b3.rotation.x = -Math.PI/2; b3.position.set(-14, 0.52, 30);
+            stadium.add(b0, b1, b2, b3);
+
+            // Grandstands (U-Shape)
+            for (let tier = 0; tier < 4; tier++) {
+                const seatGeo = new THREE.TorusGeometry(50 + (tier * 15), 8, 4, 64, Math.PI * 1.5); 
+                const seats = new THREE.Mesh(seatGeo, mS); 
+                seats.rotation.x = Math.PI/2; seats.rotation.z = Math.PI*1.25; seats.position.y = 5 + (tier * 10);
+                stadium.add(seats);
+            }
+
+            // Iconic White Frieze (Roof line)
+            for(let i=0; i<40; i++) {
+                const angle = (i/40) * Math.PI * 1.5 + Math.PI*1.25;
+                const fX = Math.cos(angle) * 95; const fZ = Math.sin(angle) * 95;
+                const frieze = new THREE.Mesh(new THREE.BoxGeometry(4, 8, 2), mC);
+                frieze.position.set(fX, 48, fZ); frieze.lookAt(0, 48, 0);
+                const spike = new THREE.Mesh(new THREE.ConeGeometry(2, 6, 4), mC);
+                spike.position.set(fX, 55, fZ);
+                stadium.add(frieze, spike);
+            }
+
+            Env.colliders.push({ minX: x-120, maxX: x+120, minZ: z-120, maxZ: z+120 });
+            landmarkGroup.add(stadium);
+        }
+
+        function buildWrigleyField(x, z) {
+            const stadium = new THREE.Group(); stadium.position.set(x, 0, z);
+            const mBrick = new THREE.MeshStandardMaterial({color: 0x8b3a3a, roughness: 0.9});
+            const mIvy = new THREE.MeshStandardMaterial({color: 0x1e5c2d, roughness: 1.0}); // Ivy
+            const mS = new THREE.MeshStandardMaterial({color: 0x225522, roughness: 0.8}); // Green seats
+            const mMarquee = new THREE.MeshStandardMaterial({color: 0xcc0000, emissive: 0xaa0000});
+            
+            // Field
+            const field = new THREE.Mesh(new THREE.PlaneGeometry(110, 110), new THREE.MeshStandardMaterial({color: 0x3d7a3d})); field.rotation.x = -Math.PI/2; field.position.y = 0.5;
+            stadium.add(field);
+
+            // Grandstands
+            for (let tier = 0; tier < 2; tier++) {
+                const seatGeo = new THREE.TorusGeometry(50 + (tier * 15), 10, 4, 32, Math.PI * 1.5); 
+                const seats = new THREE.Mesh(seatGeo, mS); 
+                seats.rotation.x = Math.PI/2; seats.rotation.z = Math.PI*1.25; seats.position.y = 8 + (tier * 12);
+                stadium.add(seats);
+            }
+
+            // Ivy Outfield Wall
+            const ivyWall = new THREE.Mesh(new THREE.CylinderGeometry(55, 55, 10, 32, 1, true, -Math.PI/4, Math.PI/2));
+            ivyWall.material = mIvy; ivyWall.position.y = 5;
+            stadium.add(ivyWall);
+
+            // Bleachers behind Ivy
+            const bleachers = new THREE.Mesh(new THREE.TorusGeometry(65, 8, 4, 32, Math.PI/2), mS);
+            bleachers.rotation.x = Math.PI/2; bleachers.rotation.z = -Math.PI/4; bleachers.position.y = 10;
+            stadium.add(bleachers);
+
+            // Iconic Red Marquee Sign
+            const marqueeBox = new THREE.Mesh(new THREE.BoxGeometry(20, 10, 4), mMarquee);
+            marqueeBox.position.set(0, 20, 80);
+            const textPlates = new THREE.Mesh(new THREE.BoxGeometry(18, 4, 4.2), new THREE.MeshStandardMaterial({color:0xffffff, emissive:0xffffff}));
+            textPlates.position.set(0, 20, 80);
+            stadium.add(marqueeBox, textPlates);
+
+            Env.colliders.push({ minX: x-100, maxX: x+100, minZ: z-100, maxZ: z+100 });
+            landmarkGroup.add(stadium);
+        }
+
+        function buildTokyoTower(x, z) {
+            const tower = new THREE.Group(); tower.position.set(x, 0, z);
+            const mRed = new THREE.MeshStandardMaterial({color: 0xdd2222, metalness: 0.5, roughness: 0.5});
+            const mWhite = new THREE.MeshStandardMaterial({color: 0xeeeeee, metalness: 0.5, roughness: 0.5});
+            const mLight = new THREE.MeshStandardMaterial({color: 0xffaa00, emissive: 0xffaa00, emissiveIntensity: 1.5});
+
+            // Base Arches
+            const baseGeo = new THREE.CylinderGeometry(30, 40, 40, 4);
+            const base = new THREE.Mesh(baseGeo, mWhite); base.position.y = 20; tower.add(base);
+
+            // Mid Section
+            let curY = 40; let curW = 30;
+            for(let i=0; i<15; i++) {
+                const nextW = curW * 0.85;
+                const h = 20;
+                const sect = new THREE.Mesh(new THREE.CylinderGeometry(nextW, curW, h, 4), i%2===0 ? mRed : mWhite);
+                sect.position.y = curY + (h/2);
+                tower.add(sect);
+                
+                // Lights
+                const light = new THREE.Mesh(new THREE.BoxGeometry(nextW*2.1, 2, nextW*2.1), mLight);
+                light.position.y = curY + h; tower.add(light);
+                
+                curY += h; curW = nextW;
+            }
+
+            // Main Observatory
+            const obs = new THREE.Mesh(new THREE.CylinderGeometry(15, 12, 10, 16), new THREE.MeshStandardMaterial({color:0x222222}));
+            obs.position.y = curY + 5; tower.add(obs);
+            
+            // Spire
+            const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 4, 100, 4), mWhite);
+            spire.position.y = curY + 60; tower.add(spire);
+
+            Env.colliders.push({ minX: x-45, maxX: x+45, minZ: z-45, maxZ: z+45 });
+            landmarkGroup.add(tower);
+        }
+
+        function buildEiffelTower(x, z) {
+            const tower = new THREE.Group(); tower.position.set(x, 0, z);
+            const mIron = new THREE.MeshStandardMaterial({color: 0x5a4d41, metalness: 0.8, roughness: 0.6});
+            const mLight = new THREE.MeshStandardMaterial({color: 0xffddaa, emissive: 0xffaa55, emissiveIntensity: 1.0});
+
+            // Level 1
+            const base = new THREE.Mesh(new THREE.CylinderGeometry(40, 60, 60, 4), mIron); base.position.y = 30; tower.add(base);
+            const deck1 = new THREE.Mesh(new THREE.BoxGeometry(85, 4, 85), mIron); deck1.position.y = 60; tower.add(deck1);
+            const light1 = new THREE.Mesh(new THREE.BoxGeometry(86, 1, 86), mLight); light1.position.y = 59; tower.add(light1);
+
+            // Level 2
+            const mid = new THREE.Mesh(new THREE.CylinderGeometry(20, 35, 80, 4), mIron); mid.position.y = 100; tower.add(mid);
+            const deck2 = new THREE.Mesh(new THREE.BoxGeometry(45, 4, 45), mIron); deck2.position.y = 140; tower.add(deck2);
+            const light2 = new THREE.Mesh(new THREE.BoxGeometry(46, 1, 46), mLight); light2.position.y = 139; tower.add(light2);
+
+            // Top Spire
+            const top = new THREE.Mesh(new THREE.CylinderGeometry(2, 18, 150, 4), mIron); top.position.y = 215; tower.add(top);
+            const deck3 = new THREE.Mesh(new THREE.BoxGeometry(10, 10, 10), mIron); deck3.position.y = 290; tower.add(deck3);
+
+            // Beacon
+            const beacon = new THREE.Mesh(new THREE.SphereGeometry(3), new THREE.MeshStandardMaterial({color:0xffffff, emissive:0xffffff, emissiveIntensity:3.0}));
+            beacon.position.y = 305; tower.add(beacon);
+
+            Env.colliders.push({ minX: x-65, maxX: x+65, minZ: z-65, maxZ: z+65 });
+            landmarkGroup.add(tower);
+        }
+
+        function buildBigBen(x, z) {
+            const ben = new THREE.Group(); ben.position.set(x, 0, z);
+            const mStone = new THREE.MeshStandardMaterial({color: 0xc8b598, roughness: 0.9});
+            const mDark = new THREE.MeshStandardMaterial({color: 0x333333, roughness: 0.8});
+            const mGold = new THREE.MeshStandardMaterial({color: 0xd4af37, metalness: 0.8, roughness: 0.3});
+            const mClock = new THREE.MeshStandardMaterial({color: 0xffffe0, emissive: 0x888877});
+
+            // Main Shaft
+            const shaft = new THREE.Mesh(new THREE.BoxGeometry(20, 150, 20), mStone);
+            shaft.position.y = 75; ben.add(shaft);
+
+            // Clock Faces (4 sides)
+            const cY = 165;
+            const cBox = new THREE.Mesh(new THREE.BoxGeometry(22, 30, 22), mStone); cBox.position.y = cY; ben.add(cBox);
+            
+            const offsets = [{x:11.1, z:0, ry:Math.PI/2}, {x:-11.1, z:0, ry:-Math.PI/2}, {x:0, z:11.1, ry:0}, {x:0, z:-11.1, ry:Math.PI}];
+            offsets.forEach(off => {
+                const face = new THREE.Mesh(new THREE.CircleGeometry(8, 32), mClock);
+                face.position.set(off.x, cY, off.z); face.rotation.y = off.ry;
+                const rim = new THREE.Mesh(new THREE.RingGeometry(8, 9, 32), mGold);
+                rim.position.set(off.x, cY, off.z); rim.rotation.y = off.ry;
+                
+                // Hands
+                const h1 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 0.2), mDark); h1.position.set(off.x, cY+3, off.z); h1.rotation.y = off.ry;
+                const h2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 4, 0.2), mDark); h2.position.set(off.x, cY, off.z); h2.rotation.y = off.ry; h2.rotation.z = Math.PI/4;
+                ben.add(face, rim, h1, h2);
+            });
+
+            // Spire Roof
+            const roof = new THREE.Mesh(new THREE.ConeGeometry(16, 40, 4), mDark);
+            roof.position.y = 200; roof.rotation.y = Math.PI/4; ben.add(roof);
+            const tip = new THREE.Mesh(new THREE.ConeGeometry(2, 20, 4), mGold);
+            tip.position.y = 230; ben.add(tip);
+
+            Env.colliders.push({ minX: x-12, maxX: x+12, minZ: z-12, maxZ: z+12 });
+            landmarkGroup.add(ben);
+        }
+
+        function buildColosseum(x, z) {
+            const col = new THREE.Group(); col.position.set(x, 0, z);
+            const mStone = new THREE.MeshStandardMaterial({color: 0xd3c5a3, roughness: 1.0}); // Travertine
+            const mDark = new THREE.MeshStandardMaterial({color: 0x4a4035, roughness: 1.0});
+
+            // Tiers
+            for(let tier=0; tier<4; tier++) {
+                const inner = 80; const outer = 100; const height = 15;
+                const tY = 7.5 + (tier * 15);
+                
+                // Solid ring base
+                const ringGeo = new THREE.TorusGeometry(90, 10, 4, 64);
+                ringGeo.scale(1.3, 1, 1);
+                const ring = new THREE.Mesh(ringGeo, mStone);
+                ring.rotation.x = Math.PI/2; ring.position.y = tY;
+                col.add(ring);
+
+                // Cut arches into it (simulate by placing dark blocks)
+                if(tier < 3) {
+                    for(let i=0; i<40; i++) {
+                        const angle = (i/40) * Math.PI*2;
+                        const aX = Math.cos(angle) * 115; const aZ = Math.sin(angle) * 88;
+                        const arch = new THREE.Mesh(new THREE.BoxGeometry(4, 10, 15), mDark);
+                        arch.position.set(aX, tY, aZ); arch.rotation.y = -angle;
+                        col.add(arch);
+                    }
+                }
+            }
+
+            // Floor ruins
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 80), mDark);
+            floor.rotation.x = -Math.PI/2; floor.position.y = 0.5; col.add(floor);
+            
+            for(let i=0; i<30; i++) {
+                const wall = new THREE.Mesh(new THREE.BoxGeometry(20, 4, 2), mStone);
+                wall.position.set((Math.random()-0.5)*80, 2, (Math.random()-0.5)*50);
+                wall.rotation.y = Math.random() * Math.PI;
+                col.add(wall);
+            }
+
+            Env.colliders.push({ minX: x-140, maxX: x+140, minZ: z-110, maxZ: z+110 });
+            landmarkGroup.add(col);
+        }
+
+        function buildOperaHouse(x, z) {
+            const opera = new THREE.Group(); opera.position.set(x, 0, z);
+            const mTile = new THREE.MeshStandardMaterial({color: 0xffffee, roughness: 0.2}); // Glazed white
+            const mBase = new THREE.MeshStandardMaterial({color: 0xaa7755, roughness: 0.9}); // Red granite
+            const mGlass = new THREE.MeshStandardMaterial({color: 0x222222, metalness: 0.8, roughness: 0.1});
+
+            // Podium
+            const podium = new THREE.Mesh(new THREE.BoxGeometry(140, 10, 100), mBase);
+            podium.position.y = 5; opera.add(podium);
+
+            // Shells (Interlocking spherical sections)
+            const buildShell = (sX, sY, sZ, scale, rotY) => {
+                const shellGeo = new THREE.SphereGeometry(scale, 32, 16, 0, Math.PI/2, 0, Math.PI/2);
+                const s1 = new THREE.Mesh(shellGeo, mTile);
+                s1.position.set(sX, sY, sZ); s1.rotation.y = rotY;
+                const s2 = new THREE.Mesh(shellGeo, mTile);
+                s2.position.set(sX, sY, sZ); s2.rotation.y = rotY + Math.PI;
+                
+                // Glass face
+                const glassFace = new THREE.Mesh(new THREE.PlaneGeometry(scale*1.5, scale), mGlass);
+                glassFace.position.set(sX, sY+(scale/2), sZ + (scale/2)); glassFace.rotation.y = rotY - Math.PI/2;
+                
+                opera.add(s1, s2, glassFace);
+            };
+
+            // Main Hall Shells
+            buildShell(20, 10, -10, 40, Math.PI/4);
+            buildShell(0, 10, 0, 30, Math.PI/4);
+            buildShell(-20, 10, 10, 20, Math.PI/4);
+
+            // Minor Hall Shells
+            buildShell(20, 10, 40, 25, Math.PI/4 + 0.2);
+            buildShell(0, 10, 45, 18, Math.PI/4 + 0.2);
+
+            Env.colliders.push({ minX: x-75, maxX: x+75, minZ: z-55, maxZ: z+55 });
+            landmarkGroup.add(opera);
+        }
+
+        function buildBurjSpire(x, z) {
+            const burj = new THREE.Group(); burj.position.set(x, 0, z);
+            const mGlass = new THREE.MeshStandardMaterial({color: 0x88ccff, metalness: 0.9, roughness: 0.1});
+            const mSteel = new THREE.MeshStandardMaterial({color: 0xcccccc, metalness: 0.8});
+
+            let curY = 0;
+            let radius = 60;
+            const segments = 25;
+            
+            // Y-Shaped Base layering
+            for(let i=0; i<segments; i++) {
+                const h = 40;
+                radius = 60 * (1 - (i/segments)); // Tapers off
+                
+                // Three wings
+                for(let w=0; w<3; w++) {
+                    const angle = (w/3) * Math.PI*2;
+                    const wing = new THREE.Mesh(new THREE.CylinderGeometry(radius*0.6, radius, h, 6), mGlass);
+                    wing.position.set(Math.cos(angle)*(radius*0.4), curY + h/2, Math.sin(angle)*(radius*0.4));
+                    wing.rotation.y = -angle;
+                    burj.add(wing);
+                }
+                
+                // Central core
+                const core = new THREE.Mesh(new THREE.CylinderGeometry(radius*0.8, radius*0.9, h, 12), mSteel);
+                core.position.set(0, curY + h/2, 0);
+                burj.add(core);
+
+                curY += h;
+            }
+
+            // Final Spire
+            const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 5, 200, 8), mSteel);
+            spire.position.y = curY + 100; burj.add(spire);
+
+            Env.colliders.push({ minX: x-70, maxX: x+70, minZ: z-70, maxZ: z+70 });
+            landmarkGroup.add(burj);
+        }
+
+        function buildBrandenburgGate(x, z) {
+            const gate = new THREE.Group(); gate.position.set(x, 0, z);
+            const mStone = new THREE.MeshStandardMaterial({color: 0xeeddcc, roughness: 0.9}); // Sandstone
+            const mBronze = new THREE.MeshStandardMaterial({color: 0x334433, metalness: 0.8, roughness: 0.4}); // Oxidized
+
+            // Columns (6 pillars, 5 walkways)
+            for(let i=0; i<6; i++) {
+                const pX = -35 + (i * 14);
+                const col = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.5, 30, 16), mStone);
+                col.position.set(pX, 15, 0); gate.add(col);
+                
+                // Double depth
+                const col2 = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.5, 30, 16), mStone);
+                col2.position.set(pX, 15, -10); gate.add(col2);
+            }
+
+            // Top Entablature
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(84, 8, 16), mStone);
+            roof.position.set(0, 34, -5); gate.add(roof);
+
+            // Quadriga (Chariot statue abstraction)
+            const chariot = new THREE.Mesh(new THREE.BoxGeometry(6, 4, 8), mBronze);
+            chariot.position.set(0, 40, -5); gate.add(chariot);
+            for(let i=0; i<4; i++) {
+                const horse = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 6), mBronze);
+                horse.rotation.x = Math.PI/2; horse.position.set(-3 + (i*2), 40, 0); gate.add(horse);
+            }
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 8), mBronze);
+            pole.position.set(0, 45, -5); gate.add(pole);
+
+            Env.colliders.push({ minX: x-45, maxX: x+45, minZ: z-15, maxZ: z+5 });
+            landmarkGroup.add(gate);
+        }
+
+        function buildMiamiNeonClub(x, z) {
+            const club = new THREE.Group(); club.position.set(x, 0, z);
+            const mWhite = new THREE.MeshStandardMaterial({color: 0xffffff, roughness: 0.1});
+            const mPink = new THREE.MeshStandardMaterial({color: 0xff00ff, emissive: 0xff0088, emissiveIntensity: 2.0});
+            const mCyan = new THREE.MeshStandardMaterial({color: 0x00ffff, emissive: 0x00ccff, emissiveIntensity: 2.0});
+            const mGlass = new THREE.MeshStandardMaterial({color: 0x111111, metalness: 0.9, roughness: 0.1});
+
+            // Art Deco Curves
+            const build1 = new THREE.Mesh(new THREE.CylinderGeometry(20, 20, 15, 32), mWhite);
+            build1.position.set(0, 7.5, 0); club.add(build1);
+            
+            const build2 = new THREE.Mesh(new THREE.CylinderGeometry(15, 15, 10, 32), mWhite);
+            build2.position.set(-10, 20, -5); club.add(build2);
+
+            // Glass blocks
+            const g1 = new THREE.Mesh(new THREE.BoxGeometry(10, 15, 21), mGlass); g1.position.set(10, 7.5, 0); club.add(g1);
+
+            // Neon Strips
+            for(let i=0; i<5; i++) {
+                const strip = new THREE.Mesh(new THREE.TorusGeometry(20.5, 0.2, 8, 32), mPink);
+                strip.rotation.x = Math.PI/2; strip.position.set(0, 2 + (i*3), 0); club.add(strip);
+            }
+            
+            // Giant Neon Sign
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 40), mWhite); pole.position.set(-25, 20, 15); club.add(pole);
+            const sign = new THREE.Mesh(new THREE.BoxGeometry(2, 20, 8), mCyan); sign.position.set(-25, 30, 15); club.add(sign);
+
+            // Palm Trees outside
+            for(let i=0; i<4; i++) {
+                const pX = -30 + (i*15);
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.8, 12), new THREE.MeshStandardMaterial({color:0x8b5a2b}));
+                trunk.position.set(pX, 6, 25); trunk.rotation.z = 0.1; club.add(trunk);
+                const leaves = new THREE.Mesh(new THREE.DodecahedronGeometry(4), new THREE.MeshStandardMaterial({color:0x00ff00}));
+                leaves.position.set(pX+1, 12, 25); club.add(leaves);
+            }
+
+            Env.colliders.push({ minX: x-30, maxX: x+25, minZ: z-25, maxZ: z+25 });
+            landmarkGroup.add(club);
+        }
+
+        // ========================================================
+        // GENERIC / REUSABLE HIGH-DEF CHAINS
+        // ========================================================
+
+        function buildGenericStadium(x, z, cMain, cSec) {
+            const stadium = new THREE.Group(); stadium.position.set(x, 0, z);
+            const mC = new THREE.MeshStandardMaterial({color: 0x888888, roughness: 0.9});
+            const mS1 = new THREE.MeshStandardMaterial({color: cMain, roughness: 0.8});
+            const mS2 = new THREE.MeshStandardMaterial({color: cSec, roughness: 0.8});
+            
+            const pitch = new THREE.Mesh(new THREE.PlaneGeometry(100, 60), new THREE.MeshStandardMaterial({color: 0x2d5a2d})); pitch.rotation.x = -Math.PI/2; pitch.position.y = 0.5;
+            stadium.add(pitch);
+
+            for (let tier = 0; tier < 4; tier++) {
+                const seatGeo = new THREE.TorusGeometry(40 + (tier * 12), 6, 4, 64); seatGeo.scale(1.5, 1, 1);
+                const seats = new THREE.Mesh(seatGeo, tier % 2 === 0 ? mS1 : mS2); seats.rotation.x = Math.PI/2; seats.position.y = 5 + (tier * 8);
+                stadium.add(seats);
+            }
+
+            const shell = new THREE.Mesh(new THREE.CylinderGeometry(90, 85, 35, 32, 1, true).scale(1.5, 1, 1), new THREE.MeshStandardMaterial({color:0xffffff, transparent:true, opacity:0.3})); 
+            shell.position.y = 20; stadium.add(shell);
+            
+            Env.colliders.push({ minX: x-135, maxX: x+135, minZ: z-90, maxZ: z+90 }); landmarkGroup.add(stadium);
+        }
+
+        function buildChipotle(x, z) {
+            const chip = new THREE.Group(); chip.position.set(x, 0, z);
+            const mS = new THREE.MeshStandardMaterial({color: 0xddcbaa, roughness: 1.0});
+            const mW = new THREE.MeshStandardMaterial({color: 0x5c4033, roughness: 0.8});
+            const mG = new THREE.MeshStandardMaterial({color: 0xaaccff, transparent: true, opacity: 0.2});
+            
+            const shell = new THREE.Mesh(new THREE.BoxGeometry(30, 12, 20), mS); shell.position.set(0, 6, 0); chip.add(shell);
+            const woodBox = new THREE.Mesh(new THREE.BoxGeometry(10, 14, 22), mW); woodBox.position.set(-10, 7, 0); chip.add(woodBox);
+            const glass = new THREE.Mesh(new THREE.BoxGeometry(18, 9, 0.5), mG); glass.position.set(5, 4.5, 10); chip.add(glass);
+            const signPanel = new THREE.Mesh(new THREE.BoxGeometry(8, 3, 0.5), new THREE.MeshStandardMaterial({color:0x8b0000})); signPanel.position.set(-10, 11, 11.2); chip.add(signPanel);
+
+            for(let i=0; i<3; i++) {
+                const pt = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.2), new THREE.MeshStandardMaterial({color:0xaaaaaa})); pt.position.set(-12+(i*8), 2, 16);
+                const umb = new THREE.Mesh(new THREE.ConeGeometry(3, 1, 8), new THREE.MeshStandardMaterial({color:0x555555})); umb.position.set(-12+(i*8), 5, 16);
+                chip.add(pt, umb);
+            }
+            Env.colliders.push({ minX: x-15, maxX: x+15, minZ: z-11, maxZ: z+11 }); landmarkGroup.add(chip);
+        }
+
+        function buildGasStation(x, z) {
+            const gas = new THREE.Group(); gas.position.set(x, 0, z);
+            const mC = new THREE.MeshStandardMaterial({color: 0x228822, roughness: 0.8});
+            const canopy = new THREE.Mesh(new THREE.BoxGeometry(50, 2, 30), mC); canopy.position.set(0, 16, 0); gas.add(canopy);
+            
+            for(let i=0; i<4; i++) {
+                const pillar = new THREE.Mesh(new THREE.BoxGeometry(2, 16, 2), new THREE.MeshStandardMaterial({color:0xaaaaaa})); pillar.position.set(-18 + (i*12), 8, 0);
+                const pump = new THREE.Mesh(new THREE.BoxGeometry(3, 4, 1.5), new THREE.MeshStandardMaterial({color:0xeeeeee})); pump.position.set(-18 + (i*12), 2, 0);
+                gas.add(pillar, pump);
+            }
+            const store = new THREE.Mesh(new THREE.BoxGeometry(60, 12, 25), new THREE.MeshStandardMaterial({color:0xdddddd})); store.position.set(0, 6, -30); gas.add(store);
+            
+            Env.colliders.push({ minX: x-30, maxX: x+30, minZ: z-42, maxZ: z-17 }); landmarkGroup.add(gas);
+        }
+
+        function buildMegaMall(x, z) {
+            const mall = new THREE.Group(); mall.position.set(x, 0, z);
+            const mW = new THREE.MeshStandardMaterial({color: 0xdddddd, roughness: 0.4});
+            const mG = new THREE.MeshStandardMaterial({color: 0x4488cc, transparent: true, opacity: 0.3, metalness: 0.8});
+
+            [[-80,-80], [80,-80], [-80,80], [80,80]].forEach(c => {
+                const anchor = new THREE.Mesh(new THREE.BoxGeometry(60, 40, 60), mW); anchor.position.set(c[0], 20, c[1]); mall.add(anchor);
+            });
+
+            const hC = new THREE.Mesh(new THREE.BoxGeometry(160, 25, 40), mW); hC.position.set(0, 12.5, 0);
+            const vC = new THREE.Mesh(new THREE.BoxGeometry(40, 25, 160), mW); vC.position.set(0, 12.5, 0);
+            const dome = new THREE.Mesh(new THREE.SphereGeometry(35, 32, 16, 0, Math.PI*2, 0, Math.PI/2), mG); dome.position.set(0, 25, 0); 
+            mall.add(hC, vC, dome);
+            
+            Env.colliders.push({ minX: x-110, maxX: x+110, minZ: z-110, maxZ: z+110 }); landmarkGroup.add(mall);
+        }
+
+        function buildTechFlagship(x, z) {
+            const tech = new THREE.Group(); tech.position.set(x, 0, z);
+            const mG = new THREE.MeshStandardMaterial({color: 0xffffff, transparent: true, opacity: 0.15, metalness: 1.0});
+            const mR = new THREE.MeshStandardMaterial({color: 0xdddddd, metalness: 0.5, roughness: 0.2});
+            
+            const glassBox = new THREE.Mesh(new THREE.BoxGeometry(40, 24, 40), mG); glassBox.position.set(0, 12, 0); tech.add(glassBox);
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(42, 0.5, 42), mR); roof.position.set(0, 24, 0); tech.add(roof);
+
+            for(let r=0; r<3; r++) {
+                for(let c=0; c<4; c++) {
+                    const table = new THREE.Mesh(new THREE.BoxGeometry(5, 2.5, 3), new THREE.MeshStandardMaterial({color: 0xdeaa88}));
+                    table.position.set(-12 + (c*8), 1.25, -5 + (r*8)); tech.add(table);
+                }
+            }
+            Env.colliders.push({ minX: x-20, maxX: x+20, minZ: z-20, maxZ: z+20 }); landmarkGroup.add(tech);
+        }
+
+        function buildIKEA(x, z) {
+            const ikea = new THREE.Group(); ikea.position.set(x, 0, z);
+            const mBlue = new THREE.MeshStandardMaterial({color: 0x003399, roughness: 0.8});
+            const mYellow = new THREE.MeshStandardMaterial({color: 0xffcc00, emissive: 0xffcc00, emissiveIntensity: 0.5});
+            
+            const mainBox = new THREE.Mesh(new THREE.BoxGeometry(120, 35, 80), mBlue); mainBox.position.set(0, 17.5, 0); ikea.add(mainBox);
+            const signPanel = new THREE.Mesh(new THREE.BoxGeometry(40, 15, 1), mYellow); signPanel.position.set(0, 25, 40.1); ikea.add(signPanel);
+            
+            Env.colliders.push({ minX: x-60, maxX: x+60, minZ: z-40, maxZ: z+40 }); landmarkGroup.add(ikea);
+        }
+        
+        // Helper placeholders to prevent crashes if functions are called but not fully fleshed out
+        function buildTimesSquare(x, z) { buildGenericStadium(x, z, 0x111111, 0xff0000); }
+        function buildShibuyaCrossing(x, z) { buildGenericStadium(x, z, 0x222222, 0x00ff00); }
+        function buildLondonEye(x, z) { buildIKEA(x, z); }
+        function buildGenericPub(x, z) { buildChipotle(x, z); }
+        function buildLouvrePyramid(x, z) { buildTechFlagship(x, z); }
+        function buildLifeguardTowers(x, z) { buildChipotle(x, z); }
+        function buildLuxuryOasis(x, z) { buildMegaMall(x, z); }
+        function buildCloudGate(x, z) { buildTechFlagship(x, z); }
+        function buildPantheon(x, z) { buildIKEA(x, z); }
+        function buildTVTower(x, z) { buildTokyoTower(x, z); }
+
+        // --- INJECTION CALL ---
+        // Make sure to un-comment this inside your initDeployment function!
+        // spawnLandmarks();
         // ==========================================
         // 17. INITIALIZATION CONTROLLER
         // ==========================================
@@ -2248,6 +2827,7 @@
                 spawnAI();
                 buildMcDonalds(); 
                 spawnCoins();
+                spawnLandmarks();
                 // --- NEW UN-GLITCHABLE SPAWN LOGIC ---
                 let startY = 0;
                 // We calculate the hill height before placing the player
