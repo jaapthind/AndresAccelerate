@@ -500,6 +500,11 @@
                 <div><span class="data-value" id="val-cal">0000</span><span class="unit">KCAL</span></div>
             </div>
 
+            <div class="data-row" style="border-top: 2px solid #ff0055; margin-top: 15px; padding-top: 10px;">
+                <span class="data-label" style="color:#ff0055; font-size:14px;">DIGITAL WALLET</span>
+                <div><span class="data-value" id="hud-wallet" style="color:#ffd700; text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);">0</span><span class="unit" style="color:#ffd700;">₿</span></div>
+            </div>
+
             <div class="graph-container"><canvas id="ecg-canvas"></canvas></div>
             
             <div class="prog-track"><div id="prog-fill"></div></div>
@@ -559,6 +564,9 @@
                 <div class="map-center-dot"></div>
                 <div class="map-heading" id="map-dir-indicator"></div>
             </div>
+        </div>
+        <div id="shop-trigger-btn" onclick="Shop.toggle()" style="position:absolute; bottom:30px; left:50%; transform:translateX(-50%); background:rgba(0,255,204,0.1); border:2px solid var(--p); padding:15px 30px; color:var(--w); font-size:18px; font-weight:900; letter-spacing:4px; cursor:pointer; pointer-events:auto; box-shadow: 0 0 20px rgba(0,255,204,0.3); backdrop-filter:blur(5px); z-index:9999; text-transform:uppercase;">
+            [B] OPEN BLACK MARKET
         </div>
 
     </div>
@@ -671,12 +679,12 @@
         };
         
         // Bind the TAB key to open the shop
-        window.addEventListener('keydown', e => {
-            if(e.code === 'Tab') {
-                e.preventDefault(); // Stop it from tabbing out of the window
-                if(Env.active) Shop.toggle();
-            }
-        });
+        // Replace your old window.addEventListener for the shop with this:
+            window.addEventListener('keydown', e => {
+                if(e.code === 'KeyB') {
+                    if(Env.active) Shop.toggle();
+                }
+            });
         // ==========================================
         // 2. SIMPLEX NOISE IMPLEMENTATION
         // ==========================================
@@ -769,6 +777,10 @@
               layout:"radial_boulevards", density:0.9, baseHeight:60, varHeight:40, parkType:"formal_gardens", riverType:"seine",
               materials:['stone', 'plaster', 'zinc_roof'], neonProb:0.02, history:true, traffic:0.85 },
               
+            { id:4, name:"Miami", country:"USA", lat:"25.7617° N", lng:"80.1918° W", temp:30, weather:"CLEAR", wind:6.5, hum:85, elev:2, 
+              skyDay:0x00bfff, skyNight:0x200535, ground:0x223322, water:0x00ffee, 
+              layout:"grid_dense", density:0.8, baseHeight:60, varHeight:350, parkType:"palm_islands", riverType:"ocean",
+              materials:['glass', 'neon', 'concrete', 'plaster'], neonProb:0.7, history:false, traffic:0.9 },
               
             { id:5, name:"Dubai", country:"ARE", lat:"25.2048° N", lng:"55.2708° E", temp:42, weather:"SANDSTORM", wind:12.0, hum:40, elev:16, 
               skyDay:0xddaa77, skyNight:0x050505, ground:0xd2b48c, water:0x00aacc, 
@@ -782,7 +794,7 @@
               
             { id:7, name:"Sydney", country:"AUS", lat:"33.8688° S", lng:"151.2093° E", temp:24, weather:"CLEAR", wind:7.2, hum:55, elev:3, 
               skyDay:0x2288ff, skyNight:0x0a1020, ground:0x2a3a2a, water:0x0055aa, 
-              layout:"harbor_coves", density:0.7, baseHeight:60, varHeight:200, parkType:"botanic", riverType:"harbor",
+              layout:"organic_sprawl", density:0.7, baseHeight:60, varHeight:200, parkType:"botanic", riverType:"harbor",
               materials:['sandstone', 'glass', 'concrete'], neonProb:0.1, history:false, traffic:0.75 },
               
             { id:8, name:"Rome", country:"ITA", lat:"41.9028° N", lng:"12.4964° E", temp:28, weather:"SUNNY", wind:3.5, hum:50, elev:21, 
@@ -790,11 +802,10 @@
               layout:"ancient_chaotic", density:0.9, baseHeight:30, varHeight:50, parkType:"ruins", riverType:"tiber",
               materials:['marble', 'terracotta', 'stone', 'plaster'], neonProb:0.01, history:true, traffic:0.8 },
               
-            { id:9, name:"Rio de Janeiro", country:"BRA", lat:"22.9068° S", lng:"43.1729° W", temp:32, weather:"HUMID", wind:4.8, hum:85, elev:2, 
-              skyDay:0x00bfff, skyNight:0x051525, ground:0x1a441a, water:0x0088cc, 
-              layout:"coastal_mountains", density:0.8, baseHeight:40, varHeight:120, parkType:"jungle_mountains", riverType:"ocean",
-              materials:['concrete', 'plaster', 'glass', 'tin'], neonProb:0.05, history:false, traffic:0.8 }
-            
+            { id:9, name:"Berlin", country:"DEU", lat:"52.5200° N", lng:"13.4050° E", temp:18, weather:"PARTLY CLOUDY", wind:5.0, hum:60, elev:34, 
+              skyDay:0x7a8b9c, skyNight:0x1a1a20, ground:0x222222, water:0x1a2b3c, 
+              layout:"grid_dense", density:0.85, baseHeight:50, varHeight:120, parkType:"formal_gardens", riverType:"seine",
+              materials:['concrete', 'glass', 'steel', 'brick'], neonProb:0.2, history:true, traffic:0.7 }
         ];
 
         // ==========================================
@@ -1208,7 +1219,7 @@
                 emissiveIntensity: 0.5
             });
         
-            for(let i=0; i<1000; i++) {
+            for(let i=0; i<4000; i++) {
                 const coin = new THREE.Mesh(cGeo, cMat);
                 // Scatter them across the 6000x6000 map
                 coin.position.set((Math.random()-0.5)*5000, 1.0, (Math.random()-0.5)*5000);
@@ -2060,6 +2071,8 @@
             document.getElementById('val-bpm').innerText = Math.floor(Env.hr);
             document.getElementById('val-dst').innerText = Env.distTotal.toFixed(2);
             document.getElementById('val-cal').innerText = Math.floor(Env.calsBurned);
+            // Add this inside updateHUD():
+            document.getElementById('hud-wallet').innerText = Env.coins;
 
             // Progress Bar
             const tLoss = Env.massMax - Env.massMin;
