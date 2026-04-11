@@ -1100,7 +1100,7 @@
         const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.enabled = false;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = 1.2;
@@ -1209,10 +1209,14 @@
             // Deform ground based on city topography type
             const verts = groundGeo.attributes.position.array;
             for(let i=0; i<verts.length; i+=3) {
-                let vx = verts[i]; let vz = verts[i+1]; // Plane is XY originally
+                let vx = verts[i]; let vz = verts[i+1];
                 let vy = 0;
-                if(Env.city.layout === 'hilly_grid' || Env.city.layout === 'coastal_mountains') {
+                if(Env.city.layout.includes('hill') || Env.city.layout.includes('coast')) {
                     vy = NoiseGen.fbm(vx, vz, 4, 0.5, 0.001) * Env.city.varHeight;
+                    
+                    // FOUNDATION FIX: Flatten the area near spawn so roads aren't a mess
+                    let d = Math.sqrt(vx*vx + vz*vz);
+                    if(d < 120) vy *= Math.min(1, d / 120); 
                 }
                 verts[i+2] = vy;
             }
@@ -1527,7 +1531,7 @@
 
 
                         // --- MASSIVE FOOT TRAFFIC GENERATION ---
-            const pedCount = Math.floor(459 * Env.city.traffic); // Cranked to 1000 for crowd chaos
+            const pedCount = Math.floor(40 * Env.city.traffic);// Cranked to 1000 for crowd chaos
             const pGeo = new THREE.BoxGeometry(0.6, 1.8, 0.4);
             const pMat = new THREE.MeshStandardMaterial({color: 0x444444});
             
@@ -1552,7 +1556,7 @@
                 Env.entities.peds.push(p);
             }
                         
-            const carCount = Math.floor(200 * Env.city.traffic);
+            const carCount = Math.floor(50 * Env.city.traffic);
 
             for(let i=0; i<carCount; i++) {
 
@@ -1687,8 +1691,11 @@
             const px = playerGroup.position.x;
             const pz = playerGroup.position.z;
             let groundY = 0;
+            // The 0.25 offset ensures your feet touch the "Road" layer (0.2) and not the grass
             if(Env.city.layout.includes('hill') || Env.city.layout.includes('coast')) {
-                groundY = NoiseGen.fbm(px, pz, 4, 0.5, 0.001) * Env.city.varHeight;
+                groundY = (NoiseGen.fbm(px, pz, 4, 0.5, 0.001) * Env.city.varHeight) + 0.25;
+            } else {
+                groundY = 0.25; // Flat cities need snapping too
             }
             
             playerGroup.position.y += Env.yVel * dt;
