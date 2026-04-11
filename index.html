@@ -2188,6 +2188,17 @@
             stepEnvironment(dt);
             updateCamera();
             updateHUD();
+            // --- THE CHROMEBOOK OVERDRIVE FIX ---
+            scene.traverse((obj) => {
+                if (obj.isMesh || obj.isGroup) {
+                    const dist = obj.position.distanceTo(playerGroup.position);
+                    // Hide anything further than 600 units away to save CPU/GPU cycles
+                    obj.visible = dist < 600; 
+                    // Force low-poly shadows or disable them for distant objects
+                    if(obj.isMesh) obj.castShadow = (dist < 150); 
+                }
+            });
+// -------------------------------------
 
             renderer.render(scene, camera);
         }
