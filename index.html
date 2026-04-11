@@ -2199,1343 +2199,803 @@
         // 18. CITY-SPECIFIC ULTRA-HD LANDMARK ENGINE V3 (EXPANDED)
         // ==========================================
 
-       // ==========================================
-        // 18. A.R.E.S. V-FINAL: TITAN-CLASS LANDMARK & RETAIL ENGINE
-        // TRUE-SCALE | INTERIOR-MAPPED | HIGH-DENSITY
-        // ==========================================
-
         const landmarkGroup = new THREE.Group();
         scene.add(landmarkGroup);
 
-        const MATS = {
-            conc: new THREE.MeshStandardMaterial({color: 0xd3d3d3, roughness: 0.9}),
-            concDrk: new THREE.MeshStandardMaterial({color: 0x888888, roughness: 1.0}),
-            asph: new THREE.MeshStandardMaterial({color: 0x222222, roughness: 0.8}),
-            glass: new THREE.MeshStandardMaterial({color: 0x88ccff, transparent: true, opacity: 0.3, metalness: 0.8}),
-            drkGlass: new THREE.MeshStandardMaterial({color: 0x112233, transparent: true, opacity: 0.6, metalness: 0.9}),
-            red: new THREE.MeshStandardMaterial({color: 0xcc0000, roughness: 0.7}),
-            redGlow: new THREE.MeshStandardMaterial({color: 0xff0000, emissive: 0xaa0000, emissiveIntensity: 1.5}),
-            grn: new THREE.MeshStandardMaterial({color: 0x006241, roughness: 0.8}),
-            grnGlow: new THREE.MeshStandardMaterial({color: 0x00ff00, emissive: 0x008800, emissiveIntensity: 1.5}),
-            blu: new THREE.MeshStandardMaterial({color: 0x003b64, roughness: 0.6}),
-            bluGlow: new THREE.MeshStandardMaterial({color: 0x0088ff, emissive: 0x0044aa, emissiveIntensity: 1.5}),
-            yel: new THREE.MeshStandardMaterial({color: 0xffe600, roughness: 0.5}),
-            yelGlow: new THREE.MeshStandardMaterial({color: 0xffff00, emissive: 0xaaaa00, emissiveIntensity: 1.5}),
-            blk: new THREE.MeshStandardMaterial({color: 0x111111, roughness: 0.9}),
-            wht: new THREE.MeshStandardMaterial({color: 0xffffff, roughness: 0.5}),
-            wood: new THREE.MeshStandardMaterial({color: 0x5c4033, roughness: 0.9}),
-            woodLgt: new THREE.MeshStandardMaterial({color: 0xd2b48c, roughness: 0.8}),
-            met: new THREE.MeshStandardMaterial({color: 0xaaaaaa, metalness: 0.8, roughness: 0.4}),
-            metDrk: new THREE.MeshStandardMaterial({color: 0x444444, metalness: 0.9, roughness: 0.5}),
-            neonPink: new THREE.MeshStandardMaterial({color: 0xff00ff, emissive: 0xff0088, emissiveIntensity: 2}),
-            neonCyan: new THREE.MeshStandardMaterial({color: 0x00ffff, emissive: 0x00ccff, emissiveIntensity: 2}),
-            grass: new THREE.MeshStandardMaterial({color: 0x2d5a2d, roughness: 1.0}),
-            dirt: new THREE.MeshStandardMaterial({color: 0x8b5a2b, roughness: 1.0}),
-            brick: new THREE.MeshStandardMaterial({color: 0x8b3a3a, roughness: 0.9}),
-            sand: new THREE.MeshStandardMaterial({color: 0xeeddcc, roughness: 1.0})
-        };
-
         function spawnLandmarks() {
-            SysLog.print("DEPLOYING TITAN-CLASS INFRASTRUCTURE. CLEARING 1000M CORE...");
+            SysLog.print("INJECTING MASSIVE COMMERCIAL ZONES & LANDMARKS...");
             
-            Env.colliders = Env.colliders.filter(c => Math.hypot(c.minX, c.minZ) > 1000);
-            const snap = (val) => Math.round(val / 200) * 200 + 100;
+            // Clear a massive 600m radius in the center
+            Env.colliders = Env.colliders.filter(c => Math.hypot(c.minX, c.minZ) > 600);
 
-            // RETAIL ZONE 1: INNER RING (Radius 1200m)
-            for(let i=0; i<36; i++) {
-                const angle = (i/36) * Math.PI * 2;
-                const dist = 1100 + Math.random() * 400;
-                const cX = snap(Math.cos(angle) * dist);
-                const cZ = snap(Math.sin(angle) * dist);
-                dispatchRetail(cX, cZ);
+            // Sprawling Franchise Ring (Frequent Gas Stations, 7-11s, Targets, etc.)
+            for(let i=0; i<12; i++) {
+                const angle = (i/12) * Math.PI * 2;
+                const dist = 700 + Math.random() * 800;
+                const cX = Math.cos(angle) * dist;
+                const cZ = Math.sin(angle) * dist;
+                
+                const type = Math.floor(Math.random() * 8);
+                if(type === 0) buildGasStation(cX, cZ);
+                else if(type === 1) buildSevenEleven(cX, cZ);
+                else if(type === 2) buildStarbucks(cX, cZ);
+                else if(type === 3) buildTarget(cX, cZ);
+                else if(type === 4) buildChipotle(cX, cZ);
+                else if(type === 5) buildBestBuy(cX, cZ);
+                else if(type === 6) buildGasStation(cX, cZ); // Double chance for gas
+                else buildSevenEleven(cX, cZ); // Double chance for 7-11
             }
 
-            // RETAIL ZONE 2: OUTER RING (Radius 2000m)
-            for(let i=0; i<48; i++) {
-                const angle = (i/48) * Math.PI * 2;
-                const dist = 1600 + Math.random() * 800;
-                const cX = snap(Math.cos(angle) * dist);
-                const cZ = snap(Math.sin(angle) * dist);
-                dispatchRetail(cX, cZ);
-            }
+            // Universal Anchor Malls
+            buildMegaMall(500, -500);
+            buildIKEA(-500, 500);
 
-            // MASSIVE ANCHOR STORES (Fixed Suburbs)
-            buildMegaMall(800, -800);
-            buildIKEA(-800, 800);
-            buildWalmart(800, 800);
-            buildHomeDepot(-800, -800);
-
-            // CORE CITY-SPECIFIC SPAWNS (0,0 to 600,600 range)
+            // City-Specific Dispatcher
             switch(Env.city.id) {
-                case 0: 
-                    buildYankeeStadium(0, 600); buildTimesSquare(-400, 100); buildTechFlagship(400, -200); 
-                    buildFootLocker(200, 200); buildBank(-200, 400); buildMcDonalds(300, -500); 
+                case 0: // NYC
+                    buildYankeeStadium(0, 350);
+                    buildTimesSquare(-250, 0);
+                    buildTechFlagship(250, -250);
+                    buildFootLocker(150, 150);
                     break;
-                case 1: 
-                    buildTokyoTower(0, 600); buildShibuyaCrossing(-400, 100); buildTechFlagship(400, -200); 
-                    buildSevenEleven(200, 200); buildSevenEleven(-300, -300); buildGym(300, 500);
+                case 1: // Tokyo
+                    buildTokyoTower(0, 350);
+                    buildShibuyaCrossing(-250, 0);
+                    buildTechFlagship(250, -250);
+                    buildSevenEleven(100, 100);
                     break;
-                case 2: 
-                    buildBigBen(-400, -400); buildLondonEye(0, 600); buildGenericPub(400, 200); 
-                    buildGenericPub(-200, 400); buildBank(300, -300); buildStarbucks(200, 200);
+                case 2: // London
+                    buildBigBen(-250, -250);
+                    buildLondonEye(0, 350);
+                    buildGenericPub(200, 0);
+                    buildGenericPub(-150, 150);
                     break;
-                case 3: 
-                    buildEiffelTower(0, 600); buildLouvrePyramid(-400, -200); buildGenericPub(400, 200); 
-                    buildTechFlagship(200, 400); buildCinema(-300, 400);
+                case 3: // Paris
+                    buildEiffelTower(0, 350);
+                    buildLouvrePyramid(-250, -250);
+                    buildGenericPub(200, 0); 
+                    buildTechFlagship(150, 150);
                     break;
-                case 4: 
-                    buildMiamiNeonClub(-400, -200); buildGenericStadium(0, 600, 0x00aacc, 0xff0088); 
-                    buildLifeguardTowers(400, 200); buildMiamiNeonClub(300, 400); buildBurgerKing(-200, 400);
+                case 4: // Miami
+                    buildMiamiNeonClub(-250, -250);
+                    buildGenericStadium(0, 350, 0x00aacc, 0xff0088);
+                    buildLifeguardTowers(200, 0);
+                    buildMiamiNeonClub(250, 250);
                     break;
-                case 5: 
-                    buildBurjSpire(0, 0); buildLuxuryOasis(600, 600); buildTarget(-400, 200); 
-                    buildTechFlagship(-400, -400); buildBank(300, -300);
+                case 5: // Dubai
+                    buildBurjSpire(0, 0);
+                    buildLuxuryOasis(350, 350);
+                    buildTechFlagship(-250, -250);
+                    buildTarget(-300, 0);
                     break;
-                case 6: 
-                    buildWrigleyField(0, 600); buildCloudGate(-400, -200); buildStarbucks(400, 200); 
-                    buildTarget(200, -400); buildWendys(-300, 300);
+                case 6: // Chicago
+                    buildWrigleyField(0, 350);
+                    buildCloudGate(-250, -250);
+                    buildTechFlagship(250, 0);
+                    buildStarbucks(150, 150);
                     break;
-                case 7: 
-                    buildOperaHouse(0, 600); buildGenericStadium(-400, -400, 0x0055ff, 0xffff00); 
-                    buildBestBuy(400, 200); buildCinema(200, -300);
+                case 7: // Sydney
+                    buildOperaHouse(0, 350);
+                    buildGenericStadium(-250, -250, 0x0055ff, 0xffff00);
+                    buildTechFlagship(250, 0);
+                    buildBestBuy(-150, 150);
                     break;
-                case 8: 
-                    buildColosseum(0, 600); buildPantheon(-400, -200); buildStarbucks(400, 200); 
-                    buildGenericPub(200, 400); buildBank(-300, 300);
+                case 8: // Rome
+                    buildColosseum(0, 350);
+                    buildPantheon(-250, -250);
+                    buildGenericPub(250, 0);
+                    buildStarbucks(-150, 150);
                     break;
-                case 9: 
-                    buildBrandenburgGate(-400, -200); buildTVTower(0, 600); buildMiamiNeonClub(400, 200); 
-                    buildAutoShop(200, -400); buildBurgerKing(-300, 300);
+                case 9: // Berlin
+                    buildBrandenburgGate(-250, -250);
+                    buildTVTower(0, 350);
+                    buildIKEA(250, 0);
+                    buildMiamiNeonClub(150, 150); // Techno club proxy
                     break;
-                default: 
-                    buildGenericStadium(0, 600, 0xaa0000, 0x0000aa); buildTechFlagship(-400, -200); 
-                    buildTarget(400, 200); buildBank(200, -400);
+                default:
+                    buildGenericStadium(0, 350, 0xaa0000, 0x0000aa);
+                    buildTechFlagship(-250, -250);
+                    buildTarget(250, 250);
             }
-        }
-
-        function dispatchRetail(cX, cZ) {
-            const type = Math.floor(Math.random() * 20);
-            if(type === 0 || type === 1) buildGasStation(cX, cZ);
-            else if(type === 2 || type === 3) buildSevenEleven(cX, cZ);
-            else if(type === 4) buildStarbucks(cX, cZ);
-            else if(type === 5) buildTarget(cX, cZ);
-            else if(type === 6) buildChipotle(cX, cZ);
-            else if(type === 7) buildBestBuy(cX, cZ);
-            else if(type === 8) buildFootLocker(cX, cZ);
-            else if(type === 9) buildTechFlagship(cX, cZ);
-            else if(type === 10) buildWendys(cX, cZ);
-            else if(type === 11) buildAutoShop(cX, cZ);
-            else if(type === 12) buildBank(cX, cZ);
-            else if(type === 13) buildMcDonalds(cX, cZ);
-            else if(type === 14) buildBurgerKing(cX, cZ);
-            else if(type === 15) buildGym(cX, cZ);
-            else if(type === 16) buildCinema(cX, cZ);
-            else if(type === 17) buildCarDealership(cX, cZ);
-            else buildGasStation(cX, cZ);
-        }
-
-        // ========================================================
-        // DEEP DETAILING HELPERS
-        // ========================================================
-
-        function addParkingLot(group, w, d, zOff, hasCars = true) {
-            const lot = new THREE.Mesh(new THREE.PlaneGeometry(w, d), MATS.asph);
-            lot.rotation.x = -Math.PI/2; lot.position.set(0, 0.1, zOff); group.add(lot);
-            
-            // Stripes
-            const cols = Math.floor(w / 8);
-            for(let i=0; i<cols; i++) {
-                const px = -w/2 + 4 + (i*8);
-                const s1 = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 12), MATS.wht);
-                s1.rotation.x = -Math.PI/2; s1.position.set(px, 0.12, zOff - d/4); group.add(s1);
-                const s2 = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 12), MATS.wht);
-                s2.rotation.x = -Math.PI/2; s2.position.set(px, 0.12, zOff + d/4); group.add(s2);
-
-                // Spawn Cars
-                if(hasCars && Math.random() > 0.5) {
-                    const car = buildLowPolyCar();
-                    car.position.set(px - 4, 0, zOff - d/4);
-                    group.add(car);
-                }
-                if(hasCars && Math.random() > 0.5) {
-                    const car2 = buildLowPolyCar();
-                    car2.position.set(px - 4, 0, zOff + d/4);
-                    car2.rotation.y = Math.PI;
-                    group.add(car2);
-                }
-            }
-            
-            // Light Poles
-            for(let i=0; i<4; i++) {
-                const lx = -w/2 + 10 + (i * (w/4));
-                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.8, 20, 8), MATS.met);
-                pole.position.set(lx, 10, zOff); group.add(pole);
-                const head = new THREE.Mesh(new THREE.BoxGeometry(4, 1, 2), MATS.wht);
-                head.position.set(lx+2, 20, zOff); group.add(head);
-                const bulb = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.2, 1.8), MATS.yelGlow);
-                bulb.position.set(lx+2, 19.5, zOff); group.add(bulb);
-            }
-        }
-
-        function buildLowPolyCar() {
-            const car = new THREE.Group();
-            const colors = [MATS.red, MATS.blu, MATS.blk, MATS.wht, MATS.met, MATS.grn];
-            const mat = colors[Math.floor(Math.random() * colors.length)];
-            const body = new THREE.Mesh(new THREE.BoxGeometry(4, 1.5, 8), mat); body.position.y = 1.5; car.add(body);
-            const top = new THREE.Mesh(new THREE.BoxGeometry(3.5, 1.2, 4), MATS.drkGlass); top.position.set(0, 2.8, -0.5); car.add(top);
-            for(let i=0; i<4; i++) {
-                const wx = i%2===0 ? 2.2 : -2.2; const wz = i<2 ? 2.5 : -2.5;
-                const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.4, 16), MATS.blk);
-                wheel.rotation.z = Math.PI/2; wheel.position.set(wx, 0.8, wz); car.add(wheel);
-            }
-            return car;
-        }
-
-        function addRoofAC(group, w, d, y, count) {
-            for(let i=0; i<count; i++) {
-                const ac = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 4), MATS.met);
-                ac.position.set((Math.random()-0.5)*w*0.8, y+1.5, (Math.random()-0.5)*d*0.8);
-                const fan = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.2, 16), MATS.blk);
-                fan.position.set(0, 1.51, 0); ac.add(fan); 
-                const duct = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 6), MATS.met);
-                duct.position.set(0, -0.5, 3); ac.add(duct);
-                group.add(ac);
-            }
-        }
-
-        function addDumpster(group, x, z, rot) {
-            const d = new THREE.Group(); d.position.set(x, 0, z); d.rotation.y = rot;
-            const box = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 3), MATS.grn); box.position.y = 1.5; d.add(box);
-            const lid = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.2, 3.2), MATS.blk); lid.position.set(0, 3.1, 0); lid.rotation.x = -0.1; d.add(lid);
-            group.add(d);
-        }
-
-        function addSidewalkWrap(group, w, d) {
-            const sw = new THREE.Mesh(new THREE.BoxGeometry(w+6, 0.4, d+6), MATS.conc);
-            sw.position.set(0, 0.2, 0); group.add(sw);
         }
 
         // ========================================================
-        // MASSIVE RETAIL CHAINS (INTERIOR & EXTERIOR)
+        // MASSIVE RETAIL & FRANCHISE CHAINS
         // ========================================================
-
-        function buildTarget(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 160, 120);
-            
-            // Shell
-            const shell = new THREE.Mesh(new THREE.BoxGeometry(160, 18, 120), MATS.conc); shell.position.set(0, 9, 0); s.add(shell);
-            const entry = new THREE.Mesh(new THREE.BoxGeometry(40, 22, 15), MATS.conc); entry.position.set(0, 11, 60); s.add(entry);
-            const doors = new THREE.Mesh(new THREE.BoxGeometry(24, 10, 0.5), MATS.glass); doors.position.set(0, 5, 67.2); s.add(doors);
-            
-            // Branding
-            const r1 = new THREE.Mesh(new THREE.RingGeometry(5, 7.5, 32), MATS.red); r1.position.set(0, 16, 67.6); s.add(r1);
-            const d1 = new THREE.Mesh(new THREE.CircleGeometry(3, 32), MATS.red); d1.position.set(0, 16, 67.6); s.add(d1);
-            
-            // Bollards
-            for(let i=0; i<20; i++) { 
-                const b = new THREE.Mesh(new THREE.SphereGeometry(1.2, 16, 16), MATS.red); 
-                b.position.set(-40+(i*4.2), 1.2, 72); s.add(b); 
-            }
-            
-            // Checkouts
-            for(let i=0; i<12; i++) { 
-                const r = new THREE.Mesh(new THREE.BoxGeometry(2, 1.5, 6), MATS.met); r.position.set(-25+(i*4.5), 0.75, 48); s.add(r); 
-                const lgt = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 4), MATS.met); lgt.position.set(-25+(i*4.5), 3.5, 46); s.add(lgt);
-                const num = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), MATS.wht); num.position.set(-25+(i*4.5), 6, 46); s.add(num);
-            }
-            
-            // Shelving Grid
-            for(let r=0; r<6; r++) {
-                for(let c=0; c<14; c++) {
-                    const aisle = new THREE.Mesh(new THREE.BoxGeometry(4, 10, 50), MATS.wht);
-                    aisle.position.set(-65 + (c*10), 5, -20 + (r*5)); s.add(aisle);
-                }
-            }
-
-            addRoofAC(s, 160, 120, 18, 16); 
-            addParkingLot(s, 240, 140, 135);
-            addDumpster(s, -85, 0, Math.PI/2);
-            
-            Env.colliders.push({ minX: x-120, maxX: x+120, minZ: z-65, maxZ: z+210 }); 
-            landmarkGroup.add(s);
-        }
-
-        function buildWalmart(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 200, 140);
-            
-            const shell = new THREE.Mesh(new THREE.BoxGeometry(200, 18, 140), MATS.sand); shell.position.set(0, 9, 0); s.add(shell);
-            const fac = new THREE.Mesh(new THREE.BoxGeometry(180, 6, 4), MATS.blu); fac.position.set(0, 15, 70); s.add(fac);
-            
-            // Left Entry (Grocery)
-            const entL = new THREE.Mesh(new THREE.BoxGeometry(30, 12, 10), MATS.concDrk); entL.position.set(-60, 6, 75); s.add(entL);
-            const drL = new THREE.Mesh(new THREE.BoxGeometry(16, 8, 0.5), MATS.glass); drL.position.set(-60, 4, 80.1); s.add(drL);
-            
-            // Right Entry (Home)
-            const entR = new THREE.Mesh(new THREE.BoxGeometry(30, 12, 10), MATS.concDrk); entR.position.set(60, 6, 75); s.add(entR);
-            const drR = new THREE.Mesh(new THREE.BoxGeometry(16, 8, 0.5), MATS.glass); drR.position.set(60, 4, 80.1); s.add(drR);
-            
-            // Logo Spark
-            const spark = new THREE.Group(); spark.position.set(0, 18, 72.1);
-            for(let i=0; i<6; i++) {
-                const ray = new THREE.Mesh(new THREE.BoxGeometry(1, 4, 0.5), MATS.yel);
-                ray.rotation.z = (i/6)*Math.PI*2; ray.position.set(Math.sin((i/6)*Math.PI*2)*3, Math.cos((i/6)*Math.PI*2)*3, 0); spark.add(ray);
-            }
-            s.add(spark);
-
-            // Massive Interior
-            for(let r=0; r<8; r++) {
-                for(let c=0; c<18; c++) {
-                    const aisle = new THREE.Mesh(new THREE.BoxGeometry(3, 12, 40), MATS.met);
-                    aisle.position.set(-85 + (c*10), 6, -30 + (r*6)); s.add(aisle);
-                }
-            }
-
-            addRoofAC(s, 200, 140, 18, 24); 
-            addParkingLot(s, 300, 160, 155);
-            Env.colliders.push({ minX: x-150, maxX: x+150, minZ: z-75, maxZ: z+240 }); landmarkGroup.add(s);
-        }
-
-        function buildHomeDepot(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 180, 120);
-            
-            const shell = new THREE.Mesh(new THREE.BoxGeometry(180, 22, 120), MATS.conc); shell.position.set(0, 11, 0); s.add(shell);
-            
-            // Orange Branding
-            const fac = new THREE.Mesh(new THREE.BoxGeometry(182, 8, 2), new THREE.MeshStandardMaterial({color:0xff6600, roughness:0.8})); fac.position.set(0, 18, 60.1); s.add(fac);
-            
-            // Lumber doors
-            for(let i=0; i<3; i++) {
-                const bay = new THREE.Mesh(new THREE.BoxGeometry(10, 12, 1), MATS.metDrk);
-                bay.position.set(-60+(i*15), 6, 60.2); s.add(bay);
-            }
-
-            // Garden Center
-            const gc = new THREE.Mesh(new THREE.BoxGeometry(40, 14, 80), MATS.met); gc.material.wireframe = true; gc.position.set(110, 7, 0); s.add(gc);
-            for(let i=0; i<15; i++) {
-                const plant = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 2), MATS.grn);
-                plant.position.set(95+(Math.random()*30), 1.5, -30+(Math.random()*60)); s.add(plant);
-            }
-
-            // Interior High Racks
-            for(let r=0; r<4; r++) {
-                for(let c=0; c<12; c++) {
-                    const rack = new THREE.Mesh(new THREE.BoxGeometry(6, 18, 60), MATS.met);
-                    rack.material.wireframe = true;
-                    rack.position.set(-70 + (c*12), 9, -20 + (r*10)); s.add(rack);
-                    
-                    // Orange inventory boxes
-                    const inv = new THREE.Mesh(new THREE.BoxGeometry(5, 4, 58), new THREE.MeshStandardMaterial({color:0xdd8844}));
-                    inv.position.set(-70 + (c*12), 14, -20 + (r*10)); s.add(inv);
-                }
-            }
-
-            addRoofAC(s, 180, 120, 22, 20); 
-            addParkingLot(s, 280, 140, 135);
-            Env.colliders.push({ minX: x-100, maxX: x+140, minZ: z-65, maxZ: z+210 }); landmarkGroup.add(s);
-        }
 
         function buildSevenEleven(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 34, 24);
-            const shell = new THREE.Mesh(new THREE.BoxGeometry(30, 10, 20), MATS.wht); shell.position.set(0, 5, 0); s.add(shell);
-            const glass = new THREE.Mesh(new THREE.BoxGeometry(28, 7, 0.5), MATS.glass); glass.position.set(0, 3.5, 10); s.add(glass);
-            
-            // Stripes
-            const sG = new THREE.Mesh(new THREE.BoxGeometry(30.4, 1.2, 20.4), MATS.grn); sG.position.set(0, 8.5, 0); s.add(sG);
-            const sR = new THREE.Mesh(new THREE.BoxGeometry(30.4, 0.6, 20.4), MATS.red); sR.position.set(0, 7.5, 0); s.add(sR);
-            const sO = new THREE.Mesh(new THREE.BoxGeometry(30.4, 0.6, 20.4), new THREE.MeshStandardMaterial({color:0xff7f00})); sO.position.set(0, 6.9, 0); s.add(sO);
-            
-            // Props
-            const ice = new THREE.Mesh(new THREE.BoxGeometry(4, 6, 3), MATS.wht); ice.position.set(-12, 3, 11); s.add(ice);
-            const pro = new THREE.Mesh(new THREE.BoxGeometry(5, 5, 2.5), MATS.met); pro.position.set(12, 2.5, 11); s.add(pro);
-            
-            // Interior Details
-            for(let i=0; i<5; i++) { 
-                const aisle = new THREE.Mesh(new THREE.BoxGeometry(2, 6, 12), MATS.blk); aisle.position.set(-10+(i*5), 3, -2); s.add(aisle); 
+            const store = new THREE.Group(); store.position.set(x, 0, z);
+            const mWall = new THREE.MeshStandardMaterial({color: 0xeeeeee, roughness: 0.9});
+            const mGlass = new THREE.MeshStandardMaterial({color: 0xaaccff, transparent: true, opacity: 0.3});
+            const mGreen = new THREE.MeshStandardMaterial({color: 0x007f3f});
+            const mRed = new THREE.MeshStandardMaterial({color: 0xff0000});
+            const mOrange = new THREE.MeshStandardMaterial({color: 0xff7f00});
+
+            const shell = new THREE.Mesh(new THREE.BoxGeometry(25, 10, 20), mWall); shell.position.set(0, 5, 0); store.add(shell);
+            const glass = new THREE.Mesh(new THREE.BoxGeometry(20, 7, 0.5), mGlass); glass.position.set(0, 3.5, 10); store.add(glass);
+
+            // Iconic Stripes
+            const sG = new THREE.Mesh(new THREE.BoxGeometry(25.2, 1, 20.2), mGreen); sG.position.set(0, 8.5, 0); store.add(sG);
+            const sR = new THREE.Mesh(new THREE.BoxGeometry(25.2, 0.6, 20.2), mRed); sR.position.set(0, 7.5, 0); store.add(sR);
+            const sO = new THREE.Mesh(new THREE.BoxGeometry(25.2, 0.6, 20.2), mOrange); sO.position.set(0, 6.5, 0); store.add(sO);
+
+            // Gas Pumps (Often attached)
+            for(let i=0; i<2; i++) {
+                const pump = new THREE.Mesh(new THREE.BoxGeometry(2, 4, 1.5), mWall);
+                pump.position.set(-5 + (i*10), 2, 25);
+                store.add(pump);
             }
-            const counter = new THREE.Mesh(new THREE.BoxGeometry(12, 2.5, 3), MATS.woodLgt); counter.position.set(0, 1.25, 6); s.add(counter);
-            const slurpee = new THREE.Mesh(new THREE.BoxGeometry(3, 4, 2), MATS.met); slurpee.position.set(-12, 2, -8); s.add(slurpee);
+            const canopy = new THREE.Mesh(new THREE.BoxGeometry(30, 1, 20), mWall); canopy.position.set(0, 12, 25); store.add(canopy);
+            const cPillars = new THREE.Mesh(new THREE.BoxGeometry(1, 12, 1), mWall); cPillars.position.set(0, 6, 25); store.add(cPillars);
+
+            Env.colliders.push({ minX: x-15, maxX: x+15, minZ: z-12, maxZ: z+30 }); landmarkGroup.add(store);
+        }
+
+        function buildTarget(x, z) {
+            const store = new THREE.Group(); store.position.set(x, 0, z);
+            const mWall = new THREE.MeshStandardMaterial({color: 0xdcdcdc, roughness: 1.0});
+            const mRed = new THREE.MeshStandardMaterial({color: 0xcc0000, emissive: 0x880000});
             
-            // Gas Pumps
-            for(let i=0; i<3; i++) { 
-                const pmp = new THREE.Mesh(new THREE.BoxGeometry(3, 6, 1.5), MATS.wht); pmp.position.set(-12+(i*12), 3, 35); s.add(pmp); 
+            const shell = new THREE.Mesh(new THREE.BoxGeometry(100, 25, 80), mWall); shell.position.set(0, 12.5, 0); store.add(shell);
+            
+            // Bullseye Logo
+            const ring1 = new THREE.Mesh(new THREE.RingGeometry(6, 9, 32), mRed); ring1.position.set(0, 15, 40.1); store.add(ring1);
+            const dot = new THREE.Mesh(new THREE.CircleGeometry(3, 32), mRed); dot.position.set(0, 15, 40.1); store.add(dot);
+
+            // Red concrete spheres outside
+            for(let i=0; i<6; i++) {
+                const bollard = new THREE.Mesh(new THREE.SphereGeometry(1.5, 16, 16), mRed);
+                bollard.position.set(-30 + (i*12), 1.5, 48); store.add(bollard);
             }
-            const can = new THREE.Mesh(new THREE.BoxGeometry(45, 2, 25), MATS.wht); can.position.set(0, 14, 35); s.add(can);
-            const pil1 = new THREE.Mesh(new THREE.BoxGeometry(1.5, 14, 1.5), MATS.met); pil1.position.set(-12, 7, 35); s.add(pil1);
-            const pil2 = new THREE.Mesh(new THREE.BoxGeometry(1.5, 14, 1.5), MATS.met); pil2.position.set(12, 7, 35); s.add(pil2);
-            
-            addRoofAC(s, 30, 20, 10, 2); addParkingLot(s, 60, 70, 30);
-            Env.colliders.push({ minX: x-30, maxX: x+30, minZ: z-15, maxZ: z+70 }); landmarkGroup.add(s);
+
+            Env.colliders.push({ minX: x-55, maxX: x+55, minZ: z-45, maxZ: z+45 }); landmarkGroup.add(store);
         }
 
         function buildStarbucks(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 32, 24);
+            const store = new THREE.Group(); store.position.set(x, 0, z);
+            const mWood = new THREE.MeshStandardMaterial({color: 0x4a3b2c, roughness: 0.9});
+            const mDark = new THREE.MeshStandardMaterial({color: 0x222222, roughness: 0.8});
+            const mGreen = new THREE.MeshStandardMaterial({color: 0x006241, emissive: 0x003322});
             
-            const shell = new THREE.Mesh(new THREE.BoxGeometry(28, 10, 20), MATS.wood); shell.position.set(0, 5, 0); s.add(shell);
-            const rf = new THREE.Mesh(new THREE.BoxGeometry(32, 2, 24), MATS.blk); rf.position.set(0, 11, 0); s.add(rf);
-            
-            // Glass Corner Wrap
-            const gl1 = new THREE.Mesh(new THREE.BoxGeometry(15, 8, 0.5), MATS.drkGlass); gl1.position.set(6.5, 4, 10); s.add(gl1);
-            const gl2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 10), MATS.drkGlass); gl2.position.set(14, 4, 5); s.add(gl2);
-            
-            // Logo
-            const logo = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 0.5, 32), MATS.grnGlow); logo.rotation.x = Math.PI/2; logo.position.set(-6, 7, 10.2); s.add(logo);
-            
-            // Drive Thru
-            const dtLane = new THREE.Mesh(new THREE.BoxGeometry(4, 0.2, 40), MATS.asph); dtLane.position.set(-18, 0.1, 0); s.add(dtLane);
-            const dtMenu = new THREE.Mesh(new THREE.BoxGeometry(2, 5, 1), MATS.blk); dtMenu.position.set(-21, 2.5, -10); dtMenu.rotation.y = Math.PI/6; s.add(dtMenu);
-            const dtWin = new THREE.Mesh(new THREE.BoxGeometry(0.2, 4, 5), MATS.glass); dtWin.position.set(-14.1, 4, 2); s.add(dtWin);
-            
-            // Patio
-            const fence = new THREE.Mesh(new THREE.BoxGeometry(20, 3, 0.5), MATS.blk); fence.position.set(4, 1.5, 18); s.add(fence);
-            for(let i=0; i<4; i++) {
-                const pt = new THREE.Group(); pt.position.set(-2+(i*5), 0, 14);
-                const tb = new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,0.2), MATS.blk); tb.position.y=1.5; pt.add(tb);
-                const pl = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,1.5), MATS.blk); pl.position.y=0.75; pt.add(pl);
-                const um = new THREE.Mesh(new THREE.ConeGeometry(3,1,8), MATS.grn); um.position.y=4.5; pt.add(um);
-                const po = new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,4.5), MATS.blk); po.position.y=2.25; pt.add(po);
-                s.add(pt);
-            }
-            
-            // Interior Bar
-            const bar = new THREE.Mesh(new THREE.BoxGeometry(10, 2.5, 4), MATS.woodLgt); bar.position.set(0, 1.25, -2); s.add(bar);
-            const esp = new THREE.Mesh(new THREE.BoxGeometry(2, 1.5, 1.5), MATS.met); esp.position.set(2, 3.25, -2); s.add(esp);
+            const shell = new THREE.Mesh(new THREE.BoxGeometry(20, 12, 18), mWood); shell.position.set(0, 6, 0); store.add(shell);
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(22, 2, 20), mDark); roof.position.set(0, 13, 0); store.add(roof);
+            const glass = new THREE.Mesh(new THREE.BoxGeometry(15, 8, 0.5), new THREE.MeshStandardMaterial({color: 0x88ccff, transparent: true, opacity: 0.2})); 
+            glass.position.set(0, 4, 9); store.add(glass);
 
-            addRoofAC(s, 28, 20, 12, 2); addParkingLot(s, 60, 50, 35);
-            Env.colliders.push({ minX: x-25, maxX: x+20, minZ: z-15, maxZ: z+55 }); landmarkGroup.add(s);
+            const logo = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 0.5, 32), mGreen);
+            logo.rotation.x = Math.PI/2; logo.position.set(0, 9, 9.2); store.add(logo);
+
+            // Drive-thru menu
+            const menu = new THREE.Mesh(new THREE.BoxGeometry(3, 4, 1), mDark); menu.position.set(-15, 2, 0); store.add(menu);
+
+            Env.colliders.push({ minX: x-18, maxX: x+12, minZ: z-10, maxZ: z+10 }); landmarkGroup.add(store);
         }
 
         function buildBestBuy(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 110, 80);
-            
-            const shell = new THREE.Mesh(new THREE.BoxGeometry(100, 22, 75), MATS.sand); shell.position.set(0, 11, 0); s.add(shell);
-            const fac = new THREE.Mesh(new THREE.BoxGeometry(60, 28, 6), MATS.blu); fac.position.set(0, 14, 37.5); s.add(fac);
-            
-            // Yellow Tag
-            const tag = new THREE.Mesh(new THREE.BoxGeometry(18, 12, 1.5), MATS.yelGlow); tag.position.set(0, 20, 40.6); tag.rotation.z = -0.2; s.add(tag);
-            
-            // Vestibule
-            const ent = new THREE.Mesh(new THREE.BoxGeometry(30, 10, 8), MATS.blk); ent.position.set(0, 5, 38); s.add(ent);
-            const gls = new THREE.Mesh(new THREE.BoxGeometry(26, 8, 0.5), MATS.glass); gls.position.set(0, 4, 42.1); s.add(gls);
-            
-            // Interior Tech Displays
-            for(let r=0; r<5; r++) { 
-                for(let c=0; c<8; c++) { 
-                    const tbl = new THREE.Mesh(new THREE.BoxGeometry(6, 2, 3), MATS.wht); 
-                    tbl.position.set(-35+(c*10), 1, -15+(r*8)); s.add(tbl); 
-                    const tv = new THREE.Mesh(new THREE.BoxGeometry(4, 2.5, 0.5), MATS.blk);
-                    tv.position.set(-35+(c*10), 3.25, -15+(r*8)); s.add(tv);
-                } 
-            }
-            
-            // Back Warehouse Doors
-            for(let i=0; i<2; i++) {
-                const bay = new THREE.Mesh(new THREE.BoxGeometry(8, 8, 1), MATS.met); bay.position.set(-20+(i*40), 4, -37.6); s.add(bay);
-            }
+            const store = new THREE.Group(); store.position.set(x, 0, z);
+            const mBlue = new THREE.MeshStandardMaterial({color: 0x003b64, roughness: 0.8});
+            const mYellow = new THREE.MeshStandardMaterial({color: 0xffe600});
+            const mTan = new THREE.MeshStandardMaterial({color: 0xddccaa, roughness: 1.0});
 
-            addRoofAC(s, 100, 75, 22, 10); addParkingLot(s, 160, 100, 95);
-            addDumpster(s, -55, -20, Math.PI/2);
-            Env.colliders.push({ minX: x-60, maxX: x+60, minZ: z-40, maxZ: z+145 }); landmarkGroup.add(s);
-        }
+            const shell = new THREE.Mesh(new THREE.BoxGeometry(70, 20, 50), mTan); shell.position.set(0, 10, 0); store.add(shell);
+            const facade = new THREE.Mesh(new THREE.BoxGeometry(40, 25, 4), mBlue); facade.position.set(0, 12.5, 25); store.add(facade);
+            const tag = new THREE.Mesh(new THREE.BoxGeometry(15, 8, 1), mYellow); tag.position.set(0, 18, 27.1); tag.rotation.z = -0.1; store.add(tag);
 
-        function buildMcDonalds(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 35, 30);
-            
-            const shell = new THREE.Mesh(new THREE.BoxGeometry(30, 12, 25), MATS.concDrk); shell.position.set(0, 6, 0); s.add(shell);
-            const roof = new THREE.Mesh(new THREE.BoxGeometry(32, 2, 27), MATS.blk); roof.position.set(0, 13, 0); s.add(roof);
-            
-            // Red trim
-            const trim = new THREE.Mesh(new THREE.BoxGeometry(33, 3, 28), MATS.red); trim.position.set(0, 11, 0); s.add(trim);
-            
-            // Golden Arches Sign
-            const pole = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 40), MATS.met); pole.position.set(-30, 20, 20); s.add(pole);
-            const arch = new THREE.Mesh(new THREE.TorusGeometry(8, 1.5, 16, 32, Math.PI), MATS.yelGlow); arch.position.set(-34, 40, 20); arch.scale.set(0.5, 1, 1); s.add(arch);
-            const arch2 = new THREE.Mesh(new THREE.TorusGeometry(8, 1.5, 16, 32, Math.PI), MATS.yelGlow); arch2.position.set(-26, 40, 20); arch2.scale.set(0.5, 1, 1); s.add(arch2);
-            
-            const gls = new THREE.Mesh(new THREE.BoxGeometry(15, 8, 0.5), MATS.glass); gls.position.set(0, 4, 12.6); s.add(gls);
-            
-            // Drive Thru
-            const dtLane = new THREE.Mesh(new THREE.BoxGeometry(6, 0.2, 50), MATS.asph); dtLane.position.set(-20, 0.1, 0); s.add(dtLane);
-            const win1 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3, 3), MATS.glass); win1.position.set(-15.1, 4, -5); s.add(win1);
-            const win2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3, 3), MATS.glass); win2.position.set(-15.1, 4, 5); s.add(win2);
-
-            // Interior
-            const cntr = new THREE.Mesh(new THREE.BoxGeometry(10, 2.5, 4), MATS.met); cntr.position.set(0, 1.25, 0); s.add(cntr);
-            const menu = new THREE.Mesh(new THREE.BoxGeometry(10, 2, 0.5), MATS.blk); menu.position.set(0, 8, -2); menu.rotation.x = 0.2; s.add(menu);
-            for(let i=0; i<4; i++) {
-                const booth = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 4), MATS.red); booth.position.set(8, 1.5, 8-(i*5)); s.add(booth);
-                const tbl = new THREE.Mesh(new THREE.BoxGeometry(2, 2.5, 3), MATS.wht); tbl.position.set(8, 1.25, 8-(i*5)); s.add(tbl);
-            }
-
-            addRoofAC(s, 30, 25, 14, 3); addParkingLot(s, 70, 60, 40);
-            Env.colliders.push({ minX: x-20, maxX: x+20, minZ: z-15, maxZ: z+70 }); landmarkGroup.add(s);
-        }
-
-        function buildBurgerKing(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 35, 30);
-            
-            const shell = new THREE.Mesh(new THREE.BoxGeometry(30, 12, 25), MATS.sand); shell.position.set(0, 6, 0); s.add(shell);
-            const fac = new THREE.Mesh(new THREE.BoxGeometry(32, 14, 8), MATS.red); fac.position.set(0, 7, 13); s.add(fac);
-            const gls = new THREE.Mesh(new THREE.BoxGeometry(25, 8, 0.5), MATS.drkGlass); gls.position.set(0, 4, 17.1); s.add(gls);
-            
-            // BK Bun Sign
-            const pole = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 35), MATS.met); pole.position.set(30, 17.5, 20); s.add(pole);
-            const topBun = new THREE.Mesh(new THREE.SphereGeometry(6, 16, 16, 0, Math.PI*2, 0, Math.PI/2), MATS.yelGlow); topBun.position.set(30, 38, 20); s.add(topBun);
-            const meat = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 2, 16), MATS.redGlow); meat.position.set(30, 36.5, 20); s.add(meat);
-            const botBun = new THREE.Mesh(new THREE.SphereGeometry(6, 16, 16, 0, Math.PI*2, Math.PI/2, Math.PI/2), MATS.yelGlow); botBun.position.set(30, 35, 20); s.add(botBun);
-
-            // Drive Thru
-            const dtLane = new THREE.Mesh(new THREE.BoxGeometry(6, 0.2, 50), MATS.asph); dtLane.position.set(20, 0.1, 0); s.add(dtLane);
-            const win1 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3, 3), MATS.glass); win1.position.set(15.1, 4, 0); s.add(win1);
-
-            addRoofAC(s, 30, 25, 12, 3); addParkingLot(s, 80, 60, 40);
-            Env.colliders.push({ minX: x-20, maxX: x+20, minZ: z-15, maxZ: z+70 }); landmarkGroup.add(s);
-        }
-
-        function buildChipotle(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 40, 30);
-            
-            const shell = new THREE.Mesh(new THREE.BoxGeometry(35, 12, 25), MATS.conc); shell.position.set(0, 6, 0); s.add(shell);
-            const wd = new THREE.Mesh(new THREE.BoxGeometry(14, 15, 27), MATS.wood); wd.position.set(-12, 7.5, 0); s.add(wd);
-            const awn = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 10), MATS.metDrk); awn.position.set(0, 9, 15); s.add(awn);
-            const gls = new THREE.Mesh(new THREE.BoxGeometry(22, 8, 0.5), MATS.glass); gls.position.set(6, 4, 12.5); s.add(gls);
-            
-            // Interior Prep Line
-            const ctr = new THREE.Mesh(new THREE.BoxGeometry(20, 2.5, 3), MATS.met); ctr.position.set(5, 1.25, 3); s.add(ctr);
-            const snz = new THREE.Mesh(new THREE.BoxGeometry(20, 2, 0.2), MATS.glass); snz.position.set(5, 3.5, 4.5); s.add(snz);
-            for(let i=0; i<12; i++) { 
-                const bn = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.2, 1.8), Math.random()>0.5?MATS.wht:MATS.grn); 
-                bn.position.set(-3+(i*1.6), 2.51, 3); s.add(bn); 
-            }
-            
-            // Sign
-            const sig = new THREE.Mesh(new THREE.BoxGeometry(10, 5, 0.5), MATS.redGlow); sig.position.set(-12, 11, 13.6); s.add(sig);
-            
-            // Patio
-            for(let i=0; i<5; i++) {
-                const pt = new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,0.2), MATS.met); pt.position.set(-15+(i*8), 1.5, 22); s.add(pt);
-                const pu = new THREE.Mesh(new THREE.ConeGeometry(3,1,8), MATS.blk); pu.position.set(-15+(i*8), 5, 22); s.add(pu);
-            }
-            
-            addRoofAC(s, 35, 25, 12, 3); addParkingLot(s, 70, 50, 45);
-            Env.colliders.push({ minX: x-20, maxX: x+20, minZ: z-15, maxZ: z+70 }); landmarkGroup.add(s);
+            Env.colliders.push({ minX: x-38, maxX: x+38, minZ: z-28, maxZ: z+28 }); landmarkGroup.add(store);
         }
 
         function buildFootLocker(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 50, 40);
+            const store = new THREE.Group(); store.position.set(x, 0, z);
+            const mWhite = new THREE.MeshStandardMaterial({color: 0xffffff});
+            const mBlack = new THREE.MeshStandardMaterial({color: 0x111111});
             
-            const shell = new THREE.Mesh(new THREE.BoxGeometry(45, 15, 35), MATS.wht); shell.position.set(0, 7.5, 0); s.add(shell);
+            const shell = new THREE.Mesh(new THREE.BoxGeometry(30, 15, 25), mWhite); shell.position.set(0, 7.5, 0); store.add(shell);
             
-            // Ref Stripes
-            for(let i=0; i<11; i++) { 
-                const str = new THREE.Mesh(new THREE.BoxGeometry(2, 15, 35.2), MATS.blk); 
-                str.position.set(-20+(i*4), 7.5, 0); s.add(str); 
-            }
-            
-            // Recessed entry
-            const cut = new THREE.Mesh(new THREE.BoxGeometry(22, 10, 10), MATS.blk); cut.position.set(0, 5, 17.5); s.add(cut);
-            const drs = new THREE.Mesh(new THREE.BoxGeometry(22, 10, 0.5), MATS.glass); drs.position.set(0, 5, 13); s.add(drs);
-            
-            // Sign
-            const sig = new THREE.Mesh(new THREE.BoxGeometry(32, 5, 1), MATS.redGlow); sig.position.set(0, 12.5, 17.6); s.add(sig);
-            
-            // Shoe Walls
-            for(let i=0; i<6; i++) { 
-                const rk = new THREE.Mesh(new THREE.BoxGeometry(1.5, 8, 25), MATS.blk); rk.position.set(-18+(i*7.2), 4, 0); s.add(rk); 
-                // Shoe boxes
-                for(let j=0; j<10; j++) {
-                    const bx = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 24), MATS.red); bx.position.set(-18+(i*7.2), 1+(j*0.8), 0); s.add(bx);
-                }
-            }
-            
-            addRoofAC(s, 45, 35, 15, 4); addParkingLot(s, 70, 60, 50);
-            Env.colliders.push({ minX: x-25, maxX: x+25, minZ: z-20, maxZ: z+80 }); landmarkGroup.add(s);
-        }
-
-        function buildGasStation(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            
-            // Giant Canopy
-            const can = new THREE.Mesh(new THREE.BoxGeometry(80, 2.5, 50), MATS.grn); can.position.set(0, 14, 0); s.add(can);
-            const nSt = new THREE.Mesh(new THREE.BoxGeometry(80.2, 0.8, 50.2), MATS.yelGlow); nSt.position.set(0, 14, 0); s.add(nSt);
-            
-            // 8 Pump Islands
+            // Stripes
             for(let i=0; i<8; i++) {
-                const px = -30 + (i*8.5);
-                const pl = new THREE.Mesh(new THREE.BoxGeometry(1.5, 14, 1.5), MATS.met); pl.position.set(px, 7, 0); s.add(pl);
-                const island = new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 8), MATS.conc); island.position.set(px, 0.25, 0); s.add(island);
-                const pm = new THREE.Mesh(new THREE.BoxGeometry(2.5, 5, 1.5), MATS.wht); pm.position.set(px, 2.75, 0); s.add(pm);
-                const sc = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.2), MATS.blk); sc.position.set(px, 4, 0.76); s.add(sc);
-                const ho = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 4), MATS.blk); ho.position.set(px+1.3, 3, 0); s.add(ho);
+                const stripe = new THREE.Mesh(new THREE.BoxGeometry(2, 15, 25.2), mBlack);
+                stripe.position.set(-14 + (i*4), 7.5, 0); store.add(stripe);
             }
-            
-            // Convenience Store
-            const st = new THREE.Mesh(new THREE.BoxGeometry(60, 10, 30), MATS.conc); st.position.set(0, 5, -50); s.add(st);
-            const gl = new THREE.Mesh(new THREE.BoxGeometry(50, 7, 0.5), MATS.glass); gl.position.set(0, 3.5, -35); s.add(gl);
-            addSidewalkWrap(s, 64, 34); s.children[s.children.length-1].position.set(0, 0.2, -50);
-            
-            // Price Totem
-            const tm = new THREE.Mesh(new THREE.BoxGeometry(5, 35, 5), MATS.blk); tm.position.set(-55, 17.5, 40); s.add(tm);
-            const hd = new THREE.Mesh(new THREE.BoxGeometry(10, 14, 6), MATS.grn); hd.position.set(-55, 28, 40); s.add(hd);
-            const pr = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), MATS.blk); pr.position.set(-55, 28, 43.01); s.add(pr);
-            const prText = new THREE.Mesh(new THREE.PlaneGeometry(6, 3), MATS.redGlow); prText.position.set(-55, 28, 43.02); s.add(prText);
+            const sign = new THREE.Mesh(new THREE.BoxGeometry(20, 4, 1), mBlack); sign.position.set(0, 13, 12.6); store.add(sign);
 
-            // Car Wash
-            const cw = new THREE.Mesh(new THREE.BoxGeometry(15, 10, 30), MATS.blu); cw.position.set(50, 5, -50); s.add(cw);
-            const cwHole = new THREE.Mesh(new THREE.BoxGeometry(10, 8, 30.2), MATS.blk); cwHole.position.set(50, 4, -50); s.add(cwHole);
-            const brush = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 8), MATS.yel); brush.rotation.z = Math.PI/2; brush.position.set(50, 4, -50); s.add(brush);
-
-            Env.colliders.push({ minX: x-32, maxX: x+60, minZ: z-67, maxZ: z-33 }); // Store + Carwash
-            for(let i=0; i<8; i++) Env.colliders.push({ minX: x+(-30+(i*8.5))-1.5, maxX: x+(-30+(i*8.5))+1.5, minZ: z-4, maxZ: z+4 }); // Pumps
-            landmarkGroup.add(s);
-        }
-
-        function buildIKEA(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 310, 210);
-            
-            // Massive Blue Box 300x200m
-            const mb = new THREE.Mesh(new THREE.BoxGeometry(300, 35, 200), MATS.blu); mb.position.set(0, 17.5, 0); s.add(mb);
-            
-            // Giant Yellow Sign
-            const sig = new THREE.Mesh(new THREE.BoxGeometry(100, 18, 3), MATS.yelGlow); sig.position.set(0, 26, 100.1); s.add(sig);
-            
-            // Yellow Canopy Entrance
-            const can = new THREE.Mesh(new THREE.BoxGeometry(60, 3, 30), MATS.yel); can.position.set(80, 12, 115); s.add(can);
-            for(let i=0; i<5; i++) { 
-                const cl = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 12), MATS.blu); cl.position.set(56+(i*12), 6, 125); s.add(cl); 
-            }
-            const gls = new THREE.Mesh(new THREE.BoxGeometry(50, 12, 0.5), MATS.glass); gls.position.set(80, 6, 100.1); s.add(gls);
-
-            // Back Loading Docks
-            for(let i=0; i<10; i++) {
-                const dk = new THREE.Mesh(new THREE.BoxGeometry(12, 10, 6), MATS.blk); dk.position.set(-120+(i*20), 5, -100.1); s.add(dk);
-                const bp = new THREE.Mesh(new THREE.BoxGeometry(14, 2, 6), MATS.conc); bp.position.set(-120+(i*20), 1, -103); s.add(bp);
-                // Parked Semi Trucks
-                if(Math.random() > 0.4) {
-                    const trk = new THREE.Group(); trk.position.set(-120+(i*20), 0, -120);
-                    const cab = new THREE.Mesh(new THREE.BoxGeometry(8, 10, 10), MATS.wht); cab.position.set(0, 6, -15); trk.add(cab);
-                    const trl = new THREE.Mesh(new THREE.BoxGeometry(10, 12, 30), MATS.met); trl.position.set(0, 7, 5); trk.add(trl);
-                    s.add(trk);
-                }
-            }
-
-            // Interior Massive Racks (Warehouse section visible if clipped)
-            for(let r=0; r<8; r++) {
-                for(let c=0; c<20; c++) {
-                    const rack = new THREE.Mesh(new THREE.BoxGeometry(8, 30, 80), MATS.met); rack.material.wireframe = true;
-                    rack.position.set(-130 + (c*12), 15, -40 + (r*15)); s.add(rack);
-                    const box = new THREE.Mesh(new THREE.BoxGeometry(7, 28, 78), MATS.woodLgt); box.position.set(-130 + (c*12), 15, -40 + (r*15)); s.add(box);
-                }
-            }
-
-            addRoofAC(s, 300, 200, 35, 40); 
-            addParkingLot(s, 400, 200, 210);
-            Env.colliders.push({ minX: x-155, maxX: x+155, minZ: z-105, maxZ: z+310 }); landmarkGroup.add(s);
-        }
-
-        function buildMegaMall(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            
-            // 4 Massive Anchors
-            [[-150,-150], [150,-150], [-150,150], [150,150]].forEach(c => {
-                const a = new THREE.Mesh(new THREE.BoxGeometry(120, 35, 120), MATS.conc); a.position.set(c[0], 17.5, c[1]); s.add(a);
-                addRoofAC(s, 120, 120, 35, 10);
-            });
-            
-            // Central Corridors
-            const hc = new THREE.Mesh(new THREE.BoxGeometry(300, 25, 80), MATS.concDrk); hc.position.set(0, 12.5, 0); s.add(hc);
-            const vc = new THREE.Mesh(new THREE.BoxGeometry(80, 25, 300), MATS.concDrk); vc.position.set(0, 12.5, 0); s.add(vc);
-            
-            // Glass Domes & Skylights
-            const dm = new THREE.Mesh(new THREE.SphereGeometry(60, 32, 16, 0, Math.PI*2, 0, Math.PI/2), MATS.glass); dm.position.set(0, 25, 0); s.add(dm);
-            const sh = new THREE.Mesh(new THREE.CylinderGeometry(25, 25, 280, 16, 1, false, 0, Math.PI), MATS.glass); sh.rotation.z = Math.PI/2; sh.position.set(0, 25, 0); s.add(sh);
-            const sv = new THREE.Mesh(new THREE.CylinderGeometry(25, 25, 280, 16, 1, false, 0, Math.PI), MATS.glass); sv.rotation.x = Math.PI/2; sv.position.set(0, 25, 0); s.add(sv);
-            
-            // Entrances
-            for(let i=0; i<4; i++) {
-                const en = new THREE.Mesh(new THREE.BoxGeometry(40, 15, 8), MATS.glass);
-                en.position.set(i<2 ? 0 : (i===2?-190:190), 7.5, i>1 ? 0 : (i===0?-190:190));
-                if(i>1) en.rotation.y = Math.PI/2; s.add(en);
-            }
-            
-            addParkingLot(s, 500, 120, 270); addParkingLot(s, 500, 120, -270);
-            Env.colliders.push({ minX: x-220, maxX: x+220, minZ: z-220, maxZ: z+220 }); landmarkGroup.add(s);
-        }
-
-        function buildTechFlagship(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 110, 110);
-            
-            const gb = new THREE.Mesh(new THREE.BoxGeometry(100, 25, 100), MATS.glass); gb.position.set(0, 12.5, 0); s.add(gb);
-            const rf = new THREE.Mesh(new THREE.BoxGeometry(104, 1.5, 104), MATS.met); rf.position.set(0, 25.75, 0); s.add(rf);
-            
-            // Apple-style Giant Video Wall
-            const vw = new THREE.Mesh(new THREE.BoxGeometry(80, 20, 2), MATS.neonCyan); vw.position.set(0, 10, -48); s.add(vw);
-            
-            // Display Tables
-            for(let r=0; r<6; r++) { 
-                for(let c=0; c<8; c++) { 
-                    const tb = new THREE.Mesh(new THREE.BoxGeometry(8, 1.5, 4), MATS.woodLgt); tb.position.set(-35+(c*10), 1, -30+(r*12)); s.add(tb); 
-                    // Devices
-                    const laptop = new THREE.Mesh(new THREE.BoxGeometry(1, 0.5, 1), MATS.met); laptop.position.set(-35+(c*10), 2, -30+(r*12)); s.add(laptop);
-                } 
-            }
-            
-            // Indoor Trees
-            for(let i=0; i<6; i++) { 
-                const tr = new THREE.Mesh(new THREE.DodecahedronGeometry(6), MATS.grn); tr.position.set(-40+(i*16), 10, 30); s.add(tr);
-                const tk = new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.8,10), MATS.wood); tk.position.set(-40+(i*16), 5, 30); s.add(tk); 
-            }
-
-            Env.colliders.push({ minX: x-52, maxX: x+52, minZ: z-52, maxZ: z+52 }); landmarkGroup.add(s);
-        }
-
-        function buildWendys(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 40, 35);
-            
-            const mb = new THREE.Mesh(new THREE.BoxGeometry(35, 12, 30), MATS.wht); mb.position.set(0, 6, 0); s.add(mb);
-            
-            // Glass solarium
-            const gl = new THREE.Mesh(new THREE.BoxGeometry(45, 14, 15), MATS.drkGlass); gl.position.set(0, 7, 12); s.add(gl);
-            
-            // Red Roofs
-            const rf = new THREE.Mesh(new THREE.BoxGeometry(48, 2, 35), MATS.red); rf.position.set(0, 15, 2.5); s.add(rf);
-            
-            // Logo Block
-            const lg = new THREE.Mesh(new THREE.BoxGeometry(10, 8, 1), MATS.wht); lg.position.set(0, 19, 20); s.add(lg);
-            const lgRed = new THREE.Mesh(new THREE.BoxGeometry(8, 6, 1.2), MATS.redGlow); lgRed.position.set(0, 19, 20); s.add(lgRed);
-            
-            // Interior details
-            for(let i=0; i<6; i++) {
-                const tbl = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 3), MATS.woodLgt); tbl.position.set(-15+(i*6), 1.5, 12); s.add(tbl);
-                const ch = new THREE.Mesh(new THREE.BoxGeometry(1, 4, 3), MATS.blk); ch.position.set(-17+(i*6), 2, 12); s.add(ch);
-            }
-
-            const dtLane = new THREE.Mesh(new THREE.BoxGeometry(6, 0.2, 50), MATS.asph); dtLane.position.set(-23, 0.1, 0); s.add(dtLane);
-            const dtMenu = new THREE.Mesh(new THREE.BoxGeometry(2, 6, 2), MATS.blk); dtMenu.position.set(-27, 3, -15); s.add(dtMenu);
-
-            addRoofAC(s, 35, 30, 16, 3); addParkingLot(s, 70, 50, 45);
-            Env.colliders.push({ minX: x-25, maxX: x+25, minZ: z-18, maxZ: z+70 }); landmarkGroup.add(s);
-        }
-
-        function buildAutoShop(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 60, 40);
-            
-            const mb = new THREE.Mesh(new THREE.BoxGeometry(55, 16, 35), MATS.conc); mb.position.set(0, 8, 0); s.add(mb);
-            
-            // Bays with rolling doors
-            for(let i=0; i<4; i++) { 
-                const bay = new THREE.Mesh(new THREE.BoxGeometry(10, 12, 1), MATS.metDrk); bay.position.set(-18+(i*12), 6, 17.6); s.add(bay); 
-                // Bay numbers
-                const num = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 1.2), MATS.yel); num.position.set(-18+(i*12), 14, 17.6); s.add(num);
-            }
-            
-            const sig = new THREE.Mesh(new THREE.BoxGeometry(45, 5, 2), MATS.bluGlow); sig.position.set(0, 18.5, 17.5); s.add(sig);
-            
-            // Tires outside
-            for(let i=0; i<10; i++) {
-                const tr = new THREE.Mesh(new THREE.TorusGeometry(1, 0.5, 8, 16), MATS.blk);
-                tr.position.set(-28, 1.5 + (i*1.1), 10); tr.rotation.x = Math.PI/2; s.add(tr);
-            }
-
-            addRoofAC(s, 55, 35, 16, 4); addParkingLot(s, 80, 60, 50);
-            Env.colliders.push({ minX: x-30, maxX: x+30, minZ: z-20, maxZ: z+80 }); landmarkGroup.add(s);
-        }
-
-        function buildBank(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 50, 50);
-            
-            const mb = new THREE.Mesh(new THREE.BoxGeometry(45, 22, 45), MATS.sand); mb.position.set(0, 11, 0); s.add(mb);
-            
-            // Pillars
-            for(let i=0; i<6; i++) {
-                const pl = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 22, 16), MATS.conc);
-                pl.position.set(-18+(i*7.2), 11, 24); s.add(pl);
-            }
-            const ped = new THREE.Mesh(new THREE.BoxGeometry(50, 4, 6), MATS.conc); ped.position.set(0, 24, 24); s.add(ped);
-            
-            // Drive-thru ATMs
-            const can = new THREE.Mesh(new THREE.BoxGeometry(20, 1.5, 25), MATS.conc); can.position.set(35, 12, 0); s.add(can);
-            for(let i=0; i<2; i++) {
-                const pl = new THREE.Mesh(new THREE.BoxGeometry(2, 12, 20), MATS.sand); pl.position.set(30+(i*10), 6, 0); s.add(pl);
-                const atm = new THREE.Mesh(new THREE.BoxGeometry(3, 4, 2), MATS.met); atm.position.set(29+(i*10), 3, 0); s.add(atm);
-            }
-
-            const dr = new THREE.Mesh(new THREE.BoxGeometry(10, 10, 1), MATS.glass); dr.position.set(0, 5, 22.6); s.add(dr);
-            addRoofAC(s, 45, 45, 22, 3); addParkingLot(s, 80, 60, 55);
-            Env.colliders.push({ minX: x-25, maxX: x+45, minZ: z-25, maxZ: z+85 }); landmarkGroup.add(s);
-        }
-
-        function buildGym(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 80, 50);
-            const mb = new THREE.Mesh(new THREE.BoxGeometry(75, 20, 45), MATS.metDrk); mb.position.set(0, 10, 0); s.add(mb);
-            const gls = new THREE.Mesh(new THREE.BoxGeometry(60, 16, 0.5), MATS.drkGlass); gls.position.set(0, 8, 22.6); s.add(gls);
-            const sig = new THREE.Mesh(new THREE.BoxGeometry(30, 6, 1), MATS.yelGlow); sig.position.set(0, 23, 22.6); s.add(sig);
-            
-            // Treadmills visible through glass
-            for(let i=0; i<15; i++) {
-                const tm = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 4), MATS.blk); tm.position.set(-25+(i*3.5), 1.5, 18); s.add(tm);
-            }
-
-            addRoofAC(s, 75, 45, 20, 6); addParkingLot(s, 100, 70, 60);
-            Env.colliders.push({ minX: x-40, maxX: x+40, minZ: z-25, maxZ: z+95 }); landmarkGroup.add(s);
-        }
-
-        function buildCinema(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 120, 90);
-            const mb = new THREE.Mesh(new THREE.BoxGeometry(110, 30, 80), MATS.sand); mb.position.set(0, 15, 0); s.add(mb);
-            
-            // Marquee
-            const marq = new THREE.Mesh(new THREE.BoxGeometry(40, 10, 15), MATS.blk); marq.position.set(0, 15, 45); s.add(marq);
-            const n1 = new THREE.Mesh(new THREE.BoxGeometry(40.2, 1, 15.2), MATS.neonPink); n1.position.set(0, 12, 45); s.add(n1);
-            const n2 = new THREE.Mesh(new THREE.BoxGeometry(40.2, 1, 15.2), MATS.neonCyan); n2.position.set(0, 18, 45); s.add(n2);
-            const txt = new THREE.Mesh(new THREE.PlaneGeometry(30, 6), MATS.wht); txt.position.set(0, 15, 52.6); s.add(txt);
-            
-            // Entry doors
-            const drs = new THREE.Mesh(new THREE.BoxGeometry(30, 10, 0.5), MATS.glass); drs.position.set(0, 5, 40.1); s.add(drs);
-            
-            addRoofAC(s, 110, 80, 30, 12); addParkingLot(s, 160, 120, 105);
-            Env.colliders.push({ minX: x-60, maxX: x+60, minZ: z-45, maxZ: z+165 }); landmarkGroup.add(s);
-        }
-
-        function buildCarDealership(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 100, 60);
-            const sh = new THREE.Mesh(new THREE.BoxGeometry(50, 15, 40), MATS.wht); sh.position.set(0, 7.5, -10); s.add(sh);
-            const gl = new THREE.Mesh(new THREE.BoxGeometry(48, 12, 0.5), MATS.glass); gl.position.set(0, 6, 10.1); s.add(gl);
-            
-            // Showroom cars
-            for(let i=0; i<3; i++) {
-                const car = buildLowPolyCar(); car.position.set(-15+(i*15), 0, 0); car.rotation.y = Math.PI/4; s.add(car);
-            }
-            
-            // Lot Cars
-            addParkingLot(s, 120, 80, 50, false);
-            for(let r=0; r<4; r++) {
-                for(let c=0; c<10; c++) {
-                    const lc = buildLowPolyCar(); lc.position.set(-45+(c*10), 0, 20+(r*15)); s.add(lc);
-                }
-            }
-
-            addRoofAC(s, 50, 40, 15, 2);
-            Env.colliders.push({ minX: x-25, maxX: x+25, minZ: z-30, maxZ: z+10 }); landmarkGroup.add(s);
+            Env.colliders.push({ minX: x-17, maxX: x+17, minZ: z-14, maxZ: z+14 }); landmarkGroup.add(store);
         }
 
         // ========================================================
-        // MASSIVE SCALE GLOBAL LANDMARKS & STADIUMS (TITAN DETAIL)
+        // ICONIC GLOBAL LANDMARKS
         // ========================================================
 
-        function buildYankeeStadium(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
+        function buildTimesSquare(x, z) {
+            const sq = new THREE.Group(); sq.position.set(x, 0, z);
+            const mBuild = new THREE.MeshStandardMaterial({color: 0x222222, roughness: 0.8});
             
-            // Massive 300m footprint
-            const fld = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), MATS.grass); fld.rotation.x = -Math.PI/2; fld.position.y = 0.5;
-            const drt = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), MATS.dirt); drt.rotation.x = -Math.PI/2; drt.position.set(0, 0.51, 75); drt.rotation.z = Math.PI/4; 
-            s.add(fld, drt);
+            const base = new THREE.Mesh(new THREE.BoxGeometry(40, 150, 40), mBuild); base.position.set(0, 75, 0); sq.add(base);
 
-            // Bases
-            const bsMat = MATS.wht;
-            const b0 = new THREE.Mesh(new THREE.PlaneGeometry(3,3), bsMat); b0.rotation.x = -Math.PI/2; b0.position.set(0, 0.52, 103);
-            const b1 = new THREE.Mesh(new THREE.PlaneGeometry(3,3), bsMat); b1.rotation.x = -Math.PI/2; b1.position.set(28, 0.52, 75);
-            const b2 = new THREE.Mesh(new THREE.PlaneGeometry(3,3), bsMat); b2.rotation.x = -Math.PI/2; b2.position.set(0, 0.52, 47);
-            const b3 = new THREE.Mesh(new THREE.PlaneGeometry(3,3), bsMat); b3.rotation.x = -Math.PI/2; b3.position.set(-28, 0.52, 75); 
-            s.add(b0, b1, b2, b3);
+            // Billboards
+            const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff];
+            for(let i=0; i<10; i++) {
+                const c = colors[Math.floor(Math.random()*colors.length)];
+                const mScreen = new THREE.MeshStandardMaterial({color: c, emissive: c, emissiveIntensity: 1.5});
+                const w = 20 + Math.random()*15; const h = 10 + Math.random()*20;
+                const board = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mScreen);
+                board.position.set(0, 20 + (i*12), 20.1);
+                sq.add(board);
 
-            // 8 Seating Tiers
-            for(let t=0; t<8; t++) {
-                const geo = new THREE.TorusGeometry(120 + (t*18), 12, 4, 128, Math.PI*1.4);
-                const sts = new THREE.Mesh(geo, MATS.blu); sts.rotation.x = Math.PI/2; sts.rotation.z = Math.PI*1.3; sts.position.y = 8 + (t*14); s.add(sts);
+                const board2 = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mScreen);
+                board2.position.set(-20.1, 20 + (i*12), 0); board2.rotation.y = -Math.PI/2;
+                sq.add(board2);
             }
 
-            // Exterior facade wraps
-            const ext = new THREE.Mesh(new THREE.CylinderGeometry(265, 265, 110, 64, 1, true, Math.PI*1.3, Math.PI*1.4), MATS.conc);
-            ext.position.y = 55; s.add(ext);
+            // Ticket booth stairs
+            const stairs = new THREE.Mesh(new THREE.BoxGeometry(30, 10, 20), new THREE.MeshStandardMaterial({color:0xaa0000}));
+            stairs.position.set(0, 5, 40); stairs.rotation.x = -0.4; sq.add(stairs);
 
-            // Detailed White Frieze
-            for(let i=0; i<100; i++) {
-                const ang = (i/100)*Math.PI*1.4 + Math.PI*1.3;
-                const fx = Math.cos(ang)*245; const fz = Math.sin(ang)*245;
-                const frz = new THREE.Mesh(new THREE.BoxGeometry(6, 18, 4), MATS.wht); frz.position.set(fx, 115, fz); frz.lookAt(0, 115, 0);
-                const spk = new THREE.Mesh(new THREE.ConeGeometry(3, 12, 4), MATS.wht); spk.position.set(fx, 130, fz); s.add(frz, spk);
-            }
-
-            // Massive Jumbotron
-            const jmb = new THREE.Mesh(new THREE.BoxGeometry(80, 40, 8), MATS.blk); jmb.position.set(0, 60, -120); s.add(jmb);
-            const scr = new THREE.Mesh(new THREE.PlaneGeometry(76, 36), MATS.bluGlow); scr.position.set(0, 60, -115.9); s.add(scr);
-            const logo = new THREE.Mesh(new THREE.CircleGeometry(8, 32), MATS.wht); logo.position.set(0, 85, -115.9); s.add(logo);
-
-            // Light Towers
-            for(let i=0; i<6; i++) {
-                const ang = (i/6)*Math.PI*1.4 + Math.PI*1.3;
-                const lx = Math.cos(ang)*260; const lz = Math.sin(ang)*260;
-                const twr = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 160), MATS.met); twr.position.set(lx, 80, lz); s.add(twr);
-                const hd = new THREE.Mesh(new THREE.BoxGeometry(20, 10, 4), MATS.wht); hd.position.set(lx, 160, lz); hd.lookAt(0, 0, 0); s.add(hd);
-                const blb = new THREE.Mesh(new THREE.BoxGeometry(18, 8, 4.2), MATS.wht); blb.material.emissive=new THREE.Color(0xffffff); blb.position.set(lx, 160, lz); blb.lookAt(0, 0, 0); s.add(blb);
-            }
-
-            Env.colliders.push({ minX: x-270, maxX: x+270, minZ: z-270, maxZ: z+270 }); landmarkGroup.add(s);
-        }
-
-        function buildWrigleyField(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            const fld = new THREE.Mesh(new THREE.PlaneGeometry(280, 280), MATS.grass); fld.rotation.x = -Math.PI/2; fld.position.y = 0.5; s.add(fld);
-            
-            // 5 Tiers
-            for(let t=0; t<5; t++) {
-                const geo = new THREE.TorusGeometry(120 + (t*22), 20, 4, 64, Math.PI*1.5);
-                const sts = new THREE.Mesh(geo, MATS.grn); sts.rotation.x = Math.PI/2; sts.rotation.z = Math.PI*1.25; sts.position.y = 15 + (t*24); s.add(sts);
-            }
-
-            // Ivy Wall
-            const ivy = new THREE.Mesh(new THREE.CylinderGeometry(130, 130, 20, 64, 1, true, -Math.PI/4, Math.PI/2)); ivy.material = MATS.grn; ivy.position.y = 10; s.add(ivy);
-            
-            // Bleachers
-            const blc = new THREE.Mesh(new THREE.TorusGeometry(150, 20, 4, 64, Math.PI/2), MATS.grn); blc.rotation.x = Math.PI/2; blc.rotation.z = -Math.PI/4; blc.position.y = 20; s.add(blc);
-            
-            // Famous Marquee Sign
-            const mq = new THREE.Mesh(new THREE.BoxGeometry(60, 25, 10), MATS.red); mq.position.set(0, 40, 200); s.add(mq);
-            const txt = new THREE.Mesh(new THREE.BoxGeometry(54, 12, 10.2), MATS.wht); txt.position.set(0, 40, 200); s.add(txt);
-            const neon = new THREE.Mesh(new THREE.BoxGeometry(62, 27, 8), MATS.redGlow); neon.position.set(0, 40, 200); s.add(neon);
-
-            // Brick exterior
-            const brk = new THREE.Mesh(new THREE.CylinderGeometry(230, 230, 80, 64, 1, true, Math.PI*1.25, Math.PI*1.5), MATS.brick); brk.position.y = 40; s.add(brk);
-
-            Env.colliders.push({ minX: x-240, maxX: x+240, minZ: z-240, maxZ: z+240 }); landmarkGroup.add(s);
-        }
-
-        function buildTokyoTower(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            
-            // Massive arch base
-            const bs = new THREE.Mesh(new THREE.CylinderGeometry(70, 120, 80, 4), MATS.wht); bs.position.y = 40; s.add(bs);
-            const bsCut = new THREE.Mesh(new THREE.BoxGeometry(100, 60, 150), MATS.blk); bsCut.position.y = 30; s.add(bsCut);
-            const bsCut2 = new THREE.Mesh(new THREE.BoxGeometry(150, 60, 100), MATS.blk); bsCut2.position.y = 30; s.add(bsCut2);
-
-            let cy = 80; let cw = 70;
-            // 25 Segments
-            for(let i=0; i<25; i++) {
-                const nw = cw * 0.85; const h = 40;
-                const sc = new THREE.Mesh(new THREE.CylinderGeometry(nw, cw, h, 4), i%2===0 ? MATS.red : MATS.wht); sc.position.y = cy + (h/2); s.add(sc);
-                const lt = new THREE.Mesh(new THREE.BoxGeometry(nw*2.1, 4, nw*2.1), MATS.yelGlow); lt.position.y = cy + h; s.add(lt);
-                
-                // Cross bracing
-                if(i%2===0) {
-                    const br = new THREE.Mesh(new THREE.BoxGeometry(nw*1.8, h, nw*1.8), MATS.metDrk); br.material.wireframe=true; br.position.y=cy+(h/2); s.add(br);
-                }
-
-                cy += h; cw = nw;
-            }
-
-            // Main Deck
-            const ob = new THREE.Mesh(new THREE.CylinderGeometry(35, 25, 20, 16), MATS.blk); ob.position.y = cy + 10; s.add(ob);
-            const obWin = new THREE.Mesh(new THREE.CylinderGeometry(35.2, 25.2, 10, 16), MATS.neonCyan); obWin.position.y = cy + 10; s.add(obWin);
-            
-            // Top Spire
-            const sp = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 8, 200, 4), MATS.wht); sp.position.y = cy + 120; s.add(sp);
-            const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 1.5, 80, 4), MATS.red); ant.position.y = cy + 260; s.add(ant);
-
-            Env.colliders.push({ minX: x-125, maxX: x+125, minZ: z-125, maxZ: z+125 }); landmarkGroup.add(s);
-        }
-
-        function buildEiffelTower(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            const iron = new THREE.MeshStandardMaterial({color:0x5a4d41, metalness:0.9, roughness:0.5});
-            
-            // Base Arches
-            const b1 = new THREE.Mesh(new THREE.CylinderGeometry(90, 150, 150, 4), iron); b1.position.y = 75; s.add(b1);
-            const b1c1 = new THREE.Mesh(new THREE.BoxGeometry(100, 100, 200), MATS.blk); b1c1.position.y=50; s.add(b1c1);
-            const b1c2 = new THREE.Mesh(new THREE.BoxGeometry(200, 100, 100), MATS.blk); b1c2.position.y=50; s.add(b1c2);
-
-            // Deck 1
-            const d1 = new THREE.Mesh(new THREE.BoxGeometry(200, 10, 200), iron); d1.position.y = 150; s.add(d1);
-            const l1 = new THREE.Mesh(new THREE.BoxGeometry(202, 2, 202), MATS.yelGlow); l1.position.y = 149; s.add(l1);
-
-            // Mid
-            const b2 = new THREE.Mesh(new THREE.CylinderGeometry(40, 80, 200, 4), iron); b2.position.y = 250; s.add(b2);
-            
-            // Deck 2
-            const d2 = new THREE.Mesh(new THREE.BoxGeometry(100, 8, 100), iron); d2.position.y = 350; s.add(d2);
-            const l2 = new THREE.Mesh(new THREE.BoxGeometry(102, 2, 102), MATS.yelGlow); l2.position.y = 349; s.add(l2);
-
-            // Top
-            const b3 = new THREE.Mesh(new THREE.CylinderGeometry(5, 35, 400, 4), iron); b3.position.y = 550; s.add(b3);
-            
-            // Deck 3
-            const d3 = new THREE.Mesh(new THREE.BoxGeometry(25, 25, 25), iron); d3.position.y = 750; s.add(d3);
-            const bcn = new THREE.Mesh(new THREE.SphereGeometry(8), MATS.wht); bcn.material.emissive=new THREE.Color(0xffffff); bcn.material.emissiveIntensity=5; bcn.position.y = 780; s.add(bcn);
-
-            Env.colliders.push({ minX: x-160, maxX: x+160, minZ: z-160, maxZ: z+160 }); landmarkGroup.add(s);
-        }
-
-        function buildBigBen(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            
-            // Main Shaft
-            const shf = new THREE.Mesh(new THREE.BoxGeometry(50, 360, 50), MATS.sand); shf.position.y = 180; s.add(shf);
-            
-            // Gothic Details
-            for(let i=0; i<4; i++) {
-                const pl = new THREE.Mesh(new THREE.BoxGeometry(4, 360, 4), MATS.concDrk);
-                pl.position.set(i<2?25:-25, 180, i%2===0?25:-25); s.add(pl);
-            }
-            for(let i=0; i<30; i++) {
-                const ring = new THREE.Mesh(new THREE.BoxGeometry(52, 2, 52), MATS.concDrk); ring.position.y = i*12; s.add(ring);
-            }
-
-            // Clock Housing
-            const cb = new THREE.Mesh(new THREE.BoxGeometry(58, 65, 58), MATS.sand); cb.position.y = 392.5; s.add(cb);
-            
-            // Clock Faces
-            const offs = [{x:29.1, z:0, ry:Math.PI/2}, {x:-29.1, z:0, ry:-Math.PI/2}, {x:0, z:29.1, ry:0}, {x:0, z:-29.1, ry:Math.PI}];
-            offs.forEach(o => {
-                const fc = new THREE.Mesh(new THREE.CircleGeometry(22, 64), new THREE.MeshStandardMaterial({color:0xffffe0, emissive:0x666655})); fc.position.set(o.x, 392.5, o.z); fc.rotation.y = o.ry;
-                const rm = new THREE.Mesh(new THREE.RingGeometry(22, 24, 64), MATS.yel); rm.position.set(o.x, 392.5, o.z); rm.rotation.y = o.ry;
-                
-                // Details
-                for(let hr=0; hr<12; hr++) {
-                    const mark = new THREE.Mesh(new THREE.BoxGeometry(1, 4, 0.2), MATS.blk);
-                    mark.position.set(o.x + Math.sin(hr*Math.PI/6)*20, 392.5 + Math.cos(hr*Math.PI/6)*20, o.z);
-                    mark.rotation.y = o.ry; mark.rotation.z = -hr*Math.PI/6;
-                    s.add(mark);
-                }
-
-                // Hands
-                const h1 = new THREE.Mesh(new THREE.BoxGeometry(1.2, 18, 0.5), MATS.blk); h1.position.set(o.x, 401.5, o.z); h1.rotation.y = o.ry;
-                const h2 = new THREE.Mesh(new THREE.BoxGeometry(1.5, 12, 0.6), MATS.blk); h2.position.set(o.x, 392.5, o.z); h2.rotation.y = o.ry; h2.rotation.z = Math.PI/4;
-                s.add(fc, rm, h1, h2);
-            });
-
-            // Roof Spire
-            const rf = new THREE.Mesh(new THREE.ConeGeometry(40, 100, 4), MATS.metDrk); rf.position.y = 475; rf.rotation.y = Math.PI/4; s.add(rf);
-            const tp = new THREE.Mesh(new THREE.ConeGeometry(5, 50, 4), MATS.yelGlow); tp.position.y = 550; s.add(tp);
-
-            Env.colliders.push({ minX: x-30, maxX: x+30, minZ: z-30, maxZ: z+30 }); landmarkGroup.add(s);
-        }
-
-        function buildColosseum(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            
-            // Massive ruin walls
-            for(let t=0; t<4; t++) {
-                const ty = 20 + (t*40);
-                const rg = new THREE.TorusGeometry(220, 22, 4, 128); rg.scale(1.3, 1, 1);
-                const rng = new THREE.Mesh(rg, MATS.sand); rng.rotation.x = Math.PI/2; rng.position.y = ty; s.add(rng);
-                
-                // Arches
-                if(t<3) {
-                    for(let i=0; i<60; i++) {
-                        const ang = (i/60)*Math.PI*2; const ax = Math.cos(ang)*286; const az = Math.sin(ang)*220;
-                        const arc = new THREE.Mesh(new THREE.BoxGeometry(12, 30, 35), MATS.blk); arc.position.set(ax, ty, az); arc.rotation.y = -ang; s.add(arc);
-                    }
-                }
-            }
-            
-            // Floor & Hypogeum (Underground tunnels)
-            const fl = new THREE.Mesh(new THREE.PlaneGeometry(340, 240), MATS.blk); fl.rotation.x = -Math.PI/2; fl.position.y = 0.5; s.add(fl);
-            for(let i=0; i<40; i++) {
-                const wl = new THREE.Mesh(new THREE.BoxGeometry(30, 10, 4), MATS.sand);
-                wl.position.set((Math.random()-0.5)*200, 5, (Math.random()-0.5)*150); wl.rotation.y = Math.random()*Math.PI; s.add(wl);
-            }
-
-            Env.colliders.push({ minX: x-310, maxX: x+310, minZ: z-250, maxZ: z+250 }); landmarkGroup.add(s);
-        }
-
-        function buildOperaHouse(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            
-            // Massive Base
-            const pd = new THREE.Mesh(new THREE.BoxGeometry(300, 20, 200), MATS.woodLgt); pd.position.y = 10; s.add(pd);
-            
-            const bs = (sx, sy, sz, sc, ry) => {
-                const s1 = new THREE.Mesh(new THREE.SphereGeometry(sc, 64, 32, 0, Math.PI/2, 0, Math.PI/2), MATS.wht); s1.position.set(sx,sy,sz); s1.rotation.y = ry;
-                const s2 = new THREE.Mesh(new THREE.SphereGeometry(sc, 64, 32, 0, Math.PI/2, 0, Math.PI/2), MATS.wht); s2.position.set(sx,sy,sz); s2.rotation.y = ry+Math.PI;
-                const gl = new THREE.Mesh(new THREE.PlaneGeometry(sc*1.5, sc), MATS.drkGlass); gl.position.set(sx, sy+(sc/2), sz+(sc/2)); gl.rotation.y = ry-Math.PI/2;
-                s.add(s1, s2, gl);
-            };
-            
-            // Shell Sets
-            bs(40, 20, -20, 90, Math.PI/4); bs(0, 20, 0, 70, Math.PI/4); bs(-40, 20, 20, 50, Math.PI/4);
-            bs(40, 20, 80, 60, Math.PI/4+0.2); bs(0, 20, 90, 45, Math.PI/4+0.2);
-
-            Env.colliders.push({ minX: x-160, maxX: x+160, minZ: z-110, maxZ: z+110 }); landmarkGroup.add(s);
-        }
-
-        function buildBurjSpire(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            let cy = 0; let rad = 140; const sg = 40;
-            
-            // Massive Y-shaped tier segments
-            for(let i=0; i<sg; i++) {
-                const h = 60; rad = 140*(1-(i/sg));
-                for(let w=0; w<3; w++) {
-                    const ang = (w/3)*Math.PI*2;
-                    const wg = new THREE.Mesh(new THREE.CylinderGeometry(rad*0.6, rad, h, 6), MATS.glass);
-                    wg.position.set(Math.cos(ang)*(rad*0.4), cy+h/2, Math.sin(ang)*(rad*0.4)); wg.rotation.y = -ang; s.add(wg);
-                }
-                const cr = new THREE.Mesh(new THREE.CylinderGeometry(rad*0.8, rad*0.9, h, 12), MATS.met); cr.position.set(0, cy+h/2, 0); s.add(cr);
-                cy+=h;
-            }
-            
-            // Titan Spire
-            const sp = new THREE.Mesh(new THREE.CylinderGeometry(1, 10, 400, 8), MATS.met); sp.position.y = cy+200; s.add(sp);
-
-            Env.colliders.push({ minX: x-150, maxX: x+150, minZ: z-150, maxZ: z+150 }); landmarkGroup.add(s);
-        }
-
-        function buildBrandenburgGate(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            
-            // Colossal pillars
-            for(let i=0; i<6; i++) {
-                const px = -75 + (i*30);
-                const c1 = new THREE.Mesh(new THREE.CylinderGeometry(5, 6, 70, 32), MATS.sand); c1.position.set(px, 35, 0); s.add(c1);
-                const c2 = new THREE.Mesh(new THREE.CylinderGeometry(5, 6, 70, 32), MATS.sand); c2.position.set(px, 35, -25); s.add(c2);
-            }
-            
-            // Massive Entablature
-            const rf = new THREE.Mesh(new THREE.BoxGeometry(180, 18, 40), MATS.sand); rf.position.set(0, 79, -12.5); s.add(rf);
-            
-            // Quadriga
-            const ch = new THREE.Mesh(new THREE.BoxGeometry(15, 10, 18), MATS.blk); ch.position.set(0, 93, -12.5); s.add(ch);
-            for(let i=0; i<4; i++) { 
-                const hs = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 2.5, 14), MATS.blk); hs.rotation.x = Math.PI/2; hs.position.set(-7+(i*4.5), 93, 0); s.add(hs); 
-            }
-            const pl = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 20), MATS.blk); pl.position.set(0, 103, -12.5); s.add(pl);
-
-            Env.colliders.push({ minX: x-100, maxX: x+100, minZ: z-40, maxZ: z+15 }); landmarkGroup.add(s);
-        }
-
-        function buildTVTower(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            
-            const bs = new THREE.Mesh(new THREE.CylinderGeometry(25, 40, 50, 32), MATS.conc); bs.position.y = 25; s.add(bs);
-            const sh = new THREE.Mesh(new THREE.CylinderGeometry(10, 20, 450, 32), MATS.conc); sh.position.y = 275; s.add(sh);
-            
-            const gl = new THREE.Mesh(new THREE.SphereGeometry(45, 64, 64), MATS.metDrk); gl.position.y = 500; s.add(gl);
-            
-            const sp1 = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 5, 250, 8), MATS.red); sp1.position.y = 670; s.add(sp1);
-            const sp2 = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1.5, 100, 8), MATS.wht); sp2.position.y = 845; s.add(sp2);
-
-            Env.colliders.push({ minX: x-50, maxX: x+50, minZ: z-50, maxZ: z+50 }); landmarkGroup.add(s);
-        }
-
-        function buildLondonEye(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            
-            // Legs
-            const b1 = new THREE.Mesh(new THREE.CylinderGeometry(5, 10, 180), MATS.wht); b1.position.set(-30, 90, 0); b1.rotation.z = 0.3;
-            const b2 = new THREE.Mesh(new THREE.CylinderGeometry(5, 10, 180), MATS.wht); b2.position.set(30, 90, 0); b2.rotation.z = -0.3; s.add(b1, b2);
-            
-            // Wheel Base
-            const w = new THREE.Group(); w.position.set(0, 180, 0);
-            const r1 = new THREE.Mesh(new THREE.TorusGeometry(140, 2.5, 32, 128), MATS.wht); w.add(r1);
-            const r2 = new THREE.Mesh(new THREE.TorusGeometry(135, 2.5, 32, 128), MATS.wht); r2.position.z = 10; w.add(r2);
-            
-            // Spokes & Pods
-            for(let i=0; i<32; i++) {
-                const ang = (i/32)*Math.PI*2;
-                const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 280), MATS.wht); sp.rotation.z = ang; w.add(sp);
-                const pd = new THREE.Mesh(new THREE.SphereGeometry(7, 32, 32), MATS.glass); pd.position.set(Math.cos(ang)*140, Math.sin(ang)*140, 5); w.add(pd);
-            }
-            s.add(w); Env.entities.trees.push({ mesh: w, phase: 0, ox: 0, oy: 180, oz: 0, isWheel: true });
-            
-            Env.colliders.push({ minX: x-50, maxX: x+50, minZ: z-25, maxZ: z+25 }); landmarkGroup.add(s);
-        }
-
-        function buildLouvrePyramid(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            
-            // Glass Pyramid
-            const p = new THREE.Mesh(new THREE.ConeGeometry(70, 45, 4), MATS.glass); p.position.y = 22.5; p.rotation.y = Math.PI/4; s.add(p);
-            const f = new THREE.Mesh(new THREE.ConeGeometry(70.2, 45.2, 4), MATS.blk); f.material.wireframe = true; f.position.y = 22.5; f.rotation.y = Math.PI/4; s.add(f);
-            
-            // Water Features
-            const pl1 = new THREE.Mesh(new THREE.PlaneGeometry(55, 55), MATS.blu); pl1.rotation.x = -Math.PI/2; pl1.position.set(55, 0.5, 55); s.add(pl1);
-            const pl2 = new THREE.Mesh(new THREE.PlaneGeometry(55, 55), MATS.blu); pl2.rotation.x = -Math.PI/2; pl2.position.set(-55, 0.5, -55); s.add(pl2);
-            
-            // Old Museum Wings
-            const w1 = new THREE.Mesh(new THREE.BoxGeometry(300, 65, 45), MATS.sand); w1.position.set(0, 32.5, -120); s.add(w1);
-            const w2 = new THREE.Mesh(new THREE.BoxGeometry(45, 65, 220), MATS.sand); w2.position.set(-130, 32.5, -30); s.add(w2);
-            const w3 = new THREE.Mesh(new THREE.BoxGeometry(45, 65, 220), MATS.sand); w3.position.set(130, 32.5, -30); s.add(w3);
-
-            Env.colliders.push({ minX: x-160, maxX: x+160, minZ: z-150, maxZ: z+80 }); landmarkGroup.add(s);
-        }
-
-        function buildCloudGate(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            const pz = new THREE.Mesh(new THREE.PlaneGeometry(140, 140), MATS.concDrk); pz.rotation.x = -Math.PI/2; pz.position.y = 0.5; s.add(pz);
-            
-            const mMirror = new THREE.MeshStandardMaterial({color: 0xffffff, metalness: 1.0, roughness: 0.0});
-            const bg = new THREE.SphereGeometry(18, 128, 128); bg.scale(1.5, 0.8, 1.0);
-            const bn = new THREE.Mesh(bg, mMirror); bn.position.y = 14; s.add(bn);
-            
-            const l1 = new THREE.Mesh(new THREE.SphereGeometry(7, 64, 64), mMirror); l1.position.set(-13.5, 5, 0); s.add(l1);
-            const l2 = new THREE.Mesh(new THREE.SphereGeometry(7, 64, 64), mMirror); l2.position.set(13.5, 5, 0); s.add(l2);
-
-            Env.colliders.push({ minX: x-35, maxX: x+35, minZ: z-25, maxZ: z+25 }); landmarkGroup.add(s);
-        }
-
-        function buildPantheon(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            
-            const pb = new THREE.Mesh(new THREE.BoxGeometry(90, 4.5, 45), MATS.conc); pb.position.set(0, 2.25, 65); s.add(pb);
-            const pd = new THREE.Mesh(new THREE.ConeGeometry(50, 22, 3), MATS.sand); pd.position.set(0, 56, 65); pd.rotation.x = Math.PI/2; pd.scale.set(1, 0.5, 1); s.add(pd);
-            
-            for(let i=0; i<8; i++) { 
-                const cl = new THREE.Mesh(new THREE.CylinderGeometry(3.3, 3.3, 45, 32), MATS.sand); cl.position.set(-33.5+(i*9.5), 25, 82); s.add(cl); 
-                const cl2 = new THREE.Mesh(new THREE.CylinderGeometry(3.3, 3.3, 45, 32), MATS.sand); cl2.position.set(-33.5+(i*9.5), 25, 65); s.add(cl2); 
-            }
-            
-            const rt = new THREE.Mesh(new THREE.CylinderGeometry(70, 70, 70, 64), MATS.sand); rt.position.y = 35; s.add(rt);
-            const dm = new THREE.Mesh(new THREE.SphereGeometry(70, 64, 32, 0, Math.PI*2, 0, Math.PI/2), MATS.concDrk); dm.position.y = 70; s.add(dm);
-            const oc = new THREE.Mesh(new THREE.CylinderGeometry(10, 10, 4, 32), MATS.blk); oc.position.y = 138; s.add(oc);
-
-            Env.colliders.push({ minX: x-80, maxX: x+80, minZ: z-80, maxZ: z+100 }); landmarkGroup.add(s);
+            Env.colliders.push({ minX: x-25, maxX: x+25, minZ: z-25, maxZ: z+45 }); landmarkGroup.add(sq);
         }
 
         function buildShibuyaCrossing(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
+            const shib = new THREE.Group(); shib.position.set(x, 0, z);
+            const mRoad = new THREE.MeshStandardMaterial({color: 0x333333});
+            const mStripe = new THREE.MeshStandardMaterial({color: 0xffffff});
             
-            // Giant Intersection
-            const gr = new THREE.Mesh(new THREE.PlaneGeometry(220, 220), MATS.asph); gr.rotation.x = -Math.PI/2; gr.position.y = 0.3; s.add(gr);
-            for(let i=0; i<35; i++) {
-                const s1 = new THREE.Mesh(new THREE.PlaneGeometry(4, 180), MATS.wht); s1.rotation.x=-Math.PI/2; s1.rotation.z=Math.PI/4; s1.position.set(-65+(i*8), 0.31, -65+(i*8)); s.add(s1);
-                const s2 = new THREE.Mesh(new THREE.PlaneGeometry(4, 180), MATS.wht); s2.rotation.x=-Math.PI/2; s2.rotation.z=-Math.PI/4; s2.position.set(65-(i*8), 0.31, -65+(i*8)); s.add(s2);
+            // Massive intersection
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), mRoad); ground.rotation.x = -Math.PI/2; ground.position.y = 0.3; shib.add(ground);
+            
+            // Diagonal crossing lines
+            for(let i=0; i<15; i++) {
+                const stripe1 = new THREE.Mesh(new THREE.PlaneGeometry(2, 80), mStripe);
+                stripe1.rotation.x = -Math.PI/2; stripe1.rotation.z = Math.PI/4; stripe1.position.set(-30+(i*4), 0.31, -30+(i*4));
+                shib.add(stripe1);
+                
+                const stripe2 = new THREE.Mesh(new THREE.PlaneGeometry(2, 80), mStripe);
+                stripe2.rotation.x = -Math.PI/2; stripe2.rotation.z = -Math.PI/4; stripe2.position.set(30-(i*4), 0.31, -30+(i*4));
+                shib.add(stripe2);
             }
-            
-            // Mega Screens
-            const b109 = new THREE.Mesh(new THREE.CylinderGeometry(35, 35, 220, 32), MATS.concDrk); b109.position.set(-130, 110, -130); s.add(b109);
-            const sg = new THREE.Mesh(new THREE.CylinderGeometry(37, 37, 45, 32, 1, true, 0, Math.PI), MATS.redGlow); sg.position.set(-130, 180, -130); sg.rotation.y = Math.PI/4; s.add(sg);
-            const scrn = new THREE.Mesh(new THREE.PlaneGeometry(80, 50), MATS.bluGlow); scrn.position.set(130, 80, -130); s.add(scrn);
-            const scrn2 = new THREE.Mesh(new THREE.PlaneGeometry(80, 50), MATS.neonPink); scrn2.position.set(-130, 80, 130); s.add(scrn2);
 
-            Env.colliders.push({ minX: x-170, maxX: x-90, minZ: z-170, maxZ: z-90 }); landmarkGroup.add(s);
+            // 109 Building equivalent
+            const b109 = new THREE.Mesh(new THREE.CylinderGeometry(15, 15, 100, 16), new THREE.MeshStandardMaterial({color:0xaaaaaa}));
+            b109.position.set(-60, 50, -60); shib.add(b109);
+            const sign = new THREE.Mesh(new THREE.CylinderGeometry(16, 16, 20, 16, 1, true, 0, Math.PI), new THREE.MeshStandardMaterial({color:0xff0000, emissive:0xaa0000}));
+            sign.position.set(-60, 80, -60); sign.rotation.y = Math.PI/4; shib.add(sign);
+
+            Env.colliders.push({ minX: x-75, maxX: x-45, minZ: z-75, maxZ: z-45 }); landmarkGroup.add(shib);
         }
 
-        function buildTimesSquare(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            
-            // Core Skyscraper
-            const bs = new THREE.Mesh(new THREE.BoxGeometry(90, 350, 90), MATS.blk); bs.position.set(0, 175, 0); s.add(bs);
-            
-            // Massive Billboard Cluster
-            const cs = [MATS.redGlow, MATS.grnGlow, MATS.bluGlow, MATS.yelGlow, MATS.neonPink, MATS.neonCyan];
-            for(let i=0; i<25; i++) {
-                const mat = cs[Math.floor(Math.random()*cs.length)];
-                const w = 45+Math.random()*30; const h = 25+Math.random()*45;
-                const b1 = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); b1.position.set(0, 40+(i*25), 45.1); s.add(b1);
-                const b2 = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); b2.position.set(-45.1, 40+(i*25), 0); b2.rotation.y = -Math.PI/2; s.add(b2);
-            }
-            
-            // TKTS Booth
-            const st = new THREE.Mesh(new THREE.BoxGeometry(65, 22, 45), MATS.red); st.position.set(0, 11, 90); st.rotation.x = -0.4; s.add(st);
+        function buildLondonEye(x, z) {
+            const eye = new THREE.Group(); eye.position.set(x, 0, z);
+            const mSteel = new THREE.MeshStandardMaterial({color: 0xffffff, metalness: 0.9, roughness: 0.1});
+            const mGlass = new THREE.MeshStandardMaterial({color: 0x88ccff, transparent: true, opacity: 0.5});
 
-            Env.colliders.push({ minX: x-55, maxX: x+55, minZ: z-55, maxZ: z+110 }); landmarkGroup.add(s);
+            const base1 = new THREE.Mesh(new THREE.CylinderGeometry(2, 4, 80), mSteel); base1.position.set(-15, 40, 0); base1.rotation.z = 0.3;
+            const base2 = new THREE.Mesh(new THREE.CylinderGeometry(2, 4, 80), mSteel); base2.position.set(15, 40, 0); base2.rotation.z = -0.3;
+            eye.add(base1, base2);
+
+            const wheel = new THREE.Group(); wheel.position.set(0, 80, 0);
+            const ring1 = new THREE.Mesh(new THREE.TorusGeometry(60, 1, 16, 64), mSteel); wheel.add(ring1);
+            const ring2 = new THREE.Mesh(new THREE.TorusGeometry(58, 1, 16, 64), mSteel); ring2.position.z = 4; wheel.add(ring2);
+
+            for(let i=0; i<32; i++) {
+                const angle = (i/32)*Math.PI*2;
+                const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 120), mSteel);
+                spoke.rotation.z = angle; wheel.add(spoke);
+
+                const pod = new THREE.Mesh(new THREE.SphereGeometry(3, 16, 16), mGlass);
+                pod.position.set(Math.cos(angle)*60, Math.sin(angle)*60, 2);
+                wheel.add(pod);
+            }
+            eye.add(wheel);
+
+            Env.entities.trees.push({ mesh: wheel, phase: 0, ox: 0, oy: 80, oz: 0, isWheel: true });
+            Env.colliders.push({ minX: x-20, maxX: x+20, minZ: z-10, maxZ: z+10 }); landmarkGroup.add(eye);
         }
 
-        function buildLuxuryOasis(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
+        function buildLouvrePyramid(x, z) {
+            const louvre = new THREE.Group(); louvre.position.set(x, 0, z);
+            const mGlass = new THREE.MeshStandardMaterial({color: 0x88aaff, transparent: true, opacity: 0.3, metalness: 0.8});
+            const mFrame = new THREE.MeshStandardMaterial({color: 0x111111, metalness: 0.9});
+            const mWater = new THREE.MeshStandardMaterial({color: 0x004444, transparent: true, opacity: 0.8});
+            const mStone = new THREE.MeshStandardMaterial({color: 0xddccaa});
+
+            const pyr = new THREE.Mesh(new THREE.ConeGeometry(30, 20, 4), mGlass); pyr.position.y = 10; pyr.rotation.y = Math.PI/4; louvre.add(pyr);
+            const frame = new THREE.Mesh(new THREE.ConeGeometry(30.1, 20.1, 4), mFrame); frame.material.wireframe = true; frame.position.y = 10; frame.rotation.y = Math.PI/4; louvre.add(frame);
+
+            // Water pools
+            const pool1 = new THREE.Mesh(new THREE.PlaneGeometry(25, 25), mWater); pool1.rotation.x = -Math.PI/2; pool1.position.set(25, 0.5, 25); louvre.add(pool1);
+            const pool2 = new THREE.Mesh(new THREE.PlaneGeometry(25, 25), mWater); pool2.rotation.x = -Math.PI/2; pool2.position.set(-25, 0.5, -25); louvre.add(pool2);
             
-            // Giant Pool
-            const pl = new THREE.Mesh(new THREE.CylinderGeometry(90, 90, 4, 64), new THREE.MeshStandardMaterial({color:0x00ffff, transparent:true, opacity:0.8})); pl.position.y = 2; s.add(pl);
+            const museumWall = new THREE.Mesh(new THREE.BoxGeometry(140, 30, 20), mStone); museumWall.position.set(0, 15, -60); louvre.add(museumWall);
+            const museumWall2 = new THREE.Mesh(new THREE.BoxGeometry(20, 30, 100), mStone); museumWall2.position.set(-60, 15, -20); louvre.add(museumWall2);
+
+            Env.colliders.push({ minX: x-75, maxX: x+75, minZ: z-75, maxZ: z+35 }); landmarkGroup.add(louvre);
+        }
+
+        function buildCloudGate(x, z) {
+            const park = new THREE.Group(); park.position.set(x, 0, z);
+            const mMirror = new THREE.MeshStandardMaterial({color: 0xffffff, metalness: 1.0, roughness: 0.0});
+            const mConc = new THREE.MeshStandardMaterial({color: 0xcccccc});
+
+            const plaza = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), mConc); plaza.rotation.x = -Math.PI/2; plaza.position.y = 0.5; park.add(plaza);
+
+            // The Bean
+            const beanGeo = new THREE.SphereGeometry(8, 64, 64);
+            beanGeo.scale(1.5, 0.8, 1.0);
+            const bean = new THREE.Mesh(beanGeo, mMirror);
+            bean.position.y = 6; park.add(bean);
+
+            // Squat legs
+            const leg1 = new THREE.Mesh(new THREE.SphereGeometry(3, 32, 32), mMirror); leg1.position.set(-6, 2, 0); park.add(leg1);
+            const leg2 = new THREE.Mesh(new THREE.SphereGeometry(3, 32, 32), mMirror); leg2.position.set(6, 2, 0); park.add(leg2);
+
+            Env.colliders.push({ minX: x-15, maxX: x+15, minZ: z-10, maxZ: z+10 }); landmarkGroup.add(park);
+        }
+
+        function buildPantheon(x, z) {
+            const pan = new THREE.Group(); pan.position.set(x, 0, z);
+            const mStone = new THREE.MeshStandardMaterial({color: 0xbbbbaaa, roughness: 1.0});
             
-            // Sail structures
-            for(let i=0; i<16; i++) {
-                const ang = (i/16)*Math.PI*2;
-                const sl = new THREE.Mesh(new THREE.ConeGeometry(22, 135, 3), MATS.drkGlass); sl.position.set(Math.cos(ang)*65, 67.5, Math.sin(ang)*65); sl.rotation.y = -ang+Math.PI/2; sl.rotation.x = -0.2; s.add(sl);
-                const rg = new THREE.Mesh(new THREE.TorusGeometry(72, 2.5, 32, 128), MATS.yelGlow); rg.position.y = 20+(i*10); rg.rotation.x = Math.PI/2; s.add(rg);
+            // Portico
+            const portBase = new THREE.Mesh(new THREE.BoxGeometry(40, 2, 20), mStone); portBase.position.set(0, 1, 30); pan.add(portBase);
+            const pediment = new THREE.Mesh(new THREE.ConeGeometry(22, 10, 3), mStone); pediment.position.set(0, 25, 30); pediment.rotation.x = Math.PI/2; pediment.scale.set(1, 0.5, 1); pan.add(pediment);
+
+            for(let i=0; i<8; i++) {
+                const col = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 20, 16), mStone);
+                col.position.set(-15 + (i*4.2), 11, 38); pan.add(col);
             }
 
-            Env.colliders.push({ minX: x-100, maxX: x+100, minZ: z-100, maxZ: z+100 }); landmarkGroup.add(s);
+            // Rotunda
+            const rotunda = new THREE.Mesh(new THREE.CylinderGeometry(30, 30, 30, 32), mStone); rotunda.position.y = 15; pan.add(rotunda);
+            const dome = new THREE.Mesh(new THREE.SphereGeometry(30, 32, 16, 0, Math.PI*2, 0, Math.PI/2), mStone); dome.position.y = 30; pan.add(dome);
+            const oculus = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 2, 16), new THREE.MeshBasicMaterial({color:0x000000})); oculus.position.y = 59; pan.add(oculus);
+
+            Env.colliders.push({ minX: x-35, maxX: x+35, minZ: z-35, maxZ: z+45 }); landmarkGroup.add(pan);
+        }
+
+        function buildTVTower(x, z) {
+            const tv = new THREE.Group(); tv.position.set(x, 0, z);
+            const mConc = new THREE.MeshStandardMaterial({color: 0x999999, roughness: 0.8});
+            const mSphere = new THREE.MeshStandardMaterial({color: 0x778899, metalness: 0.8, roughness: 0.3});
+            const mRed = new THREE.MeshStandardMaterial({color: 0xcc0000});
+
+            const base = new THREE.Mesh(new THREE.CylinderGeometry(10, 15, 20, 16), mConc); base.position.y = 10; tv.add(base);
+            const shaft = new THREE.Mesh(new THREE.CylinderGeometry(4, 8, 180, 16), mConc); shaft.position.y = 110; tv.add(shaft);
+            
+            const globe = new THREE.Mesh(new THREE.SphereGeometry(18, 32, 32), mSphere); globe.position.y = 200; tv.add(globe);
+            
+            const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 2, 100, 8), mRed); spire.position.y = 260; tv.add(spire);
+            const spire2 = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.5, 50, 8), mWhite); spire2.position.y = 335; tv.add(spire2);
+
+            Env.colliders.push({ minX: x-20, maxX: x+20, minZ: z-20, maxZ: z+20 }); landmarkGroup.add(tv);
         }
 
         function buildLifeguardTowers(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            const pl = new THREE.Mesh(new THREE.PlaneGeometry(220, 220), MATS.sand); pl.rotation.x = -Math.PI/2; pl.position.y = 0.6; s.add(pl);
+            const beach = new THREE.Group(); beach.position.set(x, 0, z);
+            const mSand = new THREE.MeshStandardMaterial({color: 0xebd5b3, roughness: 1.0});
+            const mWood = new THREE.MeshStandardMaterial({color: 0x8b5a2b});
             
-            const cs = [MATS.red, MATS.neonCyan, MATS.yel, MATS.neonPink, MATS.blu];
-            for(let i=0; i<5; i++) {
-                const h = new THREE.Group(); h.position.set(-80+(i*40), 0, 0);
-                const t1=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,9), MATS.wood); t1.position.set(-4.5,4.5,-4.5); h.add(t1);
-                const t2=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,9), MATS.wood); t2.position.set(4.5,4.5,-4.5); h.add(t2);
-                const t3=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,9), MATS.wood); t3.position.set(-4.5,4.5,4.5); h.add(t3);
-                const t4=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,9), MATS.wood); t4.position.set(4.5,4.5,4.5); h.add(t4);
-                const fl=new THREE.Mesh(new THREE.BoxGeometry(13.5,1.2,13.5), MATS.wood); fl.position.y=9; h.add(fl);
-                const cb=new THREE.Mesh(new THREE.BoxGeometry(9,9,9), cs[i]); cb.position.y=14.5; h.add(cb);
-                const rf=new THREE.Mesh(new THREE.ConeGeometry(9,4.5,4), MATS.wood); rf.position.y=21; rf.rotation.y=Math.PI/4; h.add(rf);
-                s.add(h);
+            const sandPlane = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), mSand); sandPlane.rotation.x = -Math.PI/2; sandPlane.position.y = 0.6; beach.add(sandPlane);
+
+            const colors = [0xff0000, 0x00ffff, 0xffff00, 0xff00ff];
+            for(let i=0; i<4; i++) {
+                const hut = new THREE.Group(); hut.position.set(-30 + (i*20), 0, 0);
+                
+                const stilts1 = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 4), mWood); stilts1.position.set(-2, 2, -2); hut.add(stilts1);
+                const stilts2 = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 4), mWood); stilts2.position.set(2, 2, -2); hut.add(stilts2);
+                const stilts3 = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 4), mWood); stilts3.position.set(-2, 2, 2); hut.add(stilts3);
+                const stilts4 = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 4), mWood); stilts4.position.set(2, 2, 2); hut.add(stilts4);
+                
+                const floor = new THREE.Mesh(new THREE.BoxGeometry(6, 0.5, 6), mWood); floor.position.y = 4; hut.add(floor);
+                const cabin = new THREE.Mesh(new THREE.BoxGeometry(4, 4, 4), new THREE.MeshStandardMaterial({color: colors[i]})); cabin.position.y = 6.5; hut.add(cabin);
+                const roof = new THREE.Mesh(new THREE.ConeGeometry(4, 2, 4), mWood); roof.position.y = 9.5; roof.rotation.y = Math.PI/4; hut.add(roof);
+
+                beach.add(hut);
             }
 
-            Env.colliders.push({ minX: x-95, maxX: x+95, minZ: z-25, maxZ: z+25 }); landmarkGroup.add(s);
+            Env.colliders.push({ minX: x-45, maxX: x+45, minZ: z-10, maxZ: z+10 }); landmarkGroup.add(beach);
+        }
+
+        function buildLuxuryOasis(x, z) {
+            const oasis = new THREE.Group(); oasis.position.set(x, 0, z);
+            const mGold = new THREE.MeshStandardMaterial({color: 0xffaa00, metalness: 1.0, roughness: 0.2});
+            const mGlass = new THREE.MeshStandardMaterial({color: 0x001133, transparent: true, opacity: 0.7, metalness: 0.9});
+            const mWater = new THREE.MeshStandardMaterial({color: 0x00ffff, transparent: true, opacity: 0.8});
+
+            const pool = new THREE.Mesh(new THREE.CylinderGeometry(40, 40, 2, 32), mWater); pool.position.y = 1; oasis.add(pool);
+            
+            for(let i=0; i<8; i++) {
+                const angle = (i/8)*Math.PI*2;
+                const sail = new THREE.Mesh(new THREE.ConeGeometry(10, 60, 3), mGlass);
+                sail.position.set(Math.cos(angle)*30, 30, Math.sin(angle)*30);
+                sail.rotation.y = -angle + Math.PI/2;
+                sail.rotation.x = -0.2;
+                oasis.add(sail);
+
+                const ring = new THREE.Mesh(new THREE.TorusGeometry(32, 1, 16, 64), mGold);
+                ring.position.y = 10 + (i*5); ring.rotation.x = Math.PI/2; oasis.add(ring);
+            }
+
+            Env.colliders.push({ minX: x-45, maxX: x+45, minZ: z-45, maxZ: z+45 }); landmarkGroup.add(oasis);
         }
 
         function buildGenericPub(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            
-            const bd = new THREE.Mesh(new THREE.BoxGeometry(45, 33, 45), MATS.brick); bd.position.y = 16.5; s.add(bd);
-            const rf = new THREE.Mesh(new THREE.ConeGeometry(40, 18, 4), MATS.wood); rf.position.y = 42; rf.rotation.y = Math.PI/4; s.add(rf);
-            
-            const t1 = new THREE.Mesh(new THREE.BoxGeometry(48, 2, 48), MATS.wood); t1.position.y = 11; s.add(t1);
-            const t2 = new THREE.Mesh(new THREE.BoxGeometry(48, 2, 48), MATS.wood); t2.position.y = 31; s.add(t2);
-            
-            const w1 = new THREE.Mesh(new THREE.BoxGeometry(9, 11, 1), MATS.yelGlow); w1.position.set(-11, 18, 22.5); s.add(w1);
-            const w2 = new THREE.Mesh(new THREE.BoxGeometry(9, 11, 1), MATS.yelGlow); w2.position.set(11, 18, 22.5); s.add(w2);
-            
-            const sg = new THREE.Mesh(new THREE.BoxGeometry(13, 9, 1.2), MATS.wood); sg.position.set(0, 25, 23); s.add(sg);
+            const pub = new THREE.Group(); pub.position.set(x, 0, z);
+            const mBrick = new THREE.MeshStandardMaterial({color: 0x5a3322, roughness: 1.0});
+            const mWood = new THREE.MeshStandardMaterial({color: 0x2a1b12});
+            const mGlass = new THREE.MeshStandardMaterial({color: 0xffffaa, transparent: true, opacity: 0.6, emissive: 0x444400});
 
-            Env.colliders.push({ minX: x-26, maxX: x+26, minZ: z-26, maxZ: z+26 }); landmarkGroup.add(s);
+            const build = new THREE.Mesh(new THREE.BoxGeometry(20, 15, 20), mBrick); build.position.y = 7.5; pub.add(build);
+            const roof = new THREE.Mesh(new THREE.ConeGeometry(18, 8, 4), mWood); roof.position.y = 19; roof.rotation.y = Math.PI/4; pub.add(roof);
+
+            const trim1 = new THREE.Mesh(new THREE.BoxGeometry(22, 1, 22), mWood); trim1.position.y = 5; pub.add(trim1);
+            const trim2 = new THREE.Mesh(new THREE.BoxGeometry(22, 1, 22), mWood); trim2.position.y = 14; pub.add(trim2);
+
+            const win1 = new THREE.Mesh(new THREE.BoxGeometry(4, 5, 0.5), mGlass); win1.position.set(-5, 8, 10); pub.add(win1);
+            const win2 = new THREE.Mesh(new THREE.BoxGeometry(4, 5, 0.5), mGlass); win2.position.set(5, 8, 10); pub.add(win2);
+            
+            const sign = new THREE.Mesh(new THREE.BoxGeometry(6, 4, 0.5), mWood); sign.position.set(0, 11, 10.5); pub.add(sign);
+
+            Env.colliders.push({ minX: x-12, maxX: x+12, minZ: z-12, maxZ: z+12 }); landmarkGroup.add(pub);
+        }
+
+        // ========================================================
+        // MASSIVE STADIUMS & EXISTING COMPLEX STRUCTURES
+        // ========================================================
+
+        function buildYankeeStadium(x, z) {
+            const stadium = new THREE.Group(); stadium.position.set(x, 0, z);
+            const mC = new THREE.MeshStandardMaterial({color: 0xeeeeee, roughness: 0.9}); 
+            const mF = new THREE.MeshStandardMaterial({color: 0x2d5a2d, roughness: 1.0}); 
+            const mD = new THREE.MeshStandardMaterial({color: 0x8b5a2b, roughness: 1.0}); 
+            const mS = new THREE.MeshStandardMaterial({color: 0x0c2340, roughness: 0.8}); 
+            
+            const field = new THREE.Mesh(new THREE.PlaneGeometry(140, 140), mF); field.rotation.x = -Math.PI/2; field.position.y = 0.5;
+            const dirt = new THREE.Mesh(new THREE.PlaneGeometry(50, 50), mD); dirt.rotation.x = -Math.PI/2; dirt.position.set(0, 0.51, 35); dirt.rotation.z = Math.PI/4;
+            stadium.add(field, dirt);
+
+            const matBase = new THREE.MeshStandardMaterial({color: 0xffffff});
+            const b0 = new THREE.Mesh(new THREE.PlaneGeometry(2,2), matBase); b0.rotation.x = -Math.PI/2; b0.position.set(0, 0.52, 52);
+            const b1 = new THREE.Mesh(new THREE.PlaneGeometry(2,2), matBase); b1.rotation.x = -Math.PI/2; b1.position.set(17, 0.52, 35);
+            const b2 = new THREE.Mesh(new THREE.PlaneGeometry(2,2), matBase); b2.rotation.x = -Math.PI/2; b2.position.set(0, 0.52, 18);
+            const b3 = new THREE.Mesh(new THREE.PlaneGeometry(2,2), matBase); b3.rotation.x = -Math.PI/2; b3.position.set(-17, 0.52, 35);
+            stadium.add(b0, b1, b2, b3);
+
+            for (let tier = 0; tier < 4; tier++) {
+                const seatGeo = new THREE.TorusGeometry(60 + (tier * 15), 10, 4, 64, Math.PI * 1.4); 
+                const seats = new THREE.Mesh(seatGeo, mS); 
+                seats.rotation.x = Math.PI/2; seats.rotation.z = Math.PI*1.3; seats.position.y = 5 + (tier * 12);
+                stadium.add(seats);
+            }
+
+            for(let i=0; i<45; i++) {
+                const angle = (i/45) * Math.PI * 1.4 + Math.PI*1.3;
+                const fX = Math.cos(angle) * 115; const fZ = Math.sin(angle) * 115;
+                const frieze = new THREE.Mesh(new THREE.BoxGeometry(4, 10, 2), mC);
+                frieze.position.set(fX, 55, fZ); frieze.lookAt(0, 55, 0);
+                const spike = new THREE.Mesh(new THREE.ConeGeometry(2, 8, 4), mC);
+                spike.position.set(fX, 64, fZ);
+                stadium.add(frieze, spike);
+            }
+
+            Env.colliders.push({ minX: x-140, maxX: x+140, minZ: z-140, maxZ: z+140 }); landmarkGroup.add(stadium);
+        }
+
+        function buildWrigleyField(x, z) {
+            const stadium = new THREE.Group(); stadium.position.set(x, 0, z);
+            const mBrick = new THREE.MeshStandardMaterial({color: 0x8b3a3a, roughness: 0.9});
+            const mIvy = new THREE.MeshStandardMaterial({color: 0x1e5c2d, roughness: 1.0});
+            const mS = new THREE.MeshStandardMaterial({color: 0x225522, roughness: 0.8});
+            const mMarquee = new THREE.MeshStandardMaterial({color: 0xcc0000, emissive: 0xaa0000});
+            
+            const field = new THREE.Mesh(new THREE.PlaneGeometry(130, 130), new THREE.MeshStandardMaterial({color: 0x3d7a3d})); field.rotation.x = -Math.PI/2; field.position.y = 0.5;
+            stadium.add(field);
+
+            for (let tier = 0; tier < 2; tier++) {
+                const seatGeo = new THREE.TorusGeometry(60 + (tier * 15), 12, 4, 32, Math.PI * 1.5); 
+                const seats = new THREE.Mesh(seatGeo, mS); 
+                seats.rotation.x = Math.PI/2; seats.rotation.z = Math.PI*1.25; seats.position.y = 8 + (tier * 14);
+                stadium.add(seats);
+            }
+
+            const ivyWall = new THREE.Mesh(new THREE.CylinderGeometry(65, 65, 12, 32, 1, true, -Math.PI/4, Math.PI/2));
+            ivyWall.material = mIvy; ivyWall.position.y = 6; stadium.add(ivyWall);
+
+            const bleachers = new THREE.Mesh(new THREE.TorusGeometry(75, 10, 4, 32, Math.PI/2), mS);
+            bleachers.rotation.x = Math.PI/2; bleachers.rotation.z = -Math.PI/4; bleachers.position.y = 12;
+            stadium.add(bleachers);
+
+            const marqueeBox = new THREE.Mesh(new THREE.BoxGeometry(24, 12, 5), mMarquee);
+            marqueeBox.position.set(0, 24, 95);
+            const textPlates = new THREE.Mesh(new THREE.BoxGeometry(22, 5, 5.2), new THREE.MeshStandardMaterial({color:0xffffff, emissive:0xffffff}));
+            textPlates.position.set(0, 24, 95);
+            stadium.add(marqueeBox, textPlates);
+
+            Env.colliders.push({ minX: x-120, maxX: x+120, minZ: z-120, maxZ: z+120 }); landmarkGroup.add(stadium);
         }
 
         function buildMiamiNeonClub(x, z) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
-            addSidewalkWrap(s, 160, 140);
-            
-            const b1 = new THREE.Mesh(new THREE.CylinderGeometry(65, 65, 45, 64), MATS.wht); b1.position.set(0, 22.5, 0); s.add(b1);
-            const b2 = new THREE.Mesh(new THREE.CylinderGeometry(45, 45, 33), MATS.wht); b2.position.set(-33, 61.5, -22); s.add(b2);
-            const g1 = new THREE.Mesh(new THREE.BoxGeometry(33, 45, 69), MATS.drkGlass); g1.position.set(33, 22.5, 0); s.add(g1);
-            
-            for(let i=0; i<12; i++) { 
-                const st = new THREE.Mesh(new THREE.TorusGeometry(66.2, 0.8, 8, 64), MATS.neonPink); st.rotation.x=Math.PI/2; st.position.set(0, 4+(i*7), 0); s.add(st); 
+            const club = new THREE.Group(); club.position.set(x, 0, z);
+            const mWhite = new THREE.MeshStandardMaterial({color: 0xffffff, roughness: 0.1});
+            const mPink = new THREE.MeshStandardMaterial({color: 0xff00ff, emissive: 0xff0088, emissiveIntensity: 2.0});
+            const mCyan = new THREE.MeshStandardMaterial({color: 0x00ffff, emissive: 0x00ccff, emissiveIntensity: 2.0});
+            const mGlass = new THREE.MeshStandardMaterial({color: 0x111111, metalness: 0.9, roughness: 0.1});
+
+            const build1 = new THREE.Mesh(new THREE.CylinderGeometry(20, 20, 15, 32), mWhite); build1.position.set(0, 7.5, 0); club.add(build1);
+            const build2 = new THREE.Mesh(new THREE.CylinderGeometry(15, 15, 10, 32), mWhite); build2.position.set(-10, 20, -5); club.add(build2);
+            const g1 = new THREE.Mesh(new THREE.BoxGeometry(10, 15, 21), mGlass); g1.position.set(10, 7.5, 0); club.add(g1);
+
+            for(let i=0; i<5; i++) {
+                const strip = new THREE.Mesh(new THREE.TorusGeometry(20.5, 0.2, 8, 32), mPink);
+                strip.rotation.x = Math.PI/2; strip.position.set(0, 2 + (i*3), 0); club.add(strip);
             }
             
-            const pl = new THREE.Mesh(new THREE.CylinderGeometry(3.3, 3.3, 135), MATS.wht); pl.position.set(-78, 67.5, 45); s.add(pl);
-            const sn = new THREE.Mesh(new THREE.BoxGeometry(6.7, 67.5, 22), MATS.neonCyan); sn.position.set(-78, 101, 45); s.add(sn);
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 40), mWhite); pole.position.set(-25, 20, 15); club.add(pole);
+            const sign = new THREE.Mesh(new THREE.BoxGeometry(2, 20, 8), mCyan); sign.position.set(-25, 30, 15); club.add(sign);
+
+            Env.colliders.push({ minX: x-30, maxX: x+25, minZ: z-25, maxZ: z+25 }); landmarkGroup.add(club);
+        }
+
+        function buildColosseum(x, z) {
+            const col = new THREE.Group(); col.position.set(x, 0, z);
+            const mStone = new THREE.MeshStandardMaterial({color: 0xd3c5a3, roughness: 1.0});
+            const mDark = new THREE.MeshStandardMaterial({color: 0x4a4035, roughness: 1.0});
+
+            for(let tier=0; tier<4; tier++) {
+                const tY = 7.5 + (tier * 15);
+                const ringGeo = new THREE.TorusGeometry(90, 10, 4, 64); ringGeo.scale(1.3, 1, 1);
+                const ring = new THREE.Mesh(ringGeo, mStone); ring.rotation.x = Math.PI/2; ring.position.y = tY;
+                col.add(ring);
+
+                if(tier < 3) {
+                    for(let i=0; i<40; i++) {
+                        const angle = (i/40) * Math.PI*2;
+                        const aX = Math.cos(angle) * 115; const aZ = Math.sin(angle) * 88;
+                        const arch = new THREE.Mesh(new THREE.BoxGeometry(4, 10, 15), mDark);
+                        arch.position.set(aX, tY, aZ); arch.rotation.y = -angle; col.add(arch);
+                    }
+                }
+            }
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 80), mDark); floor.rotation.x = -Math.PI/2; floor.position.y = 0.5; col.add(floor);
+            Env.colliders.push({ minX: x-140, maxX: x+140, minZ: z-110, maxZ: z+110 }); landmarkGroup.add(col);
+        }
+
+        function buildTokyoTower(x, z) {
+            const tower = new THREE.Group(); tower.position.set(x, 0, z);
+            const mRed = new THREE.MeshStandardMaterial({color: 0xdd2222, metalness: 0.5, roughness: 0.5});
+            const mWhite = new THREE.MeshStandardMaterial({color: 0xeeeeee, metalness: 0.5, roughness: 0.5});
+            const mLight = new THREE.MeshStandardMaterial({color: 0xffaa00, emissive: 0xffaa00, emissiveIntensity: 1.5});
+
+            const baseGeo = new THREE.CylinderGeometry(30, 40, 40, 4); const base = new THREE.Mesh(baseGeo, mWhite); base.position.y = 20; tower.add(base);
+
+            let curY = 40; let curW = 30;
+            for(let i=0; i<15; i++) {
+                const nextW = curW * 0.85; const h = 20;
+                const sect = new THREE.Mesh(new THREE.CylinderGeometry(nextW, curW, h, 4), i%2===0 ? mRed : mWhite);
+                sect.position.y = curY + (h/2); tower.add(sect);
+                
+                const light = new THREE.Mesh(new THREE.BoxGeometry(nextW*2.1, 2, nextW*2.1), mLight); light.position.y = curY + h; tower.add(light);
+                curY += h; curW = nextW;
+            }
+
+            const obs = new THREE.Mesh(new THREE.CylinderGeometry(15, 12, 10, 16), new THREE.MeshStandardMaterial({color:0x222222})); obs.position.y = curY + 5; tower.add(obs);
+            const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 4, 100, 4), mWhite); spire.position.y = curY + 60; tower.add(spire);
+
+            Env.colliders.push({ minX: x-45, maxX: x+45, minZ: z-45, maxZ: z+45 }); landmarkGroup.add(tower);
+        }
+
+        function buildEiffelTower(x, z) {
+            const tower = new THREE.Group(); tower.position.set(x, 0, z);
+            const mIron = new THREE.MeshStandardMaterial({color: 0x5a4d41, metalness: 0.8, roughness: 0.6});
+            const mLight = new THREE.MeshStandardMaterial({color: 0xffddaa, emissive: 0xffaa55, emissiveIntensity: 1.0});
+
+            const base = new THREE.Mesh(new THREE.CylinderGeometry(40, 60, 60, 4), mIron); base.position.y = 30; tower.add(base);
+            const deck1 = new THREE.Mesh(new THREE.BoxGeometry(85, 4, 85), mIron); deck1.position.y = 60; tower.add(deck1);
+            const light1 = new THREE.Mesh(new THREE.BoxGeometry(86, 1, 86), mLight); light1.position.y = 59; tower.add(light1);
+
+            const mid = new THREE.Mesh(new THREE.CylinderGeometry(20, 35, 80, 4), mIron); mid.position.y = 100; tower.add(mid);
+            const deck2 = new THREE.Mesh(new THREE.BoxGeometry(45, 4, 45), mIron); deck2.position.y = 140; tower.add(deck2);
+            const light2 = new THREE.Mesh(new THREE.BoxGeometry(46, 1, 46), mLight); light2.position.y = 139; tower.add(light2);
+
+            const top = new THREE.Mesh(new THREE.CylinderGeometry(2, 18, 150, 4), mIron); top.position.y = 215; tower.add(top);
+            const deck3 = new THREE.Mesh(new THREE.BoxGeometry(10, 10, 10), mIron); deck3.position.y = 290; tower.add(deck3);
+
+            const beacon = new THREE.Mesh(new THREE.SphereGeometry(3), new THREE.MeshStandardMaterial({color:0xffffff, emissive:0xffffff, emissiveIntensity:3.0}));
+            beacon.position.y = 305; tower.add(beacon);
+
+            Env.colliders.push({ minX: x-65, maxX: x+65, minZ: z-65, maxZ: z+65 }); landmarkGroup.add(tower);
+        }
+
+        function buildBigBen(x, z) {
+            const ben = new THREE.Group(); ben.position.set(x, 0, z);
+            const mStone = new THREE.MeshStandardMaterial({color: 0xc8b598, roughness: 0.9});
+            const mDark = new THREE.MeshStandardMaterial({color: 0x333333, roughness: 0.8});
+            const mGold = new THREE.MeshStandardMaterial({color: 0xd4af37, metalness: 0.8, roughness: 0.3});
+            const mClock = new THREE.MeshStandardMaterial({color: 0xffffe0, emissive: 0x888877});
+
+            const shaft = new THREE.Mesh(new THREE.BoxGeometry(20, 150, 20), mStone); shaft.position.y = 75; ben.add(shaft);
+            const cY = 165; const cBox = new THREE.Mesh(new THREE.BoxGeometry(22, 30, 22), mStone); cBox.position.y = cY; ben.add(cBox);
             
-            addParkingLot(s, 150, 150, 120);
-            Env.colliders.push({ minX: x-90, maxX: x+80, minZ: z-75, maxZ: z+80 }); landmarkGroup.add(s);
+            const offsets = [{x:11.1, z:0, ry:Math.PI/2}, {x:-11.1, z:0, ry:-Math.PI/2}, {x:0, z:11.1, ry:0}, {x:0, z:-11.1, ry:Math.PI}];
+            offsets.forEach(off => {
+                const face = new THREE.Mesh(new THREE.CircleGeometry(8, 32), mClock); face.position.set(off.x, cY, off.z); face.rotation.y = off.ry;
+                const rim = new THREE.Mesh(new THREE.RingGeometry(8, 9, 32), mGold); rim.position.set(off.x, cY, off.z); rim.rotation.y = off.ry;
+                const h1 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 0.2), mDark); h1.position.set(off.x, cY+3, off.z); h1.rotation.y = off.ry;
+                const h2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 4, 0.2), mDark); h2.position.set(off.x, cY, off.z); h2.rotation.y = off.ry; h2.rotation.z = Math.PI/4;
+                ben.add(face, rim, h1, h2);
+            });
+
+            const roof = new THREE.Mesh(new THREE.ConeGeometry(16, 40, 4), mDark); roof.position.y = 200; roof.rotation.y = Math.PI/4; ben.add(roof);
+            const tip = new THREE.Mesh(new THREE.ConeGeometry(2, 20, 4), mGold); tip.position.y = 230; ben.add(tip);
+
+            Env.colliders.push({ minX: x-12, maxX: x+12, minZ: z-12, maxZ: z+12 }); landmarkGroup.add(ben);
+        }
+
+        function buildOperaHouse(x, z) {
+            const opera = new THREE.Group(); opera.position.set(x, 0, z);
+            const mTile = new THREE.MeshStandardMaterial({color: 0xffffee, roughness: 0.2});
+            const mBase = new THREE.MeshStandardMaterial({color: 0xaa7755, roughness: 0.9});
+            const mGlass = new THREE.MeshStandardMaterial({color: 0x222222, metalness: 0.8, roughness: 0.1});
+
+            const podium = new THREE.Mesh(new THREE.BoxGeometry(140, 10, 100), mBase); podium.position.y = 5; opera.add(podium);
+
+            const buildShell = (sX, sY, sZ, scale, rotY) => {
+                const shellGeo = new THREE.SphereGeometry(scale, 32, 16, 0, Math.PI/2, 0, Math.PI/2);
+                const s1 = new THREE.Mesh(shellGeo, mTile); s1.position.set(sX, sY, sZ); s1.rotation.y = rotY;
+                const s2 = new THREE.Mesh(shellGeo, mTile); s2.position.set(sX, sY, sZ); s2.rotation.y = rotY + Math.PI;
+                const glassFace = new THREE.Mesh(new THREE.PlaneGeometry(scale*1.5, scale), mGlass); glassFace.position.set(sX, sY+(scale/2), sZ + (scale/2)); glassFace.rotation.y = rotY - Math.PI/2;
+                opera.add(s1, s2, glassFace);
+            };
+
+            buildShell(20, 10, -10, 40, Math.PI/4); buildShell(0, 10, 0, 30, Math.PI/4); buildShell(-20, 10, 10, 20, Math.PI/4);
+            buildShell(20, 10, 40, 25, Math.PI/4 + 0.2); buildShell(0, 10, 45, 18, Math.PI/4 + 0.2);
+
+            Env.colliders.push({ minX: x-75, maxX: x+75, minZ: z-55, maxZ: z+55 }); landmarkGroup.add(opera);
+        }
+
+        function buildBurjSpire(x, z) {
+            const burj = new THREE.Group(); burj.position.set(x, 0, z);
+            const mGlass = new THREE.MeshStandardMaterial({color: 0x88ccff, metalness: 0.9, roughness: 0.1});
+            const mSteel = new THREE.MeshStandardMaterial({color: 0xcccccc, metalness: 0.8});
+
+            let curY = 0; let radius = 60; const segments = 25;
+            for(let i=0; i<segments; i++) {
+                const h = 40; radius = 60 * (1 - (i/segments));
+                for(let w=0; w<3; w++) {
+                    const angle = (w/3) * Math.PI*2;
+                    const wing = new THREE.Mesh(new THREE.CylinderGeometry(radius*0.6, radius, h, 6), mGlass);
+                    wing.position.set(Math.cos(angle)*(radius*0.4), curY + h/2, Math.sin(angle)*(radius*0.4)); wing.rotation.y = -angle; burj.add(wing);
+                }
+                const core = new THREE.Mesh(new THREE.CylinderGeometry(radius*0.8, radius*0.9, h, 12), mSteel); core.position.set(0, curY + h/2, 0); burj.add(core);
+                curY += h;
+            }
+            const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 5, 200, 8), mSteel); spire.position.y = curY + 100; burj.add(spire);
+
+            Env.colliders.push({ minX: x-70, maxX: x+70, minZ: z-70, maxZ: z+70 }); landmarkGroup.add(burj);
+        }
+
+        function buildBrandenburgGate(x, z) {
+            const gate = new THREE.Group(); gate.position.set(x, 0, z);
+            const mStone = new THREE.MeshStandardMaterial({color: 0xeeddcc, roughness: 0.9});
+            const mBronze = new THREE.MeshStandardMaterial({color: 0x334433, metalness: 0.8, roughness: 0.4});
+
+            for(let i=0; i<6; i++) {
+                const pX = -35 + (i * 14);
+                const col = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.5, 30, 16), mStone); col.position.set(pX, 15, 0); gate.add(col);
+                const col2 = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.5, 30, 16), mStone); col2.position.set(pX, 15, -10); gate.add(col2);
+            }
+
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(84, 8, 16), mStone); roof.position.set(0, 34, -5); gate.add(roof);
+
+            const chariot = new THREE.Mesh(new THREE.BoxGeometry(6, 4, 8), mBronze); chariot.position.set(0, 40, -5); gate.add(chariot);
+            for(let i=0; i<4; i++) {
+                const horse = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 6), mBronze); horse.rotation.x = Math.PI/2; horse.position.set(-3 + (i*2), 40, 0); gate.add(horse);
+            }
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 8), mBronze); pole.position.set(0, 45, -5); gate.add(pole);
+
+            Env.colliders.push({ minX: x-45, maxX: x+45, minZ: z-15, maxZ: z+5 }); landmarkGroup.add(gate);
         }
 
         function buildGenericStadium(x, z, cMain, cSec) {
-            const s = new THREE.Group(); s.position.set(x, 0, z);
+            const stadium = new THREE.Group(); stadium.position.set(x, 0, z);
+            const mC = new THREE.MeshStandardMaterial({color: 0x888888, roughness: 0.9});
             const mS1 = new THREE.MeshStandardMaterial({color: cMain, roughness: 0.8});
             const mS2 = new THREE.MeshStandardMaterial({color: cSec, roughness: 0.8});
             
-            const pch = new THREE.Mesh(new THREE.PlaneGeometry(310, 180), MATS.grass); pch.rotation.x = -Math.PI/2; pch.position.y = 0.5; s.add(pch);
-            
-            for (let t = 0; t < 6; t++) {
-                const geo = new THREE.TorusGeometry(135 + (t*40), 22, 4, 128); geo.scale(1.5, 1, 1);
-                const sts = new THREE.Mesh(geo, t%2===0?mS1:mS2); sts.rotation.x = Math.PI/2; sts.position.y = 18 + (t*27); s.add(sts);
-            }
-            
-            const shl = new THREE.Mesh(new THREE.CylinderGeometry(290, 270, 110, 64, 1, true).scale(1.5, 1, 1), MATS.glass); shl.position.y = 67; s.add(shl);
+            const pitch = new THREE.Mesh(new THREE.PlaneGeometry(100, 60), new THREE.MeshStandardMaterial({color: 0x2d5a2d})); pitch.rotation.x = -Math.PI/2; pitch.position.y = 0.5;
+            stadium.add(pitch);
 
-            Env.colliders.push({ minX: x-450, maxX: x+450, minZ: z-315, maxZ: z+315 }); landmarkGroup.add(s);
+            for (let tier = 0; tier < 4; tier++) {
+                const seatGeo = new THREE.TorusGeometry(40 + (tier * 12), 6, 4, 64); seatGeo.scale(1.5, 1, 1);
+                const seats = new THREE.Mesh(seatGeo, tier % 2 === 0 ? mS1 : mS2); seats.rotation.x = Math.PI/2; seats.position.y = 5 + (tier * 8);
+                stadium.add(seats);
+            }
+
+            const shell = new THREE.Mesh(new THREE.CylinderGeometry(90, 85, 35, 32, 1, true).scale(1.5, 1, 1), new THREE.MeshStandardMaterial({color:0xffffff, transparent:true, opacity:0.3})); 
+            shell.position.y = 20; stadium.add(shell);
+            
+            Env.colliders.push({ minX: x-135, maxX: x+135, minZ: z-90, maxZ: z+90 }); landmarkGroup.add(stadium);
         }
+
+        function buildChipotle(x, z) {
+            const chip = new THREE.Group(); chip.position.set(x, 0, z);
+            const mS = new THREE.MeshStandardMaterial({color: 0xddcbaa, roughness: 1.0});
+            const mW = new THREE.MeshStandardMaterial({color: 0x5c4033, roughness: 0.8});
+            const mG = new THREE.MeshStandardMaterial({color: 0xaaccff, transparent: true, opacity: 0.2});
+            
+            const shell = new THREE.Mesh(new THREE.BoxGeometry(30, 12, 20), mS); shell.position.set(0, 6, 0); chip.add(shell);
+            const woodBox = new THREE.Mesh(new THREE.BoxGeometry(10, 14, 22), mW); woodBox.position.set(-10, 7, 0); chip.add(woodBox);
+            const glass = new THREE.Mesh(new THREE.BoxGeometry(18, 9, 0.5), mG); glass.position.set(5, 4.5, 10); chip.add(glass);
+            const signPanel = new THREE.Mesh(new THREE.BoxGeometry(8, 3, 0.5), new THREE.MeshStandardMaterial({color:0x8b0000})); signPanel.position.set(-10, 11, 11.2); chip.add(signPanel);
+
+            for(let i=0; i<3; i++) {
+                const pt = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.2), new THREE.MeshStandardMaterial({color:0xaaaaaa})); pt.position.set(-12+(i*8), 2, 16);
+                const umb = new THREE.Mesh(new THREE.ConeGeometry(3, 1, 8), new THREE.MeshStandardMaterial({color:0x555555})); umb.position.set(-12+(i*8), 5, 16);
+                chip.add(pt, umb);
+            }
+            Env.colliders.push({ minX: x-15, maxX: x+15, minZ: z-11, maxZ: z+11 }); landmarkGroup.add(chip);
+        }
+
+        function buildGasStation(x, z) {
+            const gas = new THREE.Group(); gas.position.set(x, 0, z);
+            const mC = new THREE.MeshStandardMaterial({color: 0x228822, roughness: 0.8});
+            const canopy = new THREE.Mesh(new THREE.BoxGeometry(50, 2, 30), mC); canopy.position.set(0, 16, 0); gas.add(canopy);
+            
+            for(let i=0; i<4; i++) {
+                const pillar = new THREE.Mesh(new THREE.BoxGeometry(2, 16, 2), new THREE.MeshStandardMaterial({color:0xaaaaaa})); pillar.position.set(-18 + (i*12), 8, 0);
+                const pump = new THREE.Mesh(new THREE.BoxGeometry(3, 4, 1.5), new THREE.MeshStandardMaterial({color:0xeeeeee})); pump.position.set(-18 + (i*12), 2, 0);
+                gas.add(pillar, pump);
+            }
+            const store = new THREE.Mesh(new THREE.BoxGeometry(60, 12, 25), new THREE.MeshStandardMaterial({color:0xdddddd})); store.position.set(0, 6, -30); gas.add(store);
+            
+            Env.colliders.push({ minX: x-30, maxX: x+30, minZ: z-42, maxZ: z-17 }); landmarkGroup.add(gas);
+        }
+
+        function buildMegaMall(x, z) {
+            const mall = new THREE.Group(); mall.position.set(x, 0, z);
+            const mW = new THREE.MeshStandardMaterial({color: 0xdddddd, roughness: 0.4});
+            const mG = new THREE.MeshStandardMaterial({color: 0x4488cc, transparent: true, opacity: 0.3, metalness: 0.8});
+
+            [[-80,-80], [80,-80], [-80,80], [80,80]].forEach(c => {
+                const anchor = new THREE.Mesh(new THREE.BoxGeometry(60, 40, 60), mW); anchor.position.set(c[0], 20, c[1]); mall.add(anchor);
+            });
+
+            const hC = new THREE.Mesh(new THREE.BoxGeometry(160, 25, 40), mW); hC.position.set(0, 12.5, 0);
+            const vC = new THREE.Mesh(new THREE.BoxGeometry(40, 25, 160), mW); vC.position.set(0, 12.5, 0);
+            const dome = new THREE.Mesh(new THREE.SphereGeometry(35, 32, 16, 0, Math.PI*2, 0, Math.PI/2), mG); dome.position.set(0, 25, 0); 
+            mall.add(hC, vC, dome);
+            
+            Env.colliders.push({ minX: x-110, maxX: x+110, minZ: z-110, maxZ: z+110 }); landmarkGroup.add(mall);
+        }
+
+        function buildTechFlagship(x, z) {
+            const tech = new THREE.Group(); tech.position.set(x, 0, z);
+            const mG = new THREE.MeshStandardMaterial({color: 0xffffff, transparent: true, opacity: 0.15, metalness: 1.0});
+            const mR = new THREE.MeshStandardMaterial({color: 0xdddddd, metalness: 0.5, roughness: 0.2});
+            
+            const glassBox = new THREE.Mesh(new THREE.BoxGeometry(40, 24, 40), mG); glassBox.position.set(0, 12, 0); tech.add(glassBox);
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(42, 0.5, 42), mR); roof.position.set(0, 24, 0); tech.add(roof);
+
+            for(let r=0; r<3; r++) {
+                for(let c=0; c<4; c++) {
+                    const table = new THREE.Mesh(new THREE.BoxGeometry(5, 2.5, 3), new THREE.MeshStandardMaterial({color: 0xdeaa88}));
+                    table.position.set(-12 + (c*8), 1.25, -5 + (r*8)); tech.add(table);
+                }
+            }
+            Env.colliders.push({ minX: x-20, maxX: x+20, minZ: z-20, maxZ: z+20 }); landmarkGroup.add(tech);
+        }
+
+        function buildIKEA(x, z) {
+            const ikea = new THREE.Group(); ikea.position.set(x, 0, z);
+            const mBlue = new THREE.MeshStandardMaterial({color: 0x003399, roughness: 0.8});
+            const mYellow = new THREE.MeshStandardMaterial({color: 0xffcc00, emissive: 0xffcc00, emissiveIntensity: 0.5});
+            
+            const mainBox = new THREE.Mesh(new THREE.BoxGeometry(120, 35, 80), mBlue); mainBox.position.set(0, 17.5, 0); ikea.add(mainBox);
+            const signPanel = new THREE.Mesh(new THREE.BoxGeometry(40, 15, 1), mYellow); signPanel.position.set(0, 25, 40.1); ikea.add(signPanel);
+            
+            Env.colliders.push({ minX: x-60, maxX: x+60, minZ: z-40, maxZ: z+40 }); landmarkGroup.add(ikea);
+        }
+
+        // --- INJECTION CALL ---
+        // Make sure to un-comment this inside your initDeployment function!
+        // spawnLandmarks();
         // ==========================================
         // 17. INITIALIZATION CONTROLLER
         // ==========================================
